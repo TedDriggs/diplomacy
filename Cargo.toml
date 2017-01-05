@@ -1,0 +1,6 @@
+[package]
+name = "diplomacy"
+version = "0.1.0"
+authors = ["Ted Driggs <ted.driggs@outlook.com>"]
+
+[dependencies]
