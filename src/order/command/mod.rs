@@ -1,7 +1,7 @@
-mod build;
-mod retreat;
-mod standard;
+mod build_phase;
+mod main_phase;
+mod retreat_phase;
 
-pub use self::build::BuildCommand;
-pub use self::retreat::RetreatCommand;
-pub use self::standard::{Command, SupportedOrder, ConvoyedMove};
+pub use self::build_phase::BuildCommand;
+pub use self::retreat_phase::RetreatCommand;
+pub use self::main_phase::{MainCommand, SupportedOrder, ConvoyedMove};

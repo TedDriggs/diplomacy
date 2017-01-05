@@ -3,9 +3,12 @@
 
 pub mod geo;
 pub mod order;
-mod unit;
 
+mod unit;
 pub use unit::UnitType;
+
+mod nation;
+pub use nation::Nation;
 
 /// Format trait for short naming of objects in orders.
 pub trait ShortName {

@@ -1,5 +1,7 @@
 use std::str::FromStr;
 
+use ShortName;
+
 /// The type of a military unit. Armies are convoyable land-based units; fleets
 /// are sea-going units which are able to convoy armies.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -20,6 +22,15 @@ impl FromStr for UnitType {
             "f" | "fleet" => Ok(UnitType::Fleet),
             _ => Err(())
         }
+    }
+}
+
+impl ShortName for UnitType {
+    fn short_name(&self) -> String {
+        String::from(match *self {
+            UnitType::Army => "A",
+            UnitType::Fleet => "F"
+        })
     }
 }
 

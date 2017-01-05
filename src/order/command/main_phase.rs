@@ -1,8 +1,11 @@
 use geo::Region;
+use ShortName;
 
-/// A command that is issued to a unit at a location.
+use std::fmt;
+
+/// A command that is issued to a unit at a location during the main phase of a season.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Command<'a> {
+pub enum MainCommand<'a> {
     /// The unit is to remain in place and do nothing else.
     Hold,
     
@@ -14,6 +17,18 @@ pub enum Command<'a> {
     
     /// The fleet is to attempt to help move an army to a specified region.
     Convoy(ConvoyedMove<'a>),
+}
+
+impl<'a> fmt::Display for MainCommand<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::MainCommand::*;
+        match self {
+            &Hold => write!(f, "holds"),
+            &Move(ref dest) => write!(f, "-> {}", dest.short_name()),
+            &Support(ref order) => write!(f, "supports {}", order),
+            &Convoy(ref mv) => write!(f, "convoys {}", mv)
+        }
+    }
 }
 
 /// An order supported by a support command.
@@ -28,6 +43,15 @@ pub enum SupportedOrder<'a> {
     Move(&'a Region<'a>, &'a Region<'a>),
 }
 
+impl<'a> fmt::Display for SupportedOrder<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &SupportedOrder::Hold(ref region) => write!(f, "{}", region.short_name()),
+            &SupportedOrder::Move(ref fr, ref to) => write!(f, "{} -> {}", fr.short_name(), to.short_name())
+        }
+    }
+}
+
 /// An army's move which a fleet should convoy.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ConvoyedMove<'a>(&'a Region<'a>, &'a Region<'a>);
@@ -36,5 +60,11 @@ impl<'a> ConvoyedMove<'a> {
     /// Create a new convoyed move
     pub fn new(from: &'a Region<'a>, to: &'a Region<'a>) -> Self {
         ConvoyedMove(from, to)
+    }
+}
+
+impl<'a> fmt::Display for ConvoyedMove<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} -> {}", self.0.short_name(), self.1.short_name())
     }
 }

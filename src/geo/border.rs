@@ -21,4 +21,15 @@ impl<'a> Border<'a> {
     pub fn connects<'b>(&self, r1: &Region<'b>, r2: &Region<'b>) -> bool {
         self.contains(r1) && self.contains(r2)
     }
+    
+    /// If this region contains `r`, returns the other region in the border.
+    pub fn dest_from(&self, r: &Region<'a>) -> Option<&'a Region<'a>> {
+        if self.0 == r {
+            Some(self.1)
+        } else if self.1 == r {
+            Some(self.0)
+        } else {
+            None
+        }
+    }
 }
