@@ -3,6 +3,7 @@
 
 pub mod geo;
 pub mod order;
+pub mod parser;
 
 mod unit;
 pub use unit::UnitType;

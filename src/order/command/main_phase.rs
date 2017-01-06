@@ -1,25 +1,29 @@
-use geo::Region;
-use ShortName;
+use geo::Location;
+use super::Command;
 
 use std::fmt;
 
 /// A command that is issued to a unit at a location during the main phase of a season.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum MainCommand<'a> {
+pub enum MainCommand<L : Location> {
     /// The unit is to remain in place and do nothing else.
     Hold,
     
-    /// The unit is to attempt to move from its current location to `Region`.
-    Move(&'a Region<'a>),
+    /// The unit is to attempt to move from its current location to `Location`.
+    Move(L),
     
     /// The unit is to remain in place and support another order.
-    Support(SupportedOrder<'a>),
+    Support(SupportedOrder<L>),
     
-    /// The fleet is to attempt to help move an army to a specified region.
-    Convoy(ConvoyedMove<'a>),
+    /// The fleet is to attempt to help move an army to a specified locatio.
+    Convoy(ConvoyedMove<L>),
 }
 
-impl<'a> fmt::Display for MainCommand<'a> {
+impl<L : Location> Command<L> for MainCommand<L> {
+    
+}
+
+impl<L : Location> fmt::Display for MainCommand<L> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::MainCommand::*;
         match self {
@@ -33,17 +37,17 @@ impl<'a> fmt::Display for MainCommand<'a> {
 
 /// An order supported by a support command.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum SupportedOrder<'a> {
+pub enum SupportedOrder<L : Location> {
     /// The supporting unit will attempt to keep the unit in `Region` in place.
     /// A "hold" support covers units that have hold, support, or convoy commands.
-    Hold(&'a Region<'a>),
+    Hold(L),
     
     /// The supporting unit will attempt to help the unit move from the first 
     /// region to the second.
-    Move(&'a Region<'a>, &'a Region<'a>),
+    Move(L, L),
 }
 
-impl<'a> fmt::Display for SupportedOrder<'a> {
+impl<L : Location> fmt::Display for SupportedOrder<L> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             &SupportedOrder::Hold(ref region) => write!(f, "{}", region.short_name()),
@@ -54,16 +58,16 @@ impl<'a> fmt::Display for SupportedOrder<'a> {
 
 /// An army's move which a fleet should convoy.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ConvoyedMove<'a>(&'a Region<'a>, &'a Region<'a>);
+pub struct ConvoyedMove<L : Location>(L, L);
 
-impl<'a> ConvoyedMove<'a> {
+impl<L : Location> ConvoyedMove<L> {
     /// Create a new convoyed move
-    pub fn new(from: &'a Region<'a>, to: &'a Region<'a>) -> Self {
+    pub fn new(from: L, to: L) -> Self {
         ConvoyedMove(from, to)
     }
 }
 
-impl<'a> fmt::Display for ConvoyedMove<'a> {
+impl<L : Location> fmt::Display for ConvoyedMove<L> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} -> {}", self.0.short_name(), self.1.short_name())
     }

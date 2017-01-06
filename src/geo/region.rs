@@ -1,5 +1,5 @@
 use ShortName;
-use geo::Province;
+use geo::{Province, Location};
 
 use std::convert::From;
 
@@ -33,7 +33,7 @@ pub enum Terrain {
     Sea,
 }
 
-/// The area which a unit can move to. Provinces are made up of 1 or more regions.
+/// A space to which a unit can move. Provinces are made up of 1 or more regions.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Region<'a>(&'a Province, Option<Coast>, Terrain);
 
@@ -68,8 +68,22 @@ impl<'a> ShortName for Region<'a> {
     }
 }
 
+impl<'a> ShortName for &'a Region<'a> {
+    fn short_name(&self) -> String {
+        (*self).short_name()
+    }
+}
+
 impl<'a> From<&'a Region<'a>> for &'a Province {
     fn from(r: &'a Region<'a>) -> Self {
         r.province()
     }
+}
+
+impl<'a> Location for Region<'a> {
+    
+}
+
+impl<'a> Location for &'a Region<'a> {
+    
 }

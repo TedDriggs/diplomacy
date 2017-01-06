@@ -1,3 +1,6 @@
+use geo::Location;
+use super::Command;
+
 use std::fmt;
 
 /// Valid orders during build seasons.
@@ -5,6 +8,10 @@ use std::fmt;
 pub enum BuildCommand {
     Build,
     Disband,
+}
+
+impl<L : Location> Command<L> for BuildCommand {
+    
 }
 
 impl fmt::Display for BuildCommand {
