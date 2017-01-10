@@ -12,6 +12,10 @@ impl<'a> Border<'a> {
         Border(r1, r2, t)
     }
     
+    pub fn terrain(&self) -> &Terrain {
+        &self.2
+    }
+    
     /// Returns true when either of the border's edges are `r`.
     pub fn contains<'b>(&self, r: &'a Region<'b>) -> bool {
         self.0 == r || self.1 == r

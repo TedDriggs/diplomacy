@@ -3,11 +3,16 @@
 
 mod border;
 mod location;
+mod map;
 mod province;
 mod region;
 
 pub use self::border::Border;
 pub use self::location::Location;
+pub use self::map::{
+    Map,
+    RegionLookupError
+};
 pub use self::province::Province;
 pub use self::region::{
     Coast,

@@ -31,6 +31,18 @@ pub struct Order<L : Location, C : Command<L>> {
     pub command: C,
 }
 
+impl<L : Location, C : Command<L>> Order<L, C> {
+    /// Create a new order.
+    pub fn new(nation: Nation, unit_type: UnitType, region: L, command: C) -> Self {
+        Order {
+            nation: nation,
+            unit_type: unit_type,
+            region: region,
+            command: command,
+        }
+    }
+}
+
 impl<L : Location, C : Command<L>> fmt::Display for Order<L, C> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: {} {} {}", 

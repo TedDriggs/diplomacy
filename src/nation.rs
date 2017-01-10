@@ -8,7 +8,7 @@ pub struct Nation;
 
 impl ShortName for Nation {
     fn short_name(&self) -> String {
-        unimplemented!()
+        "".to_string()
     }
 }
 

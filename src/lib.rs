@@ -11,6 +11,8 @@ pub use unit::UnitType;
 mod nation;
 pub use nation::Nation;
 
+mod judge;
+
 /// Format trait for short naming of objects in orders.
 pub trait ShortName {
     /// This method returns the short display name of the object.

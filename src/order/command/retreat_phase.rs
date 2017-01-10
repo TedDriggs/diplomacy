@@ -25,19 +25,8 @@ impl<L : Location> fmt::Display for RetreatCommand<L> {
 
 #[cfg(test)]
 mod test {
-    use geo::{Location, Region, Province, Terrain};
-    use ShortName;
+    use geo::{Region, Province, Terrain};
     use super::RetreatCommand;
-    
-    impl ShortName for String {
-        fn short_name(&self) -> String {
-            self.clone()
-        }
-    }
-    
-    impl Location for String {
-        
-    }
     
     #[test]
     fn with_string() {

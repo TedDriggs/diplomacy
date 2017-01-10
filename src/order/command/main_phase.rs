@@ -1,6 +1,7 @@
 use geo::Location;
 use super::Command;
 
+use std::cmp::PartialEq;
 use std::fmt;
 
 /// A command that is issued to a unit at a location during the main phase of a season.
@@ -17,6 +18,15 @@ pub enum MainCommand<L : Location> {
     
     /// The fleet is to attempt to help move an army to a specified locatio.
     Convoy(ConvoyedMove<L>),
+}
+
+impl<L : Location> MainCommand<L> {
+    pub fn is_move(&self) -> bool {
+        match *self {
+            MainCommand::Move(..) => true,
+            _ => false,
+        }
+    }
 }
 
 impl<L : Location> Command<L> for MainCommand<L> {
@@ -52,6 +62,20 @@ impl<L : Location> fmt::Display for SupportedOrder<L> {
         match self {
             &SupportedOrder::Hold(ref region) => write!(f, "{}", region.short_name()),
             &SupportedOrder::Move(ref fr, ref to) => write!(f, "{} -> {}", fr.short_name(), to.short_name())
+        }
+    }
+}
+
+impl<L: Location> PartialEq<::order::Order<L, MainCommand<L>>> for SupportedOrder<L> {
+    
+    fn eq(&self, other: &::order::Order<L, MainCommand<L>>) -> bool {
+        match self {
+            &SupportedOrder::Hold(ref loc) => !other.command.is_move() && *loc == other.region,
+            &SupportedOrder::Move(ref fr, ref to) => if let MainCommand::Move(ref dst) = other.command {
+                *fr == other.region && to == dst
+            } else {
+                false
+            }
         }
     }
 }
