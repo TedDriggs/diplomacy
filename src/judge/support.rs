@@ -72,7 +72,7 @@ fn is_successful<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
 }
 
 /// Finds all successful orders which support a given order.
-pub fn find_successful_for<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
+    pub fn find_successful_for<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
                                               resolver: &mut ResolverState<'a, A>,
                                               supported: &MappedMainOrder<'a>)
                                               -> Vec<&'a MappedMainOrder<'a>> {

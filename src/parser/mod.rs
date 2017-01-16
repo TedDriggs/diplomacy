@@ -39,7 +39,7 @@ fn parse_shared(s: &str) -> OrderResult<(Nation, UnitType, String)> {
     let words = s.split_whitespace().collect::<Vec<_>>();
     let unit_type = words[1].parse().or(Err(Error::default()))?;
     let location = words[2].to_string();
-    Ok((Nation, unit_type, location))
+    Ok((Nation("".into()), unit_type, location))
 }
 
 impl FromStr for UnmappedOrder<MainCommand<String>> {

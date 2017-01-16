@@ -9,7 +9,7 @@ pub use super::resolver::{
 pub use geo::{Border, Province, Terrain};
 
 pub use super::state_type::*;
-pub use super::strength::*;
+pub use super::strength::{Attack, ProvinceHold, Defend, Prevent, Strength, Resistance, MoveOutcome};
 pub use super::MappedMainOrder;
 
 pub use UnitType;

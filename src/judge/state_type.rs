@@ -25,6 +25,15 @@ impl From<OrderState> for bool {
     }
 }
 
+impl<'a> From<&'a ResolutionState> for OrderState {
+    fn from(rs: &'a ResolutionState) -> Self {
+        match *rs {
+            ResolutionState::Guessing(os) 
+            | ResolutionState::Known(os) => os
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ResolutionState {
     Guessing(OrderState),

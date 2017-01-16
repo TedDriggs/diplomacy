@@ -42,7 +42,7 @@ impl<'a> Strength for Attack<'a> {
 /// The intermediate result of a province's hold strength calculation. The hold
 /// strength determines how much force is needed to dislodge the unit from the province.
 #[derive(Debug, Clone, PartialEq)]
-pub enum Hold<'a> {
+pub enum ProvinceHold<'a> {
     /// No unit occupied the province.
     Empty,
     
@@ -58,9 +58,9 @@ pub enum Hold<'a> {
     UnitHolds(Supporters<'a>),
 }
 
-impl<'a> Strength for Hold<'a> {
+impl<'a> Strength for ProvinceHold<'a> {
     fn strength(&self) -> usize {
-        use self::Hold::*;
+        use self::ProvinceHold::*;
         match *self {
             Empty | SuccessfulExit => 0,
             
@@ -111,7 +111,7 @@ impl<'a> Strength for Prevent<'a> {
 }
 
 pub enum Resistance<'a> {
-    Holds(Hold<'a>),
+    Holds(ProvinceHold<'a>),
     HeadToHead(Defend<'a>)
 }
 
@@ -125,13 +125,43 @@ impl<'a> Strength for Resistance<'a> {
     }
 }
 
+impl<'a> From<ProvinceHold<'a>> for Resistance<'a> {
+    fn from(p: ProvinceHold<'a>) -> Self {
+        Resistance::Holds(p)
+    }
+}
+
+impl<'a> From<Defend<'a>> for Resistance<'a> {
+    fn from(d: Defend<'a>) -> Self {
+        Resistance::HeadToHead(d)
+    }
+}
+
+impl<T : Strength> Strength for Option<T> {
+    fn strength(&self) -> usize {
+        if let &Some(ref streng) = self {
+            streng.strength()
+        } else {
+            0
+        }
+    }
+}
+
 pub struct MoveOutcome<'a> {
     atk: Attack<'a>,
-    max_prevent: Prevent<'a>,
+    max_prevent: Option<Prevent<'a>>,
     resistance: Resistance<'a>,
 }
 
 impl<'a> MoveOutcome<'a> {
+    pub fn new<IP : Into<Option<Prevent<'a>>>, IR : Into<Resistance<'a>>>(atk: Attack<'a>, max_prevent: IP, resistance: IR) -> Self {
+        MoveOutcome {
+            atk: atk,
+            max_prevent: max_prevent.into(),
+            resistance: resistance.into(),
+        }
+    }
+    
     /// Gets whether or not the move succeeds
     pub fn is_successful(&self) -> bool {
         let atk_strength = self.atk.strength();
