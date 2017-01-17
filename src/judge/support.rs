@@ -3,6 +3,7 @@
 
 use super::prelude::*;
 use geo;
+use super::calc;
 
 fn order_cuts<'a, A: Adjudicate>(ctx: &ResolverContext<'a>,
                                  resolver: &mut ResolverState<'a, A>,
@@ -10,7 +11,10 @@ fn order_cuts<'a, A: Adjudicate>(ctx: &ResolverContext<'a>,
                                  cutting_order: &MappedMainOrder)
                                  -> bool {
     match cutting_order.command {
-        MainCommand::Move(ref dst) => dst == &support_order.region,
+        MainCommand::Move(ref dst) => {
+            dst == &support_order.region && calc::path_exists(ctx, resolver, cutting_order) &&
+            support_order.nation != cutting_order.nation
+        }
         _ => false,
     }
 }
@@ -98,11 +102,11 @@ mod test {
     use order::{Order, MainCommand, SupportedOrder};
     use super::*;
     use super::super::{ResolverState, ResolverContext};
-    
+
     fn reg(s: &str) -> RegionKey {
         RegionKey::new(ProvinceKey::new(s), None)
     }
-    
+
     #[test]
     fn is_successful() {
         let ger = Nation("ger".into());
@@ -111,10 +115,10 @@ mod test {
             Order::new(ger.clone(), UnitType::Fleet, reg("ska"), MainCommand::Support(supp_com.clone())),
             Order::new(ger.clone(), UnitType::Fleet, reg("nth"), MainCommand::Move(reg("nwy"))),
         ];
-        
+
         assert_eq!(supp_com, orders[1]);
         assert!(super::can_reach(standard_map(), &orders[1], &orders[0]));
-        
+
         let resolver_ctx = ResolverContext::new(standard_map(), orders.clone());
         let mut res_state = ResolverState::with_adjudicator(super::super::rulebook::Rulebook);
         let supporters = find_successful_for(&resolver_ctx, &mut res_state, &orders[1]);

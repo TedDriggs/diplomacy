@@ -1,5 +1,6 @@
 #![cfg(test)]
 extern crate diplomacy;
+
 use diplomacy::order::{MainCommand, Order, SupportedOrder};
 use diplomacy::{Nation, UnitType};
 

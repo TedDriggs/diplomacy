@@ -1,5 +1,3 @@
-use order::{Order, MainCommand};
-use geo::Region;
 use super::MappedMainOrder;
 
 pub trait Strength {
@@ -110,6 +108,7 @@ impl<'a> Strength for Prevent<'a> {
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum Resistance<'a> {
     Holds(ProvinceHold<'a>),
     HeadToHead(Defend<'a>)
@@ -147,6 +146,7 @@ impl<T : Strength> Strength for Option<T> {
     }
 }
 
+#[derive(Debug)]
 pub struct MoveOutcome<'a> {
     atk: Attack<'a>,
     max_prevent: Option<Prevent<'a>>,
@@ -165,6 +165,11 @@ impl<'a> MoveOutcome<'a> {
     /// Gets whether or not the move succeeds
     pub fn is_successful(&self) -> bool {
         let atk_strength = self.atk.strength();
-        atk_strength > self.max_prevent.strength() && atk_strength > self.resistance.strength()
+        let will_succeed = atk_strength > self.max_prevent.strength() && atk_strength > self.resistance.strength();
+        if !will_succeed {
+            println!("{:?}", self);
+        }
+        
+        will_succeed
     }
 }

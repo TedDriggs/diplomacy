@@ -1,10 +1,16 @@
 region 1, region 2, terrain
 aeg,gre,sea
 aeg,ion,sea
+ber,mun,land
+ber,sil,land
+boh,mun,land
+boh,sil,land
 gre,ion,sea
 ion,tun,sea
+mun,sil,land
 nth,nwg,sea
 nth,nwy,sea
 nth,ska,sea
 nwg,nwy,sea
 nwy,ska,sea
+sil,war,land

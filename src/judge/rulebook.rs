@@ -1,4 +1,4 @@
-use order::{MainCommand, Order};
+use order::{MainCommand};
 use super::calc::{atk_result, max_prevent_result, resistance_result, dislodger_of};
 use super::resolver::{Adjudicate, ResolverState, ResolverContext};
 use super::strength::{MoveOutcome};
@@ -15,9 +15,9 @@ impl Rulebook {
                       order: &'a MappedMainOrder)
                       -> OrderState {
         (match order.command {
-            MainCommand::Move(ref dest) => {
+            MainCommand::Move(..) => {
                 MoveOutcome::new(atk_result(context, resolver, order).expect("Guaranteed to be move order"),
-                                 max_prevent_result(context, resolver, dest.province()),
+                                 max_prevent_result(context, resolver, order),
                                  resistance_result(context, resolver, order)).is_successful()
             }
             MainCommand::Support(..) => (!support::is_order_cut(context, resolver, order)),

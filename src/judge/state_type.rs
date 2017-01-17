@@ -41,6 +41,7 @@ pub enum ResolutionState {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(dead_code)]
 pub enum ProvinceOutcome {
     Holds,
     Moves,

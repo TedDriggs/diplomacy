@@ -12,10 +12,10 @@ impl Border {
     }
 }
 
-fn path_exists<'a, A: Adjudicate>(context: &ResolverContext<'a>,
-                                  resolver: &ResolverState<'a, A>,
-                                  order: &MappedMainOrder)
-                                  -> bool {
+pub fn path_exists<'a, A: Adjudicate>(context: &ResolverContext<'a>,
+                                      resolver: &ResolverState<'a, A>,
+                                      order: &MappedMainOrder)
+                                      -> bool {
     match order.command {
         MainCommand::Move(ref dst) => {
             context.world_map
@@ -112,6 +112,7 @@ fn prevent_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
     }
 }
 
+#[allow(dead_code)]
 pub fn prevent_results<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                           resolver: &mut ResolverState<'a, A>,
                                           province: &ProvinceKey)
@@ -128,21 +129,25 @@ pub fn prevent_results<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
 
 pub fn max_prevent_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                              resolver: &mut ResolverState<'a, A>,
-                                             province: &ProvinceKey)
+                                             preventing: &MappedMainOrder)
                                              -> Option<Prevent<'a>> {
-    let mut best_prevent = None;
-    let mut best_prevent_strength = 0;
-    for order in context.orders_ref().iter().filter(|ord| is_move_to_province(ord, province)) {
-        if let Some(prev) = prevent_result(context, resolver, order) {
-            let nxt_str = prev.strength();
-            if nxt_str >= best_prevent_strength {
-                best_prevent_strength = nxt_str;
-                best_prevent = Some(prev);
+    if let &MainCommand::Move(ref dst) = &preventing.command {
+        let mut best_prevent = None;
+        let mut best_prevent_strength = 0;
+        for order in context.orders_ref().iter().filter(|ord| ord != &&preventing && is_move_to_province(ord, dst.province())) {
+            if let Some(prev) = prevent_result(context, resolver, order) {
+                let nxt_str = prev.strength();
+                if nxt_str >= best_prevent_strength {
+                    best_prevent_strength = nxt_str;
+                    best_prevent = Some(prev);
+                }
             }
         }
-    }
 
-    best_prevent
+        best_prevent
+    } else {
+        None
+    }
 }
 
 /// Gets the hold outcome for a given province.
@@ -200,7 +205,7 @@ fn dislodger_no_exit<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                         resolver: &mut ResolverState<'a, A>,
                                         order: &'a MappedMainOrder)
                                         -> Option<&'a MappedMainOrder> {
-    
+
     let order_ref = context.orders_ref();
     let mut dislodger = None;
     for order in order_ref.into_iter().find(|o| is_move_to_province(o, order.region.province())) {
@@ -225,7 +230,7 @@ pub fn dislodger_of<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
             } else {
                 dislodger_no_exit(context, resolver, order)
             }
-        },
-        _ => dislodger_no_exit(context, resolver, order)
+        }
+        _ => dislodger_no_exit(context, resolver, order),
     }
 }

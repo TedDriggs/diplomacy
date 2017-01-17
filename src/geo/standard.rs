@@ -31,6 +31,8 @@ fn load_standard() -> Map {
     for line in borders {
         if let Ok(border) = border_from_line_with_context(line, &map_builder) {
             map_builder.register_border(border);
+        } else {
+            panic!("Border registration failed! {}", line);
         }
     }
 
