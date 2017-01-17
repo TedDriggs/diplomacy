@@ -15,9 +15,11 @@ pub use self::map::{
     MapBuilder,
     RegionLookupError
 };
-pub use self::province::Province;
+pub use self::province::{Province, ProvinceKey};
 pub use self::region::{
     Coast,
     Terrain,
     Region,
+    RegionKey,
 };
+pub use self::standard::standard_map;

@@ -1,4 +1,4 @@
-use geo::Region;
+use geo::RegionKey;
 use std::convert::From;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -41,8 +41,8 @@ pub enum ResolutionState {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ProvinceOutcome<'a> {
+pub enum ProvinceOutcome {
     Holds,
     Moves,
-    DislodgedBy(&'a Region<'a>),
+    DislodgedBy(RegionKey),
 }

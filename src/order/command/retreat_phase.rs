@@ -25,20 +25,5 @@ impl<L : Location> fmt::Display for RetreatCommand<L> {
 
 #[cfg(test)]
 mod test {
-    use geo::{Region, Province, Terrain};
-    use super::RetreatCommand;
     
-    #[test]
-    fn with_string() {
-        let retreat_to_string = RetreatCommand::Move(String::from("hey"));
-        println!("{:?}", retreat_to_string);
-    }
-    
-    #[test]
-    fn with_region() {
-        let prov = Province { full_name: "Hello World".to_string(), short_name: "hey".to_string() };
-        let region = Region::new(&prov, None, Terrain::Land);
-        let retreat_to_region = RetreatCommand::Move(&region);
-        println!("{:?}", retreat_to_region);
-    }
 }

@@ -12,7 +12,7 @@ impl Rulebook {
     fn adjudicate<'a>(&self,
                       context: &'a ResolverContext<'a>,
                       resolver: &mut ResolverState<'a, Self>,
-                      order: &'a MappedMainOrder<'a>)
+                      order: &'a MappedMainOrder)
                       -> OrderState {
         (match order.command {
             MainCommand::Move(ref dest) => {
@@ -30,7 +30,7 @@ impl Adjudicate for Rulebook {
     fn adjudicate<'a>(&self,
                       context: &'a ResolverContext<'a>,
                       resolver: &mut ResolverState<'a, Self>,
-                      order: &'a MappedMainOrder<'a>)
+                      order: &'a MappedMainOrder)
                       -> OrderState {
         Rulebook::adjudicate(&self, context, resolver, order)
     }

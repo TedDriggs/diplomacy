@@ -1,32 +1,40 @@
-use std::collections::HashMap;
-use geo::{Map, Region, Border, Coast, Terrain, MapBuilder, Province};
-use ShortName;
+use geo::{Map, Border, Coast, Terrain, MapBuilder, Province};
 
-pub fn standard_map() -> &'static Map<'static> {
-    unimplemented!()
+lazy_static! {
+    static ref STANDARD_MAP : Map = load_standard();
 }
 
-fn load_standard<'a>() -> Map<'a> {
+pub fn standard_map() -> &'static Map {
+    &STANDARD_MAP
+}
+
+fn load_standard() -> Map {
     let mut map_builder = MapBuilder::default();
-    
-    let mut prov_map = HashMap::new();
+
+
     let provinces = include_str!("provinces.csv").lines().skip(1);
     for line in provinces {
         if let Ok(prov) = province_from_line(line) {
-            prov_map.insert(prov.short_name(), prov);
+            map_builder.register_province(prov);
         }
     }
-    
-    let mut reg_map = HashMap::new();
+
+
     let regions = include_str!("regions.csv").lines().skip(1);
     for line in regions {
-        if let Ok(reg) = region_from_line_with_context(line, &prov_map) {
-            reg_map.insert(reg.short_name(), reg);
+        if let Ok((prov, coast, terrain)) = region_from_line(line) {
+            map_builder.register_region(prov, coast, terrain).unwrap();
         }
     }
     
-    let (p, r, b) = map_builder.dump_contents();
-    Map::new(prov_map, reg_map, b)
+    let borders = include_str!("borders.csv").lines().skip(1);
+    for line in borders {
+        if let Ok(border) = border_from_line_with_context(line, &map_builder) {
+            map_builder.register_border(border);
+        }
+    }
+
+    Map::new(map_builder)
 }
 
 fn province_from_line(s: &str) -> Result<Province, ()> {
@@ -41,22 +49,20 @@ fn province_from_line(s: &str) -> Result<Province, ()> {
     }
 }
 
-fn region_from_line_with_context<'a>(s: &str, ctx: &'a HashMap<String, Province>) -> Result<Region<'a>, ()> {
+fn region_from_line<'l>(s: &'l str) -> Result<(&'l str, Option<Coast>, Terrain), ()> {
     let words = s.split(",").collect::<Vec<_>>();
     if words.len() == 3 {
-        Ok(Region::new(ctx.get(words[0]).ok_or(())?,
-                       coast_from_word(words[1])?,
-                       terrain_from_word(words[2])?))
+        Ok((words[0], coast_from_word(words[1])?, terrain_from_word(words[2])?))
     } else {
         Err(())
     }
 }
 
-fn border_from_line_with_context<'a>(s: &str, ctx: &'a HashMap<String, Region<'a>>) -> Result<Border<'a>, ()> {
+fn border_from_line_with_context(s: &str, ctx: &MapBuilder) -> Result<Border, ()> {
     let words = s.split(",").collect::<Vec<_>>();
     if words.len() == 3 {
-        Ok(Border::new(ctx.get(words[0]).ok_or(())?,
-                       ctx.get(words[1]).ok_or(())?,
+        Ok(Border::new(ctx.find_region(words[0]).or(Err(()))?.into(),
+                       ctx.find_region(words[1]).or(Err(()))?.into(),
                        terrain_from_word(words[2])?))
     } else {
         Err(())

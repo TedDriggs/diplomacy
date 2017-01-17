@@ -1,4 +1,10 @@
+region 1, region 2, terrain
 aeg,gre,sea
 aeg,ion,sea
 gre,ion,sea
-tun,ion,sea
+ion,tun,sea
+nth,nwg,sea
+nth,nwy,sea
+nth,ska,sea
+nwg,nwy,sea
+nwy,ska,sea

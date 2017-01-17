@@ -1,14 +1,14 @@
-use geo::{Region, Terrain};
+use geo::{RegionKey, Terrain};
 
 /// An undirected edge between two regions in a graph of the map. Units move
 /// between regions via borders.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Border<'a>(&'a Region<'a>, &'a Region<'a>, Terrain);
+pub struct Border(RegionKey, RegionKey, Terrain);
 
-impl<'a> Border<'a> {
+impl Border {
     
     /// Create a new border between two regions.
-    pub fn new(r1: &'a Region<'a>, r2: &'a Region<'a>, t: Terrain) -> Border<'a> {
+    pub fn new(r1: RegionKey, r2: RegionKey, t: Terrain) -> Border {
         Border(r1, r2, t)
     }
     
@@ -17,21 +17,23 @@ impl<'a> Border<'a> {
     }
     
     /// Returns true when either of the border's edges are `r`.
-    pub fn contains<'b>(&self, r: &'a Region<'b>) -> bool {
-        self.0 == r || self.1 == r
+    pub fn contains<'a, IR: Into<&'a RegionKey>>(&self, r: IR) -> bool {
+        let rk = r.into();
+        &self.0 == rk || &self.1 == rk
     }
     
     /// Returns true when the border contains both `r1` and `r2`.
-    pub fn connects<'b>(&self, r1: &Region<'b>, r2: &Region<'b>) -> bool {
+    pub fn connects<'a, 'b, IR1: Into<&'a RegionKey>, IR2: Into<&'b RegionKey>>(&self, r1: IR1, r2: IR2) -> bool {
         self.contains(r1) && self.contains(r2)
     }
     
     /// If this region contains `r`, returns the other region in the border.
-    pub fn dest_from(&self, r: &Region<'a>) -> Option<&'a Region<'a>> {
-        if self.0 == r {
-            Some(self.1)
-        } else if self.1 == r {
-            Some(self.0)
+    pub fn dest_from<'a, IR: Into<&'a RegionKey>>(&self, r: IR) -> Option<&RegionKey> {
+        let rk = r.into();
+        if &self.0 == rk {
+            Some(&self.1)
+        } else if &self.1 == rk {
+            Some(&self.0)
         } else {
             None
         }

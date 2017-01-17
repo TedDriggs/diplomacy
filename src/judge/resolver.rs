@@ -7,27 +7,27 @@ pub trait Adjudicate: Clone {
     fn adjudicate<'a>(&self,
                       context: &'a ResolverContext<'a>,
                       resolver: &mut ResolverState<'a, Self>,
-                      order: &'a MappedMainOrder<'a>)
+                      order: &'a MappedMainOrder)
                       -> OrderState;
 }
 
 /// The immutable inputs for a resolution equation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResolverContext<'a> {
-    pub orders: Vec<MappedMainOrder<'a>>,
-    pub world_map: &'a Map<'a>,
+    pub orders: Vec<MappedMainOrder>,
+    pub world_map: &'a Map,
 }
 
 impl<'a> ResolverContext<'a> {
     /// Creates a new resolver context for a set of orders on a map.
-    pub fn new(world_map: &'a Map<'a>, orders: Vec<MappedMainOrder<'a>>) -> Self {
+    pub fn new(world_map: &'a Map, orders: Vec<MappedMainOrder>) -> Self {
         ResolverContext {
             world_map: world_map,
             orders: orders
         }
     }
     
-    pub fn orders_ref(&'a self) -> Vec<&'a MappedMainOrder<'a>> {
+    pub fn orders_ref(&'a self) -> Vec<&'a MappedMainOrder> {
         self.orders.iter().collect()
     }
 
@@ -40,7 +40,7 @@ impl<'a> ResolverContext<'a> {
         rs
     }
 
-    pub fn resolve(self) -> HashMap<MappedMainOrder<'a>, OrderState> {
+    pub fn resolve(self) -> HashMap<MappedMainOrder, OrderState> {
         let rs = self.resolve_orders();
         let mut out_map = HashMap::with_capacity(self.orders.len());
 
@@ -56,8 +56,8 @@ impl<'a> ResolverContext<'a> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResolverState<'a, A: Adjudicate> {
-    state: HashMap<&'a MappedMainOrder<'a>, ResolutionState>,
-    dependency_chain: Vec<&'a MappedMainOrder<'a>>,
+    state: HashMap<&'a MappedMainOrder, ResolutionState>,
+    dependency_chain: Vec<&'a MappedMainOrder>,
     adjudicator: A,
 }
 
@@ -70,17 +70,17 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         }
     }
 
-    fn with_state(&mut self, order: &'a MappedMainOrder<'a>, resolution: ResolutionState) -> &Self {
+    fn with_state(&mut self, order: &'a MappedMainOrder, resolution: ResolutionState) -> &Self {
         self.state.insert(order, resolution);
         self
     }
 
-    pub fn get_state(&self, order: &MappedMainOrder<'a>) -> Option<OrderState> {
+    pub fn get_state(&self, order: &MappedMainOrder) -> Option<OrderState> {
         self.state.get(order).map(|rs| rs.into())
     }
 
     /// When a dependency cycle is detected, attempt to resolve all orders in the cycle.
-    fn resolve_dependency_cycle(&mut self, cycle: &[&'a MappedMainOrder<'a>]) {
+    fn resolve_dependency_cycle(&mut self, cycle: &[&'a MappedMainOrder]) {
         use super::OrderState::*;
         use super::ResolutionState::*;
 
@@ -97,7 +97,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
 
     pub fn resolve(&mut self,
                    context: &'a ResolverContext<'a>,
-                   order: &'a MappedMainOrder<'a>)
+                   order: &'a MappedMainOrder)
                    -> OrderState {
         use super::OrderState::*;
         use super::ResolutionState::*;

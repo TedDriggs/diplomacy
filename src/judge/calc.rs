@@ -1,8 +1,8 @@
 use super::prelude::*;
 use super::support;
-use geo::Region;
+use geo::{RegionKey, ProvinceKey};
 
-impl<'a> Border<'a> {
+impl Border {
     fn is_passable_by(&self, unit_type: &UnitType) -> bool {
         match self.terrain() {
             &Terrain::Land => unit_type == &UnitType::Army,
@@ -14,7 +14,7 @@ impl<'a> Border<'a> {
 
 fn path_exists<'a, A: Adjudicate>(context: &ResolverContext<'a>,
                                   resolver: &ResolverState<'a, A>,
-                                  order: &MappedMainOrder<'a>)
+                                  order: &MappedMainOrder)
                                   -> bool {
     match order.command {
         MainCommand::Move(ref dst) => {
@@ -27,7 +27,7 @@ fn path_exists<'a, A: Adjudicate>(context: &ResolverContext<'a>,
     }
 }
 
-fn is_move_to_province<'a, 'b, D: Into<&'b Province>>(o: &MappedMainOrder<'a>, d: D) -> bool {
+fn is_move_to_province<'a, 'b, D: Into<&'b ProvinceKey>>(o: &MappedMainOrder, d: D) -> bool {
     if let MainCommand::Move(ref dst) = o.command {
         dst.province() == d.into()
     } else {
@@ -35,14 +35,14 @@ fn is_move_to_province<'a, 'b, D: Into<&'b Province>>(o: &MappedMainOrder<'a>, d
     }
 }
 
-fn is_move_and_dest_is_not<'a, 'b, D: Into<&'b Province>>(o: &MappedMainOrder<'a>, d: D) -> bool {
+fn is_move_and_dest_is_not<'a, 'b, D: Into<&'b ProvinceKey>>(o: &MappedMainOrder, d: D) -> bool {
     match o.command {
         MainCommand::Move(ref dst) => dst.province() != d.into(),
         _ => false,
     }
 }
 
-fn is_head_to_head<'a>(o1: &MappedMainOrder<'a>, o2: &MappedMainOrder<'a>) -> bool {
+fn is_head_to_head<'a>(o1: &MappedMainOrder, o2: &MappedMainOrder) -> bool {
     match (&o1.command, &o2.command) {
         (&MainCommand::Move(ref d1), &MainCommand::Move(ref d2)) => {
             o1.region.province() == d2.province() && o2.region.province() == d1.province()
@@ -53,7 +53,7 @@ fn is_head_to_head<'a>(o1: &MappedMainOrder<'a>, o2: &MappedMainOrder<'a>) -> bo
 
 pub fn atk_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                      resolver: &mut ResolverState<'a, A>,
-                                     order: &MappedMainOrder<'a>)
+                                     order: &MappedMainOrder)
                                      -> Option<Attack<'a>> {
     use order::MainCommand::*;
     match order.command {
@@ -68,7 +68,7 @@ pub fn atk_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                     None => Attack::AgainstVacant(supports),
                     Some(ref occ) => {
                         // In the case that the occupier is leaving, this is a follow-in
-                        if is_move_and_dest_is_not(occ, order.region) &&
+                        if is_move_and_dest_is_not(occ, &order.region) &&
                            resolver.resolve(context, occ) == OrderState::Succeeds {
                             Attack::FollowingIn(supports)
                         } else if occ.nation == order.nation {
@@ -87,7 +87,7 @@ pub fn atk_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
 
 fn prevent_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                      resolver: &mut ResolverState<'a, A>,
-                                     order: &MappedMainOrder<'a>)
+                                     order: &MappedMainOrder)
                                      -> Option<Prevent<'a>> {
     use order::MainCommand::*;
     match order.command {
@@ -114,7 +114,7 @@ fn prevent_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
 
 pub fn prevent_results<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                           resolver: &mut ResolverState<'a, A>,
-                                          province: &Province)
+                                          province: &ProvinceKey)
                                           -> Vec<Prevent<'a>> {
     let mut prevents = vec![];
     for order in context.orders_ref().iter().filter(|ord| is_move_to_province(ord, province)) {
@@ -128,7 +128,7 @@ pub fn prevent_results<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
 
 pub fn max_prevent_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                              resolver: &mut ResolverState<'a, A>,
-                                             province: &Province)
+                                             province: &ProvinceKey)
                                              -> Option<Prevent<'a>> {
     let mut best_prevent = None;
     let mut best_prevent_strength = 0;
@@ -148,10 +148,10 @@ pub fn max_prevent_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
 /// Gets the hold outcome for a given province.
 fn hold_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                   resolver: &mut ResolverState<'a, A>,
-                                  region: &Region<'a>)
+                                  region: &RegionKey)
                                   -> ProvinceHold<'a> {
 
-    match context.orders_ref().iter().find(|o| o.region == region) {
+    match context.orders_ref().iter().find(|o| &o.region == region) {
         None => ProvinceHold::Empty,
         Some(occupier) => {
             if occupier.command.is_move() {
@@ -169,7 +169,7 @@ fn hold_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
 
 fn defend_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                     resolver: &mut ResolverState<'a, A>,
-                                    order: &MappedMainOrder<'a>)
+                                    order: &MappedMainOrder)
                                     -> Option<Defend<'a>> {
     match order.command {
         MainCommand::Move(..) => {
@@ -181,7 +181,7 @@ fn defend_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
 
 pub fn resistance_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                             resolver: &mut ResolverState<'a, A>,
-                                            order: &MappedMainOrder<'a>)
+                                            order: &MappedMainOrder)
                                             -> Resistance<'a> {
     if let Some(h2h) = context.orders_ref().iter().find(|o| is_head_to_head(order, o)) {
         defend_result(context, resolver, h2h).expect("Already verified h2h is a move").into()
@@ -198,8 +198,8 @@ pub fn resistance_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
 /// whether the unit moved out of the province prior to being dislodged.
 fn dislodger_no_exit<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                         resolver: &mut ResolverState<'a, A>,
-                                        order: &'a MappedMainOrder<'a>)
-                                        -> Option<&'a MappedMainOrder<'a>> {
+                                        order: &'a MappedMainOrder)
+                                        -> Option<&'a MappedMainOrder> {
     
     let order_ref = context.orders_ref();
     let mut dislodger = None;
@@ -216,8 +216,8 @@ fn dislodger_no_exit<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
 /// Get the order that dislodges the provided order, if one exists.
 pub fn dislodger_of<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                        resolver: &mut ResolverState<'a, A>,
-                                       order: &'a MappedMainOrder<'a>)
-                                       -> Option<&'a MappedMainOrder<'a>> {
+                                       order: &'a MappedMainOrder)
+                                       -> Option<&'a MappedMainOrder> {
     match order.command {
         MainCommand::Move(..) => {
             if resolver.resolve(context, order).into() {

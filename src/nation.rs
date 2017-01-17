@@ -8,7 +8,7 @@ pub struct Nation(pub String);
 
 impl ShortName for Nation {
     fn short_name(&self) -> String {
-        "".to_string()
+        self.0.clone()
     }
 }
 

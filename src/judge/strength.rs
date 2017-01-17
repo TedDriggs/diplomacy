@@ -8,7 +8,7 @@ pub trait Strength {
 }
 
 /// A collection of orders which support a specific order; used in strength calculations.
-pub type Supporters<'a> = Vec<&'a MappedMainOrder<'a>>;
+pub type Supporters<'a> = Vec<&'a MappedMainOrder>;
 
 /// Intermediate state of an attack order's strength calculation.
 #[derive(Debug, Clone, PartialEq)]
