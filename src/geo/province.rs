@@ -43,6 +43,12 @@ impl From<String> for ProvinceKey {
     }
 }
 
+impl<'a> From<&'a str> for ProvinceKey {
+    fn from(s: &str) -> Self {
+        ProvinceKey(String::from(s))
+    }
+}
+
 impl ShortName for ProvinceKey {
     fn short_name(&self) -> String {
         self.0.clone()

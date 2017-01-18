@@ -1,5 +1,5 @@
 use super::prelude::*;
-use geo::{Map, RegionKey, ProvinceKey};
+use geo::{Map, ProvinceKey};
 
 /// Failure cases for convoy route lookup.
 pub enum ConvoyRouteError {

@@ -27,6 +27,7 @@ impl<'a> ResolverContext<'a> {
         }
     }
 
+    /// Get a view of the orders.
     pub fn orders_ref(&'a self) -> Vec<&'a MappedMainOrder> {
         self.orders.iter().collect()
     }
@@ -34,16 +35,15 @@ impl<'a> ResolverContext<'a> {
     fn resolve_orders(&self) -> ResolverState<super::rulebook::Rulebook> {
         let mut rs = ResolverState::with_adjudicator(super::rulebook::Rulebook);
         for order in self.orders_ref() {
-            println!("RESOLVING {}", order);
             rs.resolve(&self, order);
         }
 
-        print!("=== FINAL ===");
         rs.report_state();
 
         rs
     }
 
+    /// Resolve the orders in the context, producing a map of orders to outcomes
     pub fn resolve(self) -> HashMap<MappedMainOrder, OrderState> {
         let rs = self.resolve_orders();
         let mut out_map = HashMap::with_capacity(self.orders.len());
@@ -66,6 +66,8 @@ pub struct ResolverState<'a, A: Adjudicate> {
 }
 
 impl<'a, A: Adjudicate> ResolverState<'a, A> {
+    
+    /// Create a new resolver for a given rulebook.
     pub fn with_adjudicator(adjudicator: A) -> Self {
         ResolverState {
             state: HashMap::new(),
@@ -74,13 +76,11 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         }
     }
 
-    fn with_state(&mut self, order: &'a MappedMainOrder, resolution: ResolutionState) -> &Self {
+    fn set_state(&mut self, order: &'a MappedMainOrder, resolution: ResolutionState) {
         self.state.insert(order, resolution);
-        self.report_state();
-        self
     }
 
-    /// Get the current projected outcome of a 
+    /// Get the current projected outcome of an order.
     fn get_state(&self, order: &MappedMainOrder) -> Option<OrderState> {
         self.state.get(order).map(|rs| rs.into())
     }
@@ -104,19 +104,19 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         use super::OrderState::*;
         use super::ResolutionState::*;
 
-        println!("Entered cycle resolution");
-
         // if every order in the cycle is a move, then this is a circular move
         if cycle.iter().all(|o| o.command.is_move()) {
             for order in cycle {
-                self.with_state(order, Known(Succeeds));
+                self.set_state(order, Known(Succeeds));
             }
         } else {
             // can't resolve convoy paradoxes yet
             unimplemented!()
         }
     }
-
+    
+    /// Resolve whether an order succeeds or fails, possibly updating
+    /// the resolver's state in the process.
     pub fn resolve(&mut self,
                    context: &'a ResolverContext<'a>,
                    order: &'a MappedMainOrder)
@@ -138,7 +138,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
             None => {
                 // checkpoint the resolver and tell it to assume the order fails.
                 let mut resolver_if_fails = self.clone();
-                resolver_if_fails.with_state(order, Guessing(Fails));
+                resolver_if_fails.set_state(order, Guessing(Fails));
 
                 // get the order state based on that assumption.
                 let if_fails = self.adjudicator.adjudicate(context, &mut resolver_if_fails, order);
@@ -147,9 +147,8 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                 // We now snap to the resolver state from the assumption so that we can
                 // reuse it in future calculations.
                 if resolver_if_fails.dependency_chain.len() == self.dependency_chain.len() {
-                    println!("State resolved! {}", order);
                     self.state = resolver_if_fails.state;
-                    self.with_state(order, Known(if_fails.clone()));
+                    self.set_state(order, Known(if_fails.clone()));
                     if_fails
                 } else {
                     let next_dep = resolver_if_fails.dependency_chain[self.dependency_chain.len()];
@@ -158,7 +157,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                     // then we cautiously proceed. We update state to match what we've learned
                     // from the hypothetical and proceed with our guesses.
                     if next_dep != order {
-                        resolver_if_fails.with_state(order, Guessing(if_fails));
+                        resolver_if_fails.set_state(order, Guessing(if_fails));
                         self.state = resolver_if_fails.state;
                         self.dependency_chain.push(next_dep);
                         if_fails
@@ -166,13 +165,13 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                     // if the next dependency is the one we're already depending on, we're stuck.
                     else {
                         let mut resolver_if_succeeds = self.clone();
-                        resolver_if_succeeds.with_state(order, Guessing(Succeeds));
+                        resolver_if_succeeds.set_state(order, Guessing(Succeeds));
                         let if_succeeds = resolver_if_succeeds.resolve(context, order);
 
                         // If there's a paradox but the outcome doesn't depend on this order,
                         // then all we've learned is the state of this one order.
                         if if_fails == if_succeeds {
-                            self.with_state(order, Known(if_fails.clone()));
+                            self.set_state(order, Known(if_fails.clone()));
                             if_fails
                         } else {
                             let tail_start = self.dependency_chain.len();
