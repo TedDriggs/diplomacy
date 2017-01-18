@@ -1,6 +1,9 @@
 use geo::RegionKey;
 use std::convert::From;
 
+/// Struct representing the success or failure of an order.
+/// The meaning of success and failure is contextually-dependent,
+/// and should be derived from the outcome map of a resolution cycle.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum OrderState {
     Succeeds,
@@ -41,8 +44,7 @@ pub enum ResolutionState {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[allow(dead_code)]
-pub enum ProvinceOutcome {
+pub enum OccupationOutcome {
     Holds,
     Moves,
     DislodgedBy(RegionKey),

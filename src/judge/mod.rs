@@ -9,7 +9,7 @@ mod rulebook;
 
 use std::collections::HashMap;
 
-pub use self::state_type::{OrderState, ResolutionState};
+pub use self::state_type::{OrderState, ResolutionState, OccupationOutcome};
 
 use order::{Order, MainCommand};
 use geo::{RegionKey, Map};
