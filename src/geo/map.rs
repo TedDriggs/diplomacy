@@ -110,8 +110,22 @@ impl Map {
     }
 
     /// Get all borders with a region.
-    pub fn borders_with<'a>(&'a self, r: &RegionKey) -> Vec<&Border> {
-        self.builder.borders.iter().filter(|b| b.contains(r)).collect()
+    pub fn borders_containing<'a, L: PartialEq<RegionKey>>(&'a self, r: &L) -> Vec<&Border> {
+        self.builder.borders.iter().filter(|&b| b.contains(r)).collect()
+    }
+
+    /// Gets the set of regions which connect to the specified region. If `terrain`
+    /// is provided, only borders matching that terrain will be provided.
+    pub fn find_bordering<'a, RK: PartialEq<RegionKey>, IT: Into<Option<Terrain>>>(&'a self,
+                                                         region: &RK,
+                                                         terrain: IT)
+                                                         -> Vec<&RegionKey> {
+        let ter = terrain.into();
+        self.borders_containing(region)
+            .iter()
+            .filter(|b| ter.as_ref().map(|t| t == b.terrain()).unwrap_or(true))
+            .filter_map(|b| b.dest_from(region))
+            .collect()
     }
 
     /// Get a border between two regions, if one exists.

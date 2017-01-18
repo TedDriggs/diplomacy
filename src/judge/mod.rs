@@ -2,6 +2,7 @@ mod resolver;
 mod strength;
 mod state_type;
 mod calc;
+mod convoy;
 mod prelude;
 pub mod support;
 mod rulebook;

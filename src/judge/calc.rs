@@ -1,5 +1,5 @@
 use super::prelude::*;
-use super::support;
+use super::{support, convoy};
 use geo::{RegionKey, ProvinceKey};
 
 impl Border {
@@ -12,22 +12,27 @@ impl Border {
     }
 }
 
-pub fn path_exists<'a, A: Adjudicate>(context: &ResolverContext<'a>,
-                                      resolver: &ResolverState<'a, A>,
+pub fn path_exists<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
+                                      resolver: &mut ResolverState<'a, A>,
                                       order: &MappedMainOrder)
                                       -> bool {
     match order.command {
         MainCommand::Move(ref dst) => {
-            context.world_map
+            let border_exists = context.world_map
                 .find_border_between(&order.region, dst)
                 .map(|b| b.is_passable_by(&order.unit_type))
-                .unwrap_or(false)
+                .unwrap_or(false);
+
+            let convoy_exists = convoy::route_exists(context, resolver, order);
+
+            border_exists || convoy_exists
         }
         _ => true,
     }
 }
 
-fn is_move_to_province<'a, 'b, D: Into<&'b ProvinceKey>>(o: &MappedMainOrder, d: D) -> bool {
+/// Checks if an order is a move to the province identified by `d`.
+fn is_move_to_province<'a, 'b, DST: Into<&'b ProvinceKey>>(o: &MappedMainOrder, d: DST) -> bool {
     if let MainCommand::Move(ref dst) = o.command {
         dst.province() == d.into()
     } else {
@@ -57,28 +62,31 @@ pub fn atk_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                      -> Option<Attack<'a>> {
     use order::MainCommand::*;
     match order.command {
-        Move(..) if !path_exists(context, resolver, order) => Some(Attack::NoPath),
         Move(ref dst) => {
-            Some({
+            if !path_exists(context, resolver, order) {
+                Some(Attack::NoPath)
+            } else {
+                Some({
 
-                let dst_occupant =
-                    context.orders.iter().find(|occ| occ.region.province() == dst.province());
-                let supports = support::find_successful_for(context, resolver, order);
-                match dst_occupant {
-                    None => Attack::AgainstVacant(supports),
-                    Some(ref occ) => {
-                        // In the case that the occupier is leaving, this is a follow-in
-                        if is_move_and_dest_is_not(occ, &order.region) &&
-                           resolver.resolve(context, occ) == OrderState::Succeeds {
-                            Attack::FollowingIn(supports)
-                        } else if occ.nation == order.nation {
-                            Attack::FriendlyFire
-                        } else {
-                            Attack::AgainstOccupied(supports)
+                    let dst_occupant =
+                        context.orders.iter().find(|occ| occ.region.province() == dst.province());
+                    let supports = support::find_successful_for(context, resolver, order);
+                    match dst_occupant {
+                        None => Attack::AgainstVacant(supports),
+                        Some(ref occ) => {
+                            // In the case that the occupier is leaving, this is a follow-in
+                            if is_move_and_dest_is_not(occ, &order.region) &&
+                               resolver.resolve(context, occ) == OrderState::Succeeds {
+                                Attack::FollowingIn(supports)
+                            } else if occ.nation == order.nation {
+                                Attack::FriendlyFire
+                            } else {
+                                Attack::AgainstOccupied(supports)
+                            }
                         }
                     }
-                }
-            })
+                })
+            }
         }
         // non-move commands don't generate a move outcome
         Hold | Support(..) | Convoy(..) => None,
@@ -91,22 +99,27 @@ fn prevent_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                      -> Option<Prevent<'a>> {
     use order::MainCommand::*;
     match order.command {
-        Move(..) if !path_exists(context, resolver, order) => Some(Prevent::NoPath),
         Move(..) => {
-            Some({
-                if let Some(h2h) = context.orders_ref().iter().find(|o| is_head_to_head(o, order)) {
-                    match resolver.resolve(context, h2h) {
-                        OrderState::Succeeds => Prevent::LostHeadToHead,
-                        OrderState::Fails => {
-                            Prevent::Prevents(support::find_successful_for(context,
-                                                                           resolver,
-                                                                           order))
+            if !path_exists(context, resolver, order) {
+                Some(Prevent::NoPath)
+            } else {
+                Some({
+                    if let Some(h2h) = context.orders_ref()
+                        .iter()
+                        .find(|o| is_head_to_head(o, order)) {
+                        match resolver.resolve(context, h2h) {
+                            OrderState::Succeeds => Prevent::LostHeadToHead,
+                            OrderState::Fails => {
+                                Prevent::Prevents(support::find_successful_for(context,
+                                                                               resolver,
+                                                                               order))
+                            }
                         }
+                    } else {
+                        Prevent::Prevents(support::find_successful_for(context, resolver, order))
                     }
-                } else {
-                    Prevent::Prevents(support::find_successful_for(context, resolver, order))
-                }
-            })
+                })
+            }
         }
         Hold | Support(..) | Convoy(..) => None,
     }
@@ -134,7 +147,9 @@ pub fn max_prevent_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
     if let &MainCommand::Move(ref dst) = &preventing.command {
         let mut best_prevent = None;
         let mut best_prevent_strength = 0;
-        for order in context.orders_ref().iter().filter(|ord| ord != &&preventing && is_move_to_province(ord, dst.province())) {
+        for order in context.orders_ref()
+            .iter()
+            .filter(|ord| ord != &&preventing && is_move_to_province(ord, dst.province())) {
             if let Some(prev) = prevent_result(context, resolver, order) {
                 let nxt_str = prev.strength();
                 if nxt_str >= best_prevent_strength {

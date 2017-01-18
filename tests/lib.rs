@@ -4,18 +4,13 @@ extern crate diplomacy;
 mod util;
 mod basic;
 
-use diplomacy::order::{Order, MainCommand, SupportedOrder};
+use diplomacy::order::{Order, MainCommand, SupportedOrder, ConvoyedMove};
 use diplomacy::geo;
 use diplomacy::judge::{adjudicate, OrderState};
 
 use diplomacy::{Nation, UnitType};
 
 use util::*;
-
-#[test]
-fn it_works() {
-    
-}
 
 #[test]
 fn dipmath_figure9() {
@@ -61,6 +56,32 @@ fn dipmath_figure6() {
             assert_eq!(r, &OrderState::Succeeds);
         } else {
             assert_eq!(r, &OrderState::Fails);
+        }
+    }
+}
+
+#[test]
+fn dipmath_figure16() {
+    use diplomacy::UnitType::*;
+    
+    let tur = Nation("tur".into());
+    let aus = Nation("aus".into());
+    let ita = Nation("ita".into());
+    
+    let orders = vec![
+        Order::new(tur.clone(), Fleet, reg("aeg"), MainCommand::Move(reg("ion"))),
+        Order::new(tur.clone(), Fleet, reg("gre"), SupportedOrder::Move(reg("aeg"), reg("ion")).into()),
+        Order::new(aus, Fleet, reg("alb"), SupportedOrder::Move(reg("aeg"), reg("ion")).into()),
+        Order::new(ita.clone(), Army, reg("tun"), MainCommand::Move(reg("gre"))),
+        Order::new(ita.clone(), Fleet, reg("ion"), ConvoyedMove::new(reg("tun"), reg("gre")).into())
+    ];
+    
+    let state = adjudicate(geo::standard_map(), orders);
+    for (o, r) in &state {
+        if o.nation == ita {
+            assert_eq!(r, &OrderState::Fails);
+        } else {
+            assert_eq!(r, &OrderState::Succeeds);
         }
     }
 }

@@ -13,16 +13,16 @@ pub type Supporters<'a> = Vec<&'a MappedMainOrder>;
 pub enum Attack<'a> {
     /// The attacking unit cannot reach its destination.
     NoPath,
-    
+
     /// The attack would have caused a friendly fire incident.
     FriendlyFire,
-    
+
     /// The attack is moving into an unoccupied province.
     AgainstVacant(Supporters<'a>),
-    
+
     /// The attack is entering a province that is being vacated.
     FollowingIn(Supporters<'a>),
-    
+
     /// The attack is attempting to dislodge a unit in the province.
     AgainstOccupied(Supporters<'a>),
 }
@@ -32,7 +32,9 @@ impl<'a> Strength for Attack<'a> {
         use self::Attack::*;
         match *self {
             NoPath | FriendlyFire => 0,
-            AgainstVacant(ref sup) | FollowingIn(ref sup) | AgainstOccupied(ref sup) => 1 + sup.len()
+            AgainstVacant(ref sup) |
+            FollowingIn(ref sup) |
+            AgainstOccupied(ref sup) => 1 + sup.len(),
         }
     }
 }
@@ -43,14 +45,14 @@ impl<'a> Strength for Attack<'a> {
 pub enum ProvinceHold<'a> {
     /// No unit occupied the province.
     Empty,
-    
+
     /// The unit in the province successfully moved elsewhere.
     SuccessfulExit,
-    
+
     /// The unit in the province attempted to move elsewhere but did not.
     /// A failed exit cannot benefit from hold-support commands.
     FailedExit,
-    
+
     /// The unit in the province did not attempt to move, so it can benefit from
     /// hold-support commands.
     UnitHolds(Supporters<'a>),
@@ -61,11 +63,11 @@ impl<'a> Strength for ProvinceHold<'a> {
         use self::ProvinceHold::*;
         match *self {
             Empty | SuccessfulExit => 0,
-            
-            // A failed exit cannot benefit from hold-support commands, 
+
+            // A failed exit cannot benefit from hold-support commands,
             // so it always has strength 1.
             FailedExit => 1,
-            
+
             UnitHolds(ref sup) => 1 + sup.len(),
         }
     }
@@ -82,20 +84,20 @@ impl<'a> Strength for Defend<'a> {
     }
 }
 
-/// The intermediate state for a prevent strength calculation. Prevent strength 
+/// The intermediate state for a prevent strength calculation. Prevent strength
 /// determines how much force is applied to stop any other units from entering the
 /// destination province.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Prevent<'a> {
     /// The preventing unit cannot reach its destination.
     NoPath,
-    
-    /// The order lost a head-to-head battle. It cannot prevent others from 
+
+    /// The order lost a head-to-head battle. It cannot prevent others from
     /// entering its destination.
     LostHeadToHead,
-    
+
     /// The order attempts to prevent others from moving to the destination province with support.
-    Prevents(Supporters<'a>)
+    Prevents(Supporters<'a>),
 }
 
 impl<'a> Strength for Prevent<'a> {
@@ -111,7 +113,7 @@ impl<'a> Strength for Prevent<'a> {
 #[derive(Debug, Clone)]
 pub enum Resistance<'a> {
     Holds(ProvinceHold<'a>),
-    HeadToHead(Defend<'a>)
+    HeadToHead(Defend<'a>),
 }
 
 impl<'a> Strength for Resistance<'a> {
@@ -120,7 +122,7 @@ impl<'a> Strength for Resistance<'a> {
             Resistance::Holds(ref h) => h.strength(),
             Resistance::HeadToHead(ref d) => d.strength(),
         }
-        
+
     }
 }
 
@@ -136,7 +138,7 @@ impl<'a> From<Defend<'a>> for Resistance<'a> {
     }
 }
 
-impl<T : Strength> Strength for Option<T> {
+impl<T: Strength> Strength for Option<T> {
     fn strength(&self) -> usize {
         if let &Some(ref streng) = self {
             streng.strength()
@@ -154,22 +156,26 @@ pub struct MoveOutcome<'a> {
 }
 
 impl<'a> MoveOutcome<'a> {
-    pub fn new<IP : Into<Option<Prevent<'a>>>, IR : Into<Resistance<'a>>>(atk: Attack<'a>, max_prevent: IP, resistance: IR) -> Self {
+    pub fn new<IP: Into<Option<Prevent<'a>>>, IR: Into<Resistance<'a>>>(atk: Attack<'a>,
+                                                                        max_prevent: IP,
+                                                                        resistance: IR)
+                                                                        -> Self {
         MoveOutcome {
             atk: atk,
             max_prevent: max_prevent.into(),
             resistance: resistance.into(),
         }
     }
-    
+
     /// Gets whether or not the move succeeds
     pub fn is_successful(&self) -> bool {
         let atk_strength = self.atk.strength();
-        let will_succeed = atk_strength > self.max_prevent.strength() && atk_strength > self.resistance.strength();
+        let will_succeed = atk_strength > self.max_prevent.strength() &&
+                           atk_strength > self.resistance.strength();
         if !will_succeed {
             println!("{:?}", self);
         }
-        
+
         will_succeed
     }
 }

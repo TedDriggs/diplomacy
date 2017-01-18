@@ -1,9 +1,12 @@
 use geo::Location;
 use super::Command;
 use order::Order;
+use UnitType;
 
 use std::cmp::PartialEq;
 use std::fmt;
+
+pub type MainOrder<L> = Order<L, MainCommand<L>>;
 
 /// A command that is issued to a unit at a location during the main phase of a season.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -67,6 +70,12 @@ impl<L: Location> fmt::Display for SupportedOrder<L> {
     }
 }
 
+impl<L: Location> From<SupportedOrder<L>> for MainCommand<L> {
+    fn from(support: SupportedOrder<L>) -> Self {
+        MainCommand::Support(support)
+    }
+}
+
 impl<L: Location> PartialEq<Order<L, MainCommand<L>>> for SupportedOrder<L> {
     fn eq(&self, other: &Order<L, MainCommand<L>>) -> bool {
         match self {
@@ -91,10 +100,37 @@ impl<L: Location> ConvoyedMove<L> {
     pub fn new(from: L, to: L) -> Self {
         ConvoyedMove(from, to)
     }
+
+    pub fn from(&self) -> &L {
+        &self.0
+    }
+
+    pub fn to(&self) -> &L {
+        &self.1
+    }
 }
 
 impl<L: Location> fmt::Display for ConvoyedMove<L> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} -> {}", self.0.short_name(), self.1.short_name())
+        write!(f, "A {} -> {}", self.0.short_name(), self.1.short_name())
+    }
+}
+
+impl<L: Location> PartialEq<MainOrder<L>> for ConvoyedMove<L> {
+    fn eq(&self, rhs: &MainOrder<L>) -> bool {
+        if rhs.unit_type == UnitType::Army {
+            match &rhs.command {
+                &MainCommand::Move(ref dst) => self.from() == &rhs.region && self.to() == dst,
+                _ => false,
+            }
+        } else {
+            false
+        }
+    }
+}
+
+impl<L: Location> From<ConvoyedMove<L>> for MainCommand<L> {
+    fn from(cm: ConvoyedMove<L>) -> Self {
+        MainCommand::Convoy(cm)
     }
 }

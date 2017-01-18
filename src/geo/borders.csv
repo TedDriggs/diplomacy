@@ -5,12 +5,16 @@ ber,mun,land
 ber,sil,land
 boh,mun,land
 boh,sil,land
+eng,lon,sea
+eng,nth,sea
 gre,ion,sea
 ion,tun,sea
+lon,nth,sea
 mun,sil,land
 nth,nwg,sea
 nth,nwy,sea
 nth,ska,sea
 nwg,nwy,sea
 nwy,ska,sea
+ska,swe,sea
 sil,war,land

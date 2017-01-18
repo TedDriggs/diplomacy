@@ -5,7 +5,7 @@ use super::prelude::*;
 use geo;
 use super::calc;
 
-fn order_cuts<'a, A: Adjudicate>(ctx: &ResolverContext<'a>,
+fn order_cuts<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
                                  resolver: &mut ResolverState<'a, A>,
                                  support_order: &MappedMainOrder,
                                  cutting_order: &MappedMainOrder)
@@ -36,13 +36,12 @@ pub fn find_cutting_orders<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
 
 /// Returns whether the support is cut. This method short-circuits the search after
 /// any hit has been found.
-pub fn is_order_cut<'a, A: Adjudicate>(ctx: &ResolverContext<'a>,
+pub fn is_order_cut<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
                                        resolver: &mut ResolverState<'a, A>,
                                        support_order: &MappedMainOrder)
                                        -> bool {
     for order in &ctx.orders {
         if order_cuts(ctx, resolver, support_order, &order) {
-            println!("{} CUT BY {}", support_order, order);
             return true;
         }
     }
@@ -66,7 +65,7 @@ fn can_reach<'a>(world_map: &'a geo::Map,
 }
 
 /// Returns true if a given support order successfully supports the specified supported order.
-fn is_successful<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
+pub fn is_successful<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
                                     resolver: &mut ResolverState<'a, A>,
                                     supported: &MappedMainOrder,
                                     support_order: &'a MappedMainOrder)
@@ -108,7 +107,7 @@ mod test {
     }
 
     #[test]
-    fn is_successful() {
+    fn is_support_successful() {
         let ger = Nation("ger".into());
         let supp_com = SupportedOrder::Move(reg("nth"), reg("nwy"));
         let orders = vec![

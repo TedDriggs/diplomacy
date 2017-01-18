@@ -84,6 +84,10 @@ impl RegionKey {
     pub fn new<IP: Into<ProvinceKey>, IC: Into<Option<Coast>>>(province: IP, coast: IC) -> Self {
         RegionKey(province.into(), coast.into())
     }
+    
+    pub fn no_coast<IP: Into<ProvinceKey>>(province: IP) -> Self {
+        RegionKey::new(province, None)
+    }
 
     /// Gets the parent province for the region.
     pub fn province(&self) -> &ProvinceKey {
@@ -111,6 +115,18 @@ impl<'a> From<&'a RegionKey> for &'a ProvinceKey {
 impl PartialEq<Region> for RegionKey {
     fn eq(&self, other: &Region) -> bool {
         self.0 == other.0 && self.1 == other.1
+    }
+}
+
+impl PartialEq<ProvinceKey> for RegionKey {
+    fn eq(&self, rhs: &ProvinceKey) -> bool {
+        &self.0 == rhs
+    }
+}
+
+impl PartialEq<RegionKey> for ProvinceKey {
+    fn eq(&self, rhs: &RegionKey) -> bool {
+        rhs == self
     }
 }
 
