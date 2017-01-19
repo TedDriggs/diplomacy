@@ -11,7 +11,12 @@ pub enum RetreatCommand<L : Location> {
 }
 
 impl<L : Location> Command<L> for RetreatCommand<L> {
-    
+    fn move_dest<'a>(&'a self) -> Option<&'a L> {
+        match *self {
+            RetreatCommand::Move(ref dst) => Some(dst),
+            RetreatCommand::Hold => None
+        }
+    }
 }
 
 impl<L : Location> fmt::Display for RetreatCommand<L> {

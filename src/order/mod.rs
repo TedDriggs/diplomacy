@@ -16,7 +16,7 @@ pub use self::command::{
 };
 
 /// An order is issued by a nation and gives a command to a unit in a region.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Order<L : Location, C : Command<L>> {
     /// The nation to which the commanded unit (or province) belongs.
     pub nation: Nation,
@@ -44,6 +44,17 @@ impl<L : Location, C : Command<L>> Order<L, C> {
 }
 
 impl<L : Location, C : Command<L>> fmt::Display for Order<L, C> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}: {} {} {}", 
+            self.nation.short_name(), 
+            self.unit_type.short_name(), 
+            self.region.short_name(), 
+            self.command
+        )
+    }
+}
+
+impl<L : Location, C : Command<L>> fmt::Debug for Order<L, C> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: {} {} {}", 
             self.nation.short_name(), 

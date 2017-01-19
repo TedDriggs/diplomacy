@@ -11,7 +11,9 @@ pub enum BuildCommand {
 }
 
 impl<L : Location> Command<L> for BuildCommand {
-    
+    fn move_dest<'a>(&'a self) -> Option<&'a L> {
+        None
+    }
 }
 
 impl fmt::Display for BuildCommand {

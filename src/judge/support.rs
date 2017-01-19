@@ -2,6 +2,8 @@
 //! during the main phase of a turn.
 
 use super::prelude::*;
+use super::Outcome;
+use order::{Command, SupportedOrder};
 use geo;
 use super::calc;
 
@@ -10,32 +12,43 @@ fn order_cuts<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
                                  support_order: &MappedMainOrder,
                                  cutting_order: &MappedMainOrder)
                                  -> bool {
-    match cutting_order.command {
-        MainCommand::Move(ref dst) => {
-            dst == &support_order.region && calc::path_exists(ctx, resolver, cutting_order) &&
-            support_order.nation != cutting_order.nation
-        }
-        _ => false,
+    if let Some(ref dst) = cutting_order.command.move_dest() {
+        let supporting_attack_on_cutter = match support_order.command {
+            MainCommand::Support(SupportedOrder::Move(_, ref supported_dst)) => dst.province() == supported_dst,
+            _ => false
+        };
+        
+        dst == &support_order.region.province()
+        && !supporting_attack_on_cutter 
+        && support_order.nation != cutting_order.nation
+        && calc::path_exists(ctx, resolver, cutting_order) 
+    } else {
+        false
     }
 }
 
 /// Find all orders which cut a specified support order.
-pub fn find_cutting_orders<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
+pub fn find_cutting_order<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
                                               resolver: &mut ResolverState<'a, A>,
                                               support_order: &MappedMainOrder)
-                                              -> Vec<&'a MappedMainOrder> {
-    let mut cutting_orders = vec![];
+                                              -> Option<&'a MappedMainOrder> {
     for order in ctx.orders_ref() {
         if order_cuts(ctx, resolver, support_order, order) {
-            cutting_orders.push(order)
+            return Some(order);
         }
     }
 
-    cutting_orders
+    None
 }
 
-/// Returns whether the support is cut. This method short-circuits the search after
-/// any hit has been found.
+/// A SUPPORT decision of a unit ordered to support results in 'cut' when:
+/// At least one of the units ordered to move to the area of the supporting unit 
+/// has a minimum ATTACK STRENGTH of one or more. Again, if the support order is 
+/// a move support, then the unit that is on the area where the move is directed, 
+/// should not be taken into account. Finally, the SUPPORT decisions also results 
+/// in 'cut' when the DISLODGE decision of the unit has status 'dislodged' (dislodge rule).
+///
+/// This method short-circuits the search after any hit has been found.
 pub fn is_order_cut<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
                                        resolver: &mut ResolverState<'a, A>,
                                        support_order: &MappedMainOrder)
@@ -47,6 +60,14 @@ pub fn is_order_cut<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
     }
 
     false
+}
+
+pub fn is_supporting_self(support_order: &MappedMainOrder) -> bool {
+    if let MainCommand::Support(SupportedOrder::Hold(ref loc)) = support_order.command {
+        loc.province() == &support_order.region
+    } else {
+        false
+    }
 }
 
 fn needed_at(supported: &MappedMainOrder) -> &geo::RegionKey {
@@ -66,10 +87,10 @@ fn can_reach<'a>(world_map: &'a geo::Map,
 
 /// Returns true if a given support order successfully supports the specified supported order.
 pub fn is_successful<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
-                                    resolver: &mut ResolverState<'a, A>,
-                                    supported: &MappedMainOrder,
-                                    support_order: &'a MappedMainOrder)
-                                    -> bool {
+                                        resolver: &mut ResolverState<'a, A>,
+                                        supported: &MappedMainOrder,
+                                        support_order: &'a MappedMainOrder)
+                                        -> bool {
     if let MainCommand::Support(ref beneficiary) = support_order.command {
         beneficiary == supported && can_reach(&ctx.world_map, supported, support_order) &&
         resolver.resolve(ctx, support_order).into()
@@ -92,6 +113,21 @@ pub fn find_successful_for<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
 
     supports
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SupportOutcome<'a> {
+    NotDisrupted,
+    SupportingSelf,
+    CutBy(&'a MappedMainOrder),
+}
+
+impl<'a> SupportOutcome<'a> {
+    pub fn is_successful(&self) -> bool {
+        self == &SupportOutcome::NotDisrupted
+    }
+}
+
+impl<'a> Outcome for SupportOutcome<'a> {}
 
 #[cfg(test)]
 mod test {

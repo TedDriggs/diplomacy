@@ -1,4 +1,4 @@
-use super::MappedMainOrder;
+use super::{MappedMainOrder, Outcome};
 
 pub trait Strength {
     /// Compute the strength of an action from its result.
@@ -110,31 +110,36 @@ impl<'a> Strength for Prevent<'a> {
     }
 }
 
+/// The resistance a move order faces from its destination province.
+/// If the unit attempts to HOLD, SUPPORT, or CONVOY then this will be
+/// the HOLD STRENGTH for that unit. If the unit is attempting to move
+/// to the province where the original move is coming from, a head-to-head
+/// battle will occur.
 #[derive(Debug, Clone)]
-pub enum Resistance<'a> {
+pub enum DestResistance<'a> {
     Holds(ProvinceHold<'a>),
     HeadToHead(Defend<'a>),
 }
 
-impl<'a> Strength for Resistance<'a> {
+impl<'a> Strength for DestResistance<'a> {
     fn strength(&self) -> usize {
         match *self {
-            Resistance::Holds(ref h) => h.strength(),
-            Resistance::HeadToHead(ref d) => d.strength(),
+            DestResistance::Holds(ref h) => h.strength(),
+            DestResistance::HeadToHead(ref d) => d.strength(),
         }
 
     }
 }
 
-impl<'a> From<ProvinceHold<'a>> for Resistance<'a> {
+impl<'a> From<ProvinceHold<'a>> for DestResistance<'a> {
     fn from(p: ProvinceHold<'a>) -> Self {
-        Resistance::Holds(p)
+        DestResistance::Holds(p)
     }
 }
 
-impl<'a> From<Defend<'a>> for Resistance<'a> {
+impl<'a> From<Defend<'a>> for DestResistance<'a> {
     fn from(d: Defend<'a>) -> Self {
-        Resistance::HeadToHead(d)
+        DestResistance::HeadToHead(d)
     }
 }
 
@@ -148,34 +153,49 @@ impl<T: Strength> Strength for Option<T> {
     }
 }
 
+/// Struct containing the intermediate data needed to compute
+/// the success or failure of a MOVE command.
 #[derive(Debug)]
 pub struct MoveOutcome<'a> {
     atk: Attack<'a>,
     max_prevent: Option<Prevent<'a>>,
-    resistance: Resistance<'a>,
+    dest_hold: Option<ProvinceHold<'a>>,
+    h2h: Option<Defend<'a>>,
 }
 
 impl<'a> MoveOutcome<'a> {
-    pub fn new<IP: Into<Option<Prevent<'a>>>, IR: Into<Resistance<'a>>>(atk: Attack<'a>,
-                                                                        max_prevent: IP,
-                                                                        resistance: IR)
-                                                                        -> Self {
+    /// Create a new MoveOutcome.
+    pub fn new<IP: Into<Option<Prevent<'a>>>,
+               IH: Into<Option<ProvinceHold<'a>>>,
+               ID: Into<Option<Defend<'a>>>>
+        (atk: Attack<'a>,
+         max_prevent: IP,
+         dest_hold: IH,
+         h2h: ID)
+         -> Self {
         MoveOutcome {
             atk: atk,
             max_prevent: max_prevent.into(),
-            resistance: resistance.into(),
+            dest_hold: dest_hold.into(),
+            h2h: h2h.into(),
         }
     }
 
-    /// Gets whether or not the move succeeds
+    /// A MOVE decision of a unit ordered to move results in 'moves' (success) when:
+    /// The minimum of the ATTACK STRENGTH is larger than the maximum of the
+    /// DEFEND STRENGTH of the opposing unit in case of a head to head battle
+    /// or otherwise larger than the maximum of the HOLD STRENGTH of the attacked area.
+    /// And in all cases the minimum of the ATTACK STRENGTH is larger than the maximum
+    /// of the PREVENT STRENGTH of all of the units moving to the same area.
+    /// [DATC 5.B.1](http://web.inter.nl.net/users/L.B.Kruijswijk/#5.B.1)
     pub fn is_successful(&self) -> bool {
         let atk_strength = self.atk.strength();
         let will_succeed = atk_strength > self.max_prevent.strength() &&
-                           atk_strength > self.resistance.strength();
-        if !will_succeed {
-            println!("{:?}", self);
-        }
+                           atk_strength > self.dest_hold.strength() &&
+                           atk_strength > self.h2h.strength();
 
         will_succeed
     }
 }
+
+impl<'a> Outcome for MoveOutcome<'a> {}

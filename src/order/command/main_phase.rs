@@ -33,7 +33,14 @@ impl<L: Location> MainCommand<L> {
     }
 }
 
-impl<L: Location> Command<L> for MainCommand<L> {}
+impl<L: Location> Command<L> for MainCommand<L> {
+    fn move_dest<'a>(&'a self) -> Option<&'a L> {
+        match *self {
+            MainCommand::Move(ref dst) => Some(dst),
+            _ => None
+        }
+    }
+}
 
 impl<L: Location> fmt::Display for MainCommand<L> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -47,7 +54,7 @@ impl<L: Location> fmt::Display for MainCommand<L> {
     }
 }
 
-/// An order supported by a support command.
+/// Declaration of the order to be supported by a support command.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SupportedOrder<L: Location> {
     /// The supporting unit will attempt to keep the unit in `Region` in place.
@@ -61,9 +68,9 @@ pub enum SupportedOrder<L: Location> {
 
 impl<L: Location> fmt::Display for SupportedOrder<L> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &SupportedOrder::Hold(ref region) => write!(f, "{}", region.short_name()),
-            &SupportedOrder::Move(ref fr, ref to) => {
+        match *self {
+            SupportedOrder::Hold(ref region) => write!(f, "{}", region.short_name()),
+            SupportedOrder::Move(ref fr, ref to) => {
                 write!(f, "{} -> {}", fr.short_name(), to.short_name())
             }
         }

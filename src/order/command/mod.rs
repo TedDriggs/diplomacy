@@ -12,5 +12,5 @@ pub use self::main_phase::{MainCommand, SupportedOrder, ConvoyedMove};
 
 /// Marker trait for a command which uses a single concrete location type of `L`.
 pub trait Command<L : Location> : fmt::Display {
-    
+    fn move_dest<'a>(&'a self) -> Option<&'a L>;
 }

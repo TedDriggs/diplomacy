@@ -103,6 +103,10 @@ impl Map {
             Err(RegionLookupError::Malformed)
         }
     }
+    
+    pub fn find_region_with_key<'a>(&'a self, key: &RegionKey) -> Result<&'a Region, RegionLookupError> {
+        self.find_region(&key.short_name())
+    }
 
     /// Find a province by its canonical short name.
     pub fn find_province<'a>(&'a self, short_name: &str) -> Option<&'a Province> {

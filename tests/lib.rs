@@ -2,7 +2,7 @@
 
 extern crate diplomacy;
 mod util;
-mod basic;
+mod datc;
 
 use diplomacy::order::{Order, MainCommand, SupportedOrder, ConvoyedMove};
 use diplomacy::geo;

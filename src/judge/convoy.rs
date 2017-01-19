@@ -27,7 +27,9 @@ pub fn route_steps<'a>(map: &Map,
                        -> Vec<Vec<&'a MappedMainOrder>> {
 
     let adjacent_regions = map.find_bordering(origin, None);
-    if adjacent_regions.iter().find(|&&r| r == dest).is_some() {
+    // if we've got a convoy going and there is one hop to the destination,
+    // we've found a valid solution.
+    if !working_path.is_empty() && adjacent_regions.iter().find(|&&r| r == dest).is_some() {
         vec![working_path]
     } else {
         let mut paths = vec![];
@@ -49,6 +51,7 @@ pub fn route_steps<'a>(map: &Map,
         paths
     }
 }
+
 
 pub fn find_routes<'a, A: Adjudicate>
     (ctx: &'a ResolverContext<'a>,
@@ -99,9 +102,9 @@ mod test {
     fn convoy(l: &str, f: &str, t: &str) -> MappedMainOrder {
         Order::new(Nation("eng".into()),
                    UnitType::Fleet,
-                   RegionKey::no_coast(String::from(l)),
-                   ConvoyedMove::new(RegionKey::no_coast(String::from(f)),
-                                     RegionKey::no_coast(String::from(t)))
+                   RegionKey::new(String::from(l), None),
+                   ConvoyedMove::new(RegionKey::new(String::from(f), None),
+                                     RegionKey::new(String::from(t), None))
                        .into())
     }
 
