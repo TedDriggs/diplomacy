@@ -18,8 +18,8 @@ bul,,land
 bul,e,sea
 bul,s,sea
 bur,,land
-con,,coast
 cly,,coast
+con,,coast
 den,,coast
 eas,,sea
 edi,,coast
@@ -75,6 +75,7 @@ tun,,coast
 tus,,coast
 tyr,,land
 tys,,sea
+ukr,,land
 ven,,coast
 vie,,land
 wal,,coast

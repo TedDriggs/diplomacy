@@ -21,10 +21,3 @@ pub trait ShortName {
     /// This method returns the short display name of the object.
     fn short_name(&self) -> String;
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-    }
-}

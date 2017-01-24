@@ -1,3 +1,5 @@
+//! Contains the logic needed to adjudicate a turn.
+
 mod resolver;
 mod strength;
 mod state_type;
@@ -13,7 +15,8 @@ use std::fmt;
 pub use self::state_type::{OrderState, ResolutionState, OccupationOutcome};
 
 use order::{Order, MainCommand};
-use geo::{RegionKey, Map};
+use geo::{Border, RegionKey, Map, Terrain};
+use UnitType;
 pub use self::resolver::{ResolverContext, ResolverState};
 pub use self::rulebook::Rulebook;
 
@@ -29,3 +32,19 @@ pub fn adjudicate<'a, O: IntoIterator<Item = MappedMainOrder>>
 }
 
 pub trait Outcome : fmt::Debug {}
+
+impl Border {
+    fn is_passable_by(&self, unit_type: &UnitType) -> bool {
+        unit_type.can_occupy(self.terrain())
+    }
+}
+
+impl UnitType {
+    fn can_occupy(&self, terrain: &Terrain) -> bool {
+        match *terrain {
+            Terrain::Coast => true,
+            Terrain::Land => self == &UnitType::Army,
+            Terrain::Sea => self == &UnitType::Fleet,
+        }
+    }
+}

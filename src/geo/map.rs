@@ -103,8 +103,10 @@ impl Map {
             Err(RegionLookupError::Malformed)
         }
     }
-    
-    pub fn find_region_with_key<'a>(&'a self, key: &RegionKey) -> Result<&'a Region, RegionLookupError> {
+
+    pub fn find_region_with_key<'a>(&'a self,
+                                    key: &RegionKey)
+                                    -> Result<&'a Region, RegionLookupError> {
         self.find_region(&key.short_name())
     }
 
@@ -120,10 +122,11 @@ impl Map {
 
     /// Gets the set of regions which connect to the specified region. If `terrain`
     /// is provided, only borders matching that terrain will be provided.
-    pub fn find_bordering<'a, RK: PartialEq<RegionKey>, IT: Into<Option<Terrain>>>(&'a self,
-                                                         region: &RK,
-                                                         terrain: IT)
-                                                         -> Vec<&RegionKey> {
+    pub fn find_bordering<'a, RK: PartialEq<RegionKey>, IT: Into<Option<Terrain>>>
+        (&'a self,
+         region: &RK,
+         terrain: IT)
+         -> Vec<&RegionKey> {
         let ter = terrain.into();
         self.borders_containing(region)
             .iter()
@@ -133,13 +136,17 @@ impl Map {
     }
 
     /// Get a border between two regions, if one exists.
-    pub fn find_border_between<'a, 'b, IR1: Into<&'b RegionKey>, IR2: Into<&'b RegionKey>>
+    pub fn find_border_between<'a, IR1: PartialEq<RegionKey>, IR2: PartialEq<RegionKey>>
         (&'a self,
-         r1: IR1,
-         r2: IR2)
+         r1: &IR1,
+         r2: &IR2)
          -> Option<&Border> {
-        let rk1 = r1.into();
-        let rk2 = r2.into();
-        self.builder.borders.iter().find(|b| b.connects(rk1, rk2))
+        self.builder.borders.iter().find(|b| b.connects(r1, r2))
+    }
+
+    /// Finds all borders connecting a region to a given province.
+    /// Used for support and convoy cases.
+    pub fn find_borders_between<'a>(&'a self, r1: &RegionKey, p2: &ProvinceKey) -> Vec<&Border> {
+        self.builder.borders.iter().filter(|b| b.connects(r1, p2)).collect()
     }
 }

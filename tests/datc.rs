@@ -1,5 +1,4 @@
 #![cfg(test)]
-#![allow(unused_variables)]
 #![allow(unused_imports)]
 extern crate diplomacy;
 
@@ -20,9 +19,18 @@ fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
     judge::adjudicate(geo::standard_map(), parsed)
 }
 
-fn get_state(orders: Vec<&str>) -> ResolverContext {
+fn get_with_explanation(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
     let parsed = orders.into_iter().map(ord).collect::<Vec<_>>();
-    ResolverContext::new(geo::standard_map(), parsed)
+    let ctx = ResolverContext::new(geo::standard_map(), parsed.clone());
+    
+    {
+        let state = ctx.resolve_to_state();
+        for o in parsed {
+            ctx.explain(&mut state.clone(), &o);
+        }
+    }
+    
+    ctx.resolve()
 }
 
 fn all_fail(orders: Vec<&str>) {
@@ -71,13 +79,16 @@ fn t6a04_move_to_own_sector_illegal() {
 
 #[test]
 fn t6a05_move_to_own_sector_with_convoy() {
-    all_fail(vec![
+    let results = get_with_explanation(vec![
         "ENG: F nth convoys yor -> yor",
         "ENG: A yor -> yor",
         "ENG: A lvp supports yor -> yor",
         "GER: F lon -> yor",
-        "GER: A wal supports yor -> yor",
+        "GER: A wal supports lon -> yor",
     ]);
+    
+    assert_eq!(&OrderState::Succeeds, results.get(&ord("GER: F lon -> yor")).unwrap());
+    assert_eq!(&OrderState::Fails, results.get(&ord("ENG: A yor -> yor")).unwrap());
 }
 
 #[test]
@@ -252,16 +263,23 @@ fn t6c02_three_army_circular_movement_with_support_succeeds() {
 
 #[test]
 fn t6c03_three_army_circular_movement_disrupted_bounces() {
-    let orders = vec![
+    all_fail(vec![
         "TUR: F ank -> con",
         "TUR: A bul -> con",
         "TUR: A smy -> ank",
         "TUR: A con -> smy",
-    ];
+    ]);
+}
+
+#[test]
+fn t6d09_support_to_move_on_holding_unit_fails() {
+    let results = get_results(vec![
+        "ITA: A ven -> tri",
+        "ITA: A tyr supports ven -> tri",
+        "AUS: A alb supports tri -> ser",
+        "AUS: A tri holds"
+    ]);
     
-    // let parsed = orders.clone().into_iter().map(|o| ord(o));
-    // let r_ctx = get_state(orders.clone());
-    // let r_state = r_ctx.resolve_to_state();
-    
-    all_fail(orders);
+    report_results(&results);
+    assert_eq!(&OrderState::Succeeds, results.get(&ord("ITA: A ven -> tri")).unwrap());
 }

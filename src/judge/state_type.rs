@@ -6,7 +6,10 @@ use std::convert::From;
 /// and should be derived from the outcome map of a resolution cycle.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum OrderState {
+    /// For move commands, the order results in a move.
+    /// For all other commands, the unit is not dislodged.
     Succeeds,
+    
     Fails,
 }
 
@@ -31,8 +34,8 @@ impl From<OrderState> for bool {
 impl<'a> From<&'a ResolutionState> for OrderState {
     fn from(rs: &'a ResolutionState) -> Self {
         match *rs {
-            ResolutionState::Guessing(os) 
-            | ResolutionState::Known(os) => os
+            ResolutionState::Guessing(os) |
+            ResolutionState::Known(os) => os,
         }
     }
 }

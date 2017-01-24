@@ -10,7 +10,13 @@ pub use self::build_phase::BuildCommand;
 pub use self::retreat_phase::RetreatCommand;
 pub use self::main_phase::{MainCommand, SupportedOrder, ConvoyedMove};
 
-/// Marker trait for a command which uses a single concrete location type of `L`.
+/// A command issued to a unit or location which uses a single concrete location type of `L`.
 pub trait Command<L : Location> : fmt::Display {
-    fn move_dest<'a>(&'a self) -> Option<&'a L>;
+    /// Get the destination this order moves to, or `None` if the order is not a move.
+    fn move_dest(&self) -> Option<&L>;
+    
+    /// Gets whether or not the order attempts to move to another region.
+    fn is_move(&self) -> bool {
+        self.move_dest().is_some()
+    }
 }

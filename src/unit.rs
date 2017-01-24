@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use parser::{Error, ErrorKind};
 use ShortName;
 
 /// The type of a military unit. Armies are convoyable land-based units; fleets
@@ -14,13 +15,13 @@ pub enum UnitType {
 }
 
 impl FromStr for UnitType {
-    type Err = ();
+    type Err = Error;
     
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match &s.to_lowercase()[..] {
             "a" | "army" => Ok(UnitType::Army),
             "f" | "fleet" => Ok(UnitType::Fleet),
-            _ => Err(())
+            _ => Err(Error::new(ErrorKind::InvalidUnitType, s))
         }
     }
 }

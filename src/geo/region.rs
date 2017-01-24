@@ -1,9 +1,10 @@
-use ShortName;
-use geo::{ProvinceKey, Location};
-
 use std::fmt;
 use std::convert::From;
 use std::str::FromStr;
+
+use geo::{ProvinceKey, Location};
+use parser::{Error, ErrorKind};
+use ShortName;
 
 /// Differentiates regions within a province.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -27,15 +28,15 @@ impl ShortName for Coast {
 }
 
 impl FromStr for Coast {
-    type Err = ();
-    
+    type Err = Error;
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "nc" => Ok(Coast::North),
             "ec" => Ok(Coast::East),
             "sc" => Ok(Coast::South),
             "wc" => Ok(Coast::West),
-            _ => Err(())
+            _ => Err(Error::new(ErrorKind::BadCoast, s)),
         }
     }
 }
@@ -89,7 +90,13 @@ impl ShortName for Region {
     }
 }
 
-impl Location for Region {}
+impl Location for Region {
+    type Province = ProvinceKey;
+
+    fn province(&self) -> &Self::Province {
+        &self.0
+    }
+}
 
 /// An identifier that references a region.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -159,14 +166,20 @@ impl fmt::Display for RegionKey {
     }
 }
 
-impl Location for RegionKey {}
+impl Location for RegionKey {
+    type Province = ProvinceKey;
+
+    fn province(&self) -> &Self::Province {
+        &self.0
+    }
+}
 
 impl FromStr for RegionKey {
-    type Err = ();
-    
+    type Err = Error;
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts = s.split('(').collect::<Vec<_>>();
-        
+
         // No parentheses means no coast.
         if parts.len() == 1 {
             Ok(RegionKey::new(String::from(parts[0]), None))
@@ -175,7 +188,7 @@ impl FromStr for RegionKey {
             let coast_id = parts[1].chars().take(2).collect::<String>();
             Ok(RegionKey::new(String::from(parts[0]), Coast::from_str(&coast_id)?))
         } else {
-            Err(())
+            Err(Error::new(ErrorKind::MalformedRegion, s))
         }
     }
 }
@@ -183,17 +196,21 @@ impl FromStr for RegionKey {
 #[cfg(test)]
 mod test {
     use std::str::FromStr;
+
+    use parser::ErrorKind;
     use super::{Coast, RegionKey};
-    
+
     #[test]
     fn parse_coast() {
         assert_eq!(Coast::North, "nc".parse().expect("nc is a valid coast"));
         assert!(Coast::from_str("gc").is_err());
     }
-    
+
     #[test]
     fn parse_region() {
-        assert_eq!(RegionKey::new("aeg", None), RegionKey::from_str("aeg").expect("aeg is a valid region"));
-        assert_eq!((), RegionKey::from_str("foo(bar)").unwrap_err());
+        assert_eq!(RegionKey::new("aeg", None),
+                   RegionKey::from_str("aeg").expect("aeg is a valid region"));
+        assert_eq!(&ErrorKind::BadCoast,
+                   RegionKey::from_str("foo(bar)").unwrap_err().kind());
     }
 }

@@ -19,6 +19,7 @@ fn is_convoy_for(convoy: &MappedMainOrder, move_order: &MappedMainOrder) -> bool
     }
 }
 
+/// Find all routes from `origin` to `dest` given a set of valid convoys.
 pub fn route_steps<'a>(map: &Map,
                        convoys: Vec<&'a MappedMainOrder>,
                        origin: &ProvinceKey,
@@ -34,6 +35,7 @@ pub fn route_steps<'a>(map: &Map,
     } else {
         let mut paths = vec![];
         for convoy in &convoys {
+            // move to adjacent, and don't allow backtracking/cycles
             if !working_path.contains(&convoy) && adjacent_regions.contains(&&convoy.region) {
                 let mut next_path = working_path.clone();
                 next_path.push(&convoy);

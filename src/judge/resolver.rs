@@ -1,5 +1,5 @@
 use geo::{Map, RegionKey, ProvinceKey};
-use order::MainCommand;
+use order::{Command, MainCommand};
 use super::{MappedMainOrder, OrderState, ResolutionState, Rulebook};
 
 use std::convert::From;
@@ -40,7 +40,7 @@ impl<'a> ResolverContext<'a> {
             rs.resolve(&self, order);
         }
 
-        rs.report_with_label("FINAL");
+        // rs.report_with_label("FINAL");
 
         rs
     }
@@ -52,7 +52,7 @@ impl<'a> ResolverContext<'a> {
             MainCommand::Move(..) => {
                 println!("{}: {:?}",
                          order,
-                         "")
+                         Rulebook::adjudicate_move(self, state, order))
             }
             MainCommand::Support(..) => {
                 println!("{}: {:?}",
@@ -76,11 +76,11 @@ impl<'a> ResolverContext<'a> {
 
         out_map
     }
-    
+
     pub fn find_order_to_province(&'a self, p: &ProvinceKey) -> Option<&'a MappedMainOrder> {
         self.orders_ref().into_iter().find(|o| &o.region == p)
     }
-    
+
     pub fn find_order_to_region(&'a self, r: &RegionKey) -> Option<&'a MappedMainOrder> {
         self.orders_ref().into_iter().find(|o| &o.region == r)
     }
@@ -111,7 +111,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
 
     fn set_state(&mut self, order: &'a MappedMainOrder, resolution: ResolutionState) {
         self.state.insert(order, resolution);
-        self.report_with_label("Updated");
+        // self.report_with_label("Updated");
     }
 
     /// Get the current projected outcome of an order.
@@ -122,9 +122,9 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
     /// Dump the current resolver state to the console. Used in debugging.
     pub fn report_with_label(&self, label: &str) {
         println!("=== STATE @ {} ===", label);
-        
+
         self.report_dependencies();
-        
+
         for (order, state) in &self.state {
             println!("  {} {:?}", order, state);
         }
@@ -140,15 +140,15 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
     }
 
     /// When a dependency cycle is detected, attempt to resolve all orders in the cycle.
-    fn resolve_dependency_cycle(&mut self, ctx: &'a ResolverContext<'a>, cycle: &[&'a MappedMainOrder]) {
+    fn resolve_dependency_cycle(&mut self, cycle: &[&'a MappedMainOrder]) {
         use super::OrderState::*;
         use super::ResolutionState::*;
 
-        print!("Resolving cycle of {}", cycle.len());
-        for c in cycle {
-            print!("{} ;; ", c);
-        }
-        println!("");
+        // print!("Resolving cycle of {}", cycle.len());
+        // for c in cycle {
+        //     print!("{} ;; ", c);
+        // }
+        // println!("");
 
         // if every order in the cycle is a move, then this is a circular move
         if cycle.iter().all(|o| o.command.is_move()) {
@@ -182,6 +182,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                 order_state
             }
             None => {
+
                 // checkpoint the resolver and tell it to assume the order fails.
                 let mut resolver_if_fails = self.clone();
                 resolver_if_fails.set_state(order, Guessing(Fails));
@@ -194,7 +195,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                 // reuse it in future calculations.
                 if resolver_if_fails.dependency_chain.len() == self.dependency_chain.len() {
                     self.state = resolver_if_fails.state;
-                    self.set_state(order, Known(if_fails.clone()));
+                    self.set_state(order, Known(if_fails));
                     if_fails
                 } else {
                     let next_dep = resolver_if_fails.dependency_chain[self.dependency_chain.len()];
@@ -225,7 +226,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                             if_fails
                         } else {
                             let tail_start = self.dependency_chain.len();
-                            self.resolve_dependency_cycle(context, &resolver_if_fails.dependency_chain[tail_start..]);
+                            self.resolve_dependency_cycle(&resolver_if_fails.dependency_chain[tail_start..]);
                             self.resolve(context, order)
                         }
                     }

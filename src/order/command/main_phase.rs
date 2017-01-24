@@ -24,20 +24,18 @@ pub enum MainCommand<L: Location> {
     Convoy(ConvoyedMove<L>),
 }
 
-impl<L: Location> MainCommand<L> {
-    pub fn is_move(&self) -> bool {
-        match *self {
-            MainCommand::Move(..) => true,
-            _ => false,
-        }
-    }
-}
-
 impl<L: Location> Command<L> for MainCommand<L> {
     fn move_dest<'a>(&'a self) -> Option<&'a L> {
         match *self {
             MainCommand::Move(ref dst) => Some(dst),
             _ => None
+        }
+    }
+    
+    fn is_move(&self) -> bool {
+        match *self {
+            MainCommand::Move(..) => true,
+            _ => false,
         }
     }
 }
@@ -64,6 +62,15 @@ pub enum SupportedOrder<L: Location> {
     /// The supporting unit will attempt to help the unit move from the first
     /// region to the second.
     Move(L, L),
+}
+
+impl<L: Location> SupportedOrder<L> {
+    pub fn is_legal(&self) -> bool {
+        match *self {
+            SupportedOrder::Hold(..) => true,
+            SupportedOrder::Move(ref fr, ref to) => fr != to
+        }
+    }
 }
 
 impl<L: Location> fmt::Display for SupportedOrder<L> {

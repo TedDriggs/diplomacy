@@ -1,118 +1,114 @@
-use geo::{Location, RegionKey};
-use order::{Order, MainCommand, BuildCommand, SupportedOrder};
-use ShortName;
-use Nation;
-use UnitType;
-
-use std::default::Default;
 use std::str::FromStr;
+
+use geo::RegionKey;
+use order::{Order, Command, MainCommand, BuildCommand, SupportedOrder, ConvoyedMove,
+            RetreatCommand};
+use ::Nation;
 
 mod error;
 
 pub use self::error::{Error, ErrorKind};
 
-/// An order that has not yet been resolved against a world map.
-pub type UnmappedOrder<C> = Order<RegionKey, C>;
+/// A parser which operates on whitespace-delimited words from an input string.
+pub trait FromWords: Sized {
+    /// The associated error which can be returned from parsing.
+    type Err;
 
-type OrderResult<T> = Result<T, Error>;
-
-impl ShortName for String {
-    fn short_name(&self) -> String {
-        self.clone()
-    }
+    /// Performs the conversion.
+    fn from_words(w: &[&str]) -> Result<Self, Self::Err>;
 }
 
-impl Location for String {}
+type ParseResult<T> = Result<T, Error>;
 
-impl<'a> ShortName for &'a str {
-    fn short_name(&self) -> String {
-        self.to_string()
-    }
-}
-
-impl<'a> Location for &'a str {}
-
-fn parse_shared(s: &str) -> OrderResult<(Nation, UnitType, RegionKey)> {
-    let words = s.split_whitespace().collect::<Vec<_>>();
-    let unit_type = words[1].parse().or(Err(Error::default()))?;
-    let location = words[2].parse().or(Err(Error::default()))?;
-    Ok((Nation(words[0].trim_right_matches(":").into()), unit_type, location))
-}
-
-impl FromStr for UnmappedOrder<MainCommand<RegionKey>> {
+impl<C: Command<RegionKey> + FromWords<Err = Error>> FromStr for Order<RegionKey, C> {
     type Err = Error;
 
-    fn from_str(s: &str) -> OrderResult<Self> {
+    fn from_str(s: &str) -> ParseResult<Self> {
         let words = s.split_whitespace().collect::<Vec<_>>();
-        if words[0] == "build" {
-            unimplemented!()
-        } else {
-            let (nation, unit_type, location) = parse_shared(s)?;
-            let cmd = match &(words[3].to_lowercase())[..] {
-                "->" => Ok(MainCommand::Move(words[4].parse().or(Err(Error::default()))?)),
-                "holds" | "hold" => Ok(MainCommand::Hold),
-                "supports" => Ok(words_to_supp_comm(&words[4..])?.into()),
-                "convoys" => unimplemented!(),
-                _ => Err(Error {}),
-            }?;
 
-            Ok(Order {
-                unit_type: unit_type,
-                region: location,
-                nation: nation,
-                command: cmd,
-            })
+        let nation = Nation(words[0].trim_right_matches(":").into());
+        let unit_type = words[1].parse()?;
+        let location = words[2].parse()?;
+        let cmd = C::from_words(&words[3..])?;
+
+        Ok(Order {
+            nation: nation,
+            unit_type: unit_type,
+            region: location,
+            command: cmd,
+        })
+    }
+}
+
+impl FromWords for MainCommand<RegionKey> {
+    type Err = Error;
+
+    fn from_words(words: &[&str]) -> ParseResult<Self> {
+        match &(words[0].to_lowercase())[..] {
+            "holds" | "hold" => Ok(MainCommand::Hold),
+            "->" => Ok(MainCommand::Move(words[1].parse()?)),
+            "supports" => Ok(SupportedOrder::from_words(&words[1..])?.into()),
+            "convoys" => Ok(ConvoyedMove::from_words(&words[1..])?.into()),
+            cmd => Err(Error::new(ErrorKind::UnknownCommand, cmd)),
         }
     }
 }
 
-fn words_to_supp_comm(w: &[&str]) -> OrderResult<SupportedOrder<RegionKey>> {
-    match w.len() {
-        1 => Ok(SupportedOrder::Hold(w[0].parse().or(Err(Error::default()))?)),
-        3 => Ok(SupportedOrder::Move(w[0].parse().or(Err(Error::default()))?, w[2].parse().or(Err(Error::default()))?)),
-        _ => Err(Error::default())
+impl FromWords for SupportedOrder<RegionKey> {
+    type Err = Error;
+
+    fn from_words(w: &[&str]) -> ParseResult<SupportedOrder<RegionKey>> {
+        match w.len() {
+            1 => Ok(SupportedOrder::Hold(w[0].parse()?)),
+            3 => Ok(SupportedOrder::Move(w[0].parse()?, w[2].parse()?)),
+            _ => Err(Error::new(ErrorKind::MalformedSupport, w.join(" "))),
+        }
     }
 }
 
-// impl FromStr for UnmappedOrder<RetreatCommand<String>> {
-//     type Err = Error;
-
-//     fn from_str(s: &str) -> OrderResult<Self> {
-//         let (nation, unit_type, location) = parse_shared(s)?;
-//         let words = s.split_whitespace().collect::<Vec<_>>();
-//         let cmd = match &words[3].to_lowercase()[..] {
-//             "hold" | "holds" => Ok(RetreatCommand::Hold),
-//             "->" => Ok(RetreatCommand::Move(words[4].to_string())),
-//             _ => Err(Error::default()),
-//         }?;
-
-//         Ok(Order::new(nation, unit_type, location, cmd))
-//     }
-// }
-
-impl FromStr for UnmappedOrder<BuildCommand> {
+impl FromWords for ConvoyedMove<RegionKey> {
     type Err = Error;
 
-    fn from_str(s: &str) -> OrderResult<Self> {
-        let (nation, unit_type, location) = parse_shared(s)?;
-        let words = s.split_whitespace().collect::<Vec<_>>();
-        let cmd = match &words[3].to_lowercase()[..] {
+    fn from_words(w: &[&str]) -> ParseResult<Self> {
+        if w.len() == 3 {
+            Ok(ConvoyedMove::new(w[0].parse()?, w[2].parse()?))
+        } else {
+            Err(Error::new(ErrorKind::MalformedConvoy, w.join(" ")))
+        }
+    }
+}
+
+impl FromWords for RetreatCommand<RegionKey> {
+    type Err = Error;
+
+    fn from_words(w: &[&str]) -> ParseResult<Self> {
+        match &w[0].to_lowercase()[..] {
+            "hold" | "holds" => Ok(RetreatCommand::Hold),
+            "->" => Ok(RetreatCommand::Move(w[1].parse()?)),
+            cmd => Err(Error::new(ErrorKind::UnknownCommand, cmd)),
+        }
+    }
+}
+
+impl FromWords for BuildCommand {
+    type Err = Error;
+
+    fn from_words(w: &[&str]) -> ParseResult<Self> {
+        match &w[0].to_lowercase()[..] {
             "build" => Ok(BuildCommand::Build),
             "disband" => Ok(BuildCommand::Disband),
-            _ => Err(Error::default()),
-        }?;
-
-        Ok(Order::new(nation, unit_type, location, cmd))
+            cmd => Err(Error::new(ErrorKind::UnknownCommand, cmd)),
+        }
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use order::MainCommand;
+    use order::{MainCommand, Order};
     use geo::RegionKey;
 
-    type OrderParseResult = Result<UnmappedOrder<MainCommand<RegionKey>>, Error>;
+    type OrderParseResult = Result<Order<RegionKey, MainCommand<RegionKey>>, Error>;
 
     #[test]
     fn hold() {
