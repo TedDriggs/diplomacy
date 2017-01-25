@@ -82,9 +82,9 @@ fn t6a05_move_to_own_sector_with_convoy() {
     let results = get_with_explanation(vec![
         "ENG: F nth convoys yor -> yor",
         "ENG: A yor -> yor",
-        "ENG: A lvp supports yor -> yor",
+        "ENG: A lvp supports A yor -> yor",
         "GER: F lon -> yor",
-        "GER: A wal supports lon -> yor",
+        "GER: A wal supports F lon -> yor",
     ]);
     
     assert_eq!(&OrderState::Succeeds, results.get(&ord("GER: F lon -> yor")).unwrap());
@@ -111,8 +111,8 @@ fn t6a07_only_armies_can_be_convoyed() {
 fn t6a08_support_to_hold_self_fails() {
     let results = get_results(vec![
         "ITA: A ven -> tri",
-        "ITA: A tyr supports ven -> tri",
-        "AUS: F tri supports tri"
+        "ITA: A tyr supports A ven -> tri",
+        "AUS: F tri supports F tri"
     ]);
     
     for (o, r) in results {
@@ -131,7 +131,7 @@ fn t6a09_fleets_cannot_go_overland() {
 fn t6a10_support_on_unreachable_destination_not_possible() {
     let results = get_results(vec![
         "AUS: A ven holds",
-        "ITA: F rom supports apu -> ven",
+        "ITA: F rom supports A apu -> ven",
         "ITA: A apu -> ven"
     ]);
     
@@ -186,7 +186,7 @@ fn t6b03_moving_with_wrong_coast_when_right_inferrable_fails() {
 fn t6b04_support_to_unreachable_coast_allowed() {
     let results = get_results(vec![
         "FRA: F gas -> spa(nc)",
-        "FRA: F mar supports gas -> spa(nc)",
+        "FRA: F mar supports F gas -> spa(nc)",
         "ITA: F wes -> spa(sc)"
     ]);
     
@@ -199,7 +199,7 @@ fn t6b04_support_to_unreachable_coast_allowed() {
 fn t6b05_support_from_unreachable_coast_not_allowed() {
     let results = get_results(vec![
         "FRA: F mar -> lyo",
-        "FRA: F spa(nc) supports mar -> lyo",
+        "FRA: F spa(nc) supports F mar -> lyo",
         "ITA: F lyo holds"
     ]);
     
@@ -215,9 +215,9 @@ fn t6b05_support_from_unreachable_coast_not_allowed() {
 #[test]
 fn t6b06_support_cut_from_other_coast_succeeds() {
     let orders = vec![
-        "ENG: F iri supports nao -> mao",
+        "ENG: F iri supports F nao -> mao",
         "ENG: F nao -> mao",
-        "FRA: F spa(nc) supports mao",
+        "FRA: F spa(nc) supports F mao",
         "FRA: F mao holds",
         "ITA: F lyo -> spa(sc)"
     ];
@@ -231,7 +231,7 @@ fn t6b06_support_cut_from_other_coast_succeeds() {
     //     r_ctx.explain(&mut r_state.clone(), &ord);
     // }
     
-    assert_eq!(Some(&OrderState::Fails), results.get(&ord("FRA: F spa(nc) supports mao")));
+    assert_eq!(Some(&OrderState::Fails), results.get(&ord("FRA: F spa(nc) supports F mao")));
 }
 
 #[test]
@@ -257,7 +257,7 @@ fn t6c02_three_army_circular_movement_with_support_succeeds() {
         "TUR: F ank -> con",
         "TUR: A con -> smy",
         "TUR: A smy -> ank",
-        "TUR: A bul supports ank -> con",
+        "TUR: A bul supports F ank -> con",
     ]);
 }
 
@@ -274,10 +274,10 @@ fn t6c03_three_army_circular_movement_disrupted_bounces() {
 #[test]
 fn t6d01_supported_hold_can_prevent_dislodgement() {
     let results = get_results(vec![
-        "AUS: F adr supports tri -> ven",
+        "AUS: F adr supports A tri -> ven",
         "AUS: A tri -> ven",
         "ITA: A ven hold",
-        "ITA: A tyr supports ven"
+        "ITA: A tyr supports A ven"
     ]);
     
     assert_eq!(Some(&OrderState::Fails), results.get(&ord("AUS: A tri -> ven")));
@@ -286,11 +286,11 @@ fn t6d01_supported_hold_can_prevent_dislodgement() {
 #[test]
 fn t6d02_move_cuts_support_on_hold() {
     let results = get_results(vec![
-        "AUS: F adr supports tri -> ven",
+        "AUS: F adr supports A tri -> ven",
         "AUS: A tri -> ven",
         "AUS: A vie -> tyr",
         "ITA: A ven hold",
-        "ITA: A tyr supports ven"
+        "ITA: A tyr supports A ven"
     ]);
     
     assert_eq!(Some(&OrderState::Succeeds), results.get(&ord("AUS: A tri -> ven")));
@@ -299,7 +299,7 @@ fn t6d02_move_cuts_support_on_hold() {
 #[test]
 fn t6d03_move_cuts_support_on_move() {
     let results = get_results(vec![
-        "AUS: F adr supports tri -> ven",
+        "AUS: F adr supports A tri -> ven",
         "AUS: A tri -> ven",
         "ITA: A ven hold",
         "ITA: F ion -> adr"
@@ -311,9 +311,9 @@ fn t6d03_move_cuts_support_on_move() {
 #[test]
 fn t6d04_support_to_hold_on_unit_supporting_hold_allowed() {
     let results = get_results(vec![
-        "GER: A ber supports kie",
-        "GER: F kie supports ber",
-        "RUS: F bal supports pru -> ber",
+        "GER: A ber supports F kie",
+        "GER: F kie supports A ber",
+        "RUS: F bal supports A pru -> ber",
         "RUS: A pru -> ber"
     ]);
     
@@ -323,10 +323,10 @@ fn t6d04_support_to_hold_on_unit_supporting_hold_allowed() {
 #[test]
 fn t6d05_support_to_hold_on_unit_supporting_move_allowed() {
     let results = get_results(vec![
-        "GER: A ber supports mun -> sil",
-        "GER: F kie supports ber",
+        "GER: A ber supports A mun -> sil",
+        "GER: F kie supports A ber",
         "GER: A mun -> sil",
-        "RUS: F bal supports pru -> ber",
+        "RUS: F bal supports A pru -> ber",
         "RUS: A pru -> ber"
     ]);
     
@@ -338,8 +338,8 @@ fn t6d05_support_to_hold_on_unit_supporting_move_allowed() {
 fn t6d09_support_to_move_on_holding_unit_fails() {
     let results = get_results(vec![
         "ITA: A ven -> tri",
-        "ITA: A tyr supports ven -> tri",
-        "AUS: A alb supports tri -> ser",
+        "ITA: A tyr supports A ven -> tri",
+        "AUS: A alb supports A tri -> ser",
         "AUS: A tri holds"
     ]);
     
@@ -352,7 +352,7 @@ fn t6d33_unwanted_support_allowed() {
     let results = get_results(vec![
         "AUS: A ser -> bud",
         "AUS: A vie -> bud",
-        "RUS: A gal supports ser -> bud",
+        "RUS: A gal supports A ser -> bud",
         "TUR: A bul -> ser"
     ]);
     
@@ -365,10 +365,10 @@ fn t6d33_unwanted_support_allowed() {
 fn t6d34_support_targeting_own_area_not_allowed() {
     let results = get_results(vec![
         "GER: A ber -> pru",
-        "GER: A sil supports ber -> pru",
-        "GER: F bal supports ber -> pru",
-        "ITA: A pru supports lvn -> pru",
-        "RUS: A war supports lvn -> pru",
+        "GER: A sil supports A ber -> pru",
+        "GER: F bal supports A ber -> pru",
+        "ITA: A pru supports A lvn -> pru",
+        "RUS: A war supports A lvn -> pru",
         "RUS: A lvn -> pru"
     ]);
     
@@ -381,11 +381,23 @@ fn t6e01_dislodged_unit_has_no_effect_on_attacker_area() {
     let results = get_results(vec![
         "GER: A ber -> pru",
         "GER: F kie -> ber",
-        "GER: A sil supports ber -> pru",
+        "GER: A sil supports A ber -> pru",
         "RUS: A pru -> ber"
     ]);
     
     assert_eq!(Some(&OrderState::Succeeds), results.get(&ord("GER: A ber -> pru")));
     assert_eq!(Some(&OrderState::Succeeds), results.get(&ord("GER: F kie -> ber")));
     assert_eq!(Some(&OrderState::Fails), results.get(&ord("RUS: A pru -> ber")));
+}
+
+#[test]
+fn t6e03_no_help_dislodging_own_unit() {
+    let results = get_results(vec![
+        "GER: A ber -> kie",
+        "GER: A mun supports F kie -> ber",
+        "ENG: F kie -> ber"
+    ]);
+    
+    assert_eq!(Some(&OrderState::Fails), results.get(&ord("GER: A ber -> kie")));
+    assert_eq!(Some(&OrderState::Fails), results.get(&ord("ENG: F kie -> ber")));
 }

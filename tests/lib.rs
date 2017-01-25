@@ -23,7 +23,7 @@ fn dipmath_figure9() {
         Order::new(eng, UnitType::Fleet, reg("nwg"), MainCommand::Move(reg("nth"))),
         Order::new(ger.clone(), UnitType::Fleet, reg("nth"), MainCommand::Move(reg("nwy"))),
         Order::new(rus, UnitType::Fleet, reg("nwy"), MainCommand::Move(reg("nwg"))),
-        Order::new(ger.clone(), UnitType::Fleet, reg("ska"), MainCommand::Support(SupportedOrder::Move(reg("nth"), reg("nwy")))),
+        Order::new(ger.clone(), UnitType::Fleet, reg("ska"), MainCommand::Support(SupportedOrder::Move(UnitType::Fleet, reg("nth"), reg("nwy")))),
     ];
     
     let result = adjudicate(&map, orders);
@@ -41,7 +41,7 @@ fn dipmath_figure6() {
     
     let orders = vec![
         Order::new(ger.clone(), UnitType::Army, reg("ber"), MainCommand::Move(reg("sil"))),
-        Order::new(ger.clone(), UnitType::Army, reg("mun"), MainCommand::Support(SupportedOrder::Move(reg("ber"), reg("sil")))),
+        Order::new(ger.clone(), UnitType::Army, reg("mun"), MainCommand::Support(SupportedOrder::Move(UnitType::Army, reg("ber"), reg("sil")))),
         Order::new(rus, UnitType::Army, reg("war"), MainCommand::Move(reg("sil"))),
         Order::new(aus, UnitType::Army, reg("boh"), MainCommand::Move(reg("sil")))
     ];
@@ -70,8 +70,8 @@ fn dipmath_figure16() {
     
     let orders = vec![
         Order::new(tur.clone(), Fleet, reg("aeg"), MainCommand::Move(reg("ion"))),
-        Order::new(tur.clone(), Fleet, reg("gre"), SupportedOrder::Move(reg("aeg"), reg("ion")).into()),
-        Order::new(aus, Fleet, reg("alb"), SupportedOrder::Move(reg("aeg"), reg("ion")).into()),
+        Order::new(tur.clone(), Fleet, reg("gre"), SupportedOrder::Move(UnitType::Fleet, reg("aeg"), reg("ion")).into()),
+        Order::new(aus, Fleet, reg("alb"), SupportedOrder::Move(UnitType::Fleet, reg("aeg"), reg("ion")).into()),
         Order::new(ita.clone(), Army, reg("tun"), MainCommand::Move(reg("gre"))),
         Order::new(ita.clone(), Fleet, reg("ion"), ConvoyedMove::new(reg("tun"), reg("gre")).into())
     ];

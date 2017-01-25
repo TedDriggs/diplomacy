@@ -14,7 +14,7 @@ fn order_cuts<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
                                  -> bool {
     if let Some(ref dst) = cutting_order.command.move_dest() {
         let supporting_attack_on_cutter = match support_order.command {
-            MainCommand::Support(SupportedOrder::Move(_, ref supported_dst)) => {
+            MainCommand::Support(SupportedOrder::Move(_, _, ref supported_dst)) => {
                 dst.province() == supported_dst
             }
             _ => false,
@@ -64,7 +64,7 @@ pub fn is_order_cut<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
 }
 
 pub fn is_supporting_self(support_order: &MappedMainOrder) -> bool {
-    if let MainCommand::Support(SupportedOrder::Hold(ref loc)) = support_order.command {
+    if let MainCommand::Support(SupportedOrder::Hold(_, ref loc)) = support_order.command {
         loc.province() == &support_order.region
     } else {
         false
@@ -100,10 +100,10 @@ fn is_legal(support_order: &MappedMainOrder) -> bool {
     use order::MainCommand::*;
 
     match support_order.command {
-        Support(SupportedOrder::Hold(ref tgt)) => tgt.province() != support_order.region.province(),
+        Support(SupportedOrder::Hold(_, ref tgt)) => tgt.province() != support_order.region.province(),
 
         // test case 6.d.34; support targeting own area not allowed.
-        Support(SupportedOrder::Move(_, ref dst)) => {
+        Support(SupportedOrder::Move(_, _, ref dst)) => {
             dst.province() != support_order.region.province()
         }
         Hold | Move(..) | Convoy(..) => false,
@@ -178,7 +178,7 @@ mod test {
     #[test]
     fn is_support_successful() {
         let ger = Nation("ger".into());
-        let supp_com = SupportedOrder::Move(reg("nth"), reg("nwy"));
+        let supp_com = SupportedOrder::Move(UnitType::Fleet, reg("nth"), reg("nwy"));
         let orders = vec![
             Order::new(ger.clone(), UnitType::Fleet, reg("ska"), MainCommand::Support(supp_com.clone())),
             Order::new(ger.clone(), UnitType::Fleet, reg("nth"), MainCommand::Move(reg("nwy"))),
@@ -197,7 +197,7 @@ mod test {
     fn support_t6b04_support_to_unreachable_coast_allowed() {
         let fra = Nation("fra".into());
         let spa_nc = RegionKey::from_str("spa(nc)").unwrap();
-        let supp_com = SupportedOrder::Move(reg("gas"), spa_nc.clone());
+        let supp_com = SupportedOrder::Move(UnitType::Fleet, reg("gas"), spa_nc.clone());
         let orders = vec![
             Order::new(fra.clone(), UnitType::Fleet, reg("gas"), MainCommand::Move(spa_nc.clone())),
             Order::new(fra.clone(), UnitType::Fleet, reg("mar"), supp_com.clone().into()),

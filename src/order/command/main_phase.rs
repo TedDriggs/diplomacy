@@ -2,6 +2,7 @@ use geo::Location;
 use super::Command;
 use order::Order;
 use UnitType;
+use ShortName;
 
 use std::cmp::PartialEq;
 use std::fmt;
@@ -57,18 +58,18 @@ impl<L: Location> fmt::Display for MainCommand<L> {
 pub enum SupportedOrder<L: Location> {
     /// The supporting unit will attempt to keep the unit in `Region` in place.
     /// A "hold" support covers units that have hold, support, or convoy commands.
-    Hold(L),
+    Hold(UnitType, L),
 
     /// The supporting unit will attempt to help the unit move from the first
     /// region to the second.
-    Move(L, L),
+    Move(UnitType, L, L),
 }
 
 impl<L: Location> SupportedOrder<L> {
     pub fn is_legal(&self) -> bool {
         match *self {
             SupportedOrder::Hold(..) => true,
-            SupportedOrder::Move(ref fr, ref to) => fr != to
+            SupportedOrder::Move(_, ref fr, ref to) => fr != to
         }
     }
 }
@@ -76,9 +77,9 @@ impl<L: Location> SupportedOrder<L> {
 impl<L: Location> fmt::Display for SupportedOrder<L> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            SupportedOrder::Hold(ref region) => write!(f, "{}", region.short_name()),
-            SupportedOrder::Move(ref fr, ref to) => {
-                write!(f, "{} -> {}", fr.short_name(), to.short_name())
+            SupportedOrder::Hold(ref ut, ref region) => write!(f, "{} {}", ut.short_name(), region.short_name()),
+            SupportedOrder::Move(ref ut, ref fr, ref to) => {
+                write!(f, "{} {} -> {}", ut.short_name(), fr.short_name(), to.short_name())
             }
         }
     }
@@ -93,10 +94,10 @@ impl<L: Location> From<SupportedOrder<L>> for MainCommand<L> {
 impl<L: Location> PartialEq<Order<L, MainCommand<L>>> for SupportedOrder<L> {
     fn eq(&self, other: &Order<L, MainCommand<L>>) -> bool {
         match self {
-            &SupportedOrder::Hold(ref loc) => !other.command.is_move() && loc == &other.region,
-            &SupportedOrder::Move(ref fr, ref to) => {
+            &SupportedOrder::Hold(ref ut, ref loc) => !other.command.is_move() && loc == &other.region && ut == &other.unit_type,
+            &SupportedOrder::Move(ref ut, ref fr, ref to) => {
                 if let MainCommand::Move(ref dst) = other.command {
-                    fr == &other.region && to == dst
+                    ut == &other.unit_type && fr == &other.region && to == dst
                 } else {
                     false
                 }

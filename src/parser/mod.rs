@@ -9,7 +9,7 @@
 //! # Supported Commands
 //! 1. Hold: `hold` or `holds`
 //! 1. Move: `-> {Destination}`
-//! 1. Support: `supports {Region} [-> {Dest}]`
+//! 1. Support: `supports {UnitType} {Region} [-> {Dest}]`
 //! 1. Convoy: `convoys {Region} -> {Dest}`
 //! 1. Build: `build` (this is non-idiomatic, but easier to parse)
 //! 1. Disband: `disband`
@@ -75,8 +75,10 @@ impl FromWords for SupportedOrder<RegionKey> {
 
     fn from_words(w: &[&str]) -> ParseResult<SupportedOrder<RegionKey>> {
         match w.len() {
-            1 => Ok(SupportedOrder::Hold(w[0].parse()?)),
-            3 => Ok(SupportedOrder::Move(w[0].parse()?, w[2].parse()?)),
+            // {unitType} {in}
+            2 => Ok(SupportedOrder::Hold(w[0].parse()?, w[1].parse()?)),
+            // {unitType} {from} -> {to}
+            4 => Ok(SupportedOrder::Move(w[0].parse()?, w[1].parse()?, w[3].parse()?)),
             _ => Err(Error::new(ErrorKind::MalformedSupport, w.join(" "))),
         }
     }
