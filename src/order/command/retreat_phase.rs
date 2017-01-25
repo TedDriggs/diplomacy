@@ -27,8 +27,3 @@ impl<L : Location> fmt::Display for RetreatCommand<L> {
         }
     }
 }
-
-#[cfg(test)]
-mod test {
-    
-}

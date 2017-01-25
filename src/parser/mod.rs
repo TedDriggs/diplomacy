@@ -1,3 +1,19 @@
+//! Contains error types and trait implementations for parsing diplomacy orders.
+//!
+//! All orders are expected to be in the following format:
+//!
+//! ```text
+//! {Nation}: {UnitType} {Location} {Command}
+//! ```
+//!
+//! # Supported Commands
+//! 1. Hold: `hold`
+//! 1. Move: `-> {Destination}`
+//! 1. Support: `supports {Region} [-> {Dest}]`
+//! 1. Convoy: `convoys {Region} -> {Dest}`
+//! 1. Build: `build` (this is non-idiomatic, but easier to parse)
+//! 1. Disband: `disband`
+
 use std::str::FromStr;
 
 use geo::RegionKey;

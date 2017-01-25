@@ -1,9 +1,12 @@
+//! The model for an order issued to a unit.
+
+use std::fmt;
+
 use UnitType;
 use ShortName;
 use Nation;
 use geo::Location;
 
-use std::fmt;
 
 mod command;
 pub use self::command::{Command, MainCommand, SupportedOrder, ConvoyedMove, RetreatCommand,
@@ -44,10 +47,11 @@ impl<L: Location, C: Command<L>> Order<L, C> {
         first.command.move_dest().map(|d| d.province()) == Some(other.region.province()) &&
         other.command.move_dest().map(|d| d.province()) == Some(first.region.province())
     }
-}
-
-impl<L: Location, C: Command<L>> fmt::Display for Order<L, C> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    
+    /// Write the canonical form of the order to the formatter.
+    ///  
+    /// For readability, this is used by both the Debug and Display traits.
+    fn write_short(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f,
                "{}: {} {} {}",
                self.nation.short_name(),
@@ -57,13 +61,14 @@ impl<L: Location, C: Command<L>> fmt::Display for Order<L, C> {
     }
 }
 
+impl<L: Location, C: Command<L>> fmt::Display for Order<L, C> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.write_short(f)
+    }
+}
+
 impl<L: Location, C: Command<L>> fmt::Debug for Order<L, C> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "{}: {} {} {}",
-               self.nation.short_name(),
-               self.unit_type.short_name(),
-               self.region.short_name(),
-               self.command)
+        self.write_short(f)
     }
 }

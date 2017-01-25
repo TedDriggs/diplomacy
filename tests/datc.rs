@@ -198,9 +198,9 @@ fn t6b04_support_to_unreachable_coast_allowed() {
 #[test]
 fn t6b05_support_from_unreachable_coast_not_allowed() {
     let results = get_results(vec![
-        "FRA: F mar -> gol",
-        "FRA: F spa(nc) supports mar -> gol",
-        "ITA: F gol holds"
+        "FRA: F mar -> lyo",
+        "FRA: F spa(nc) supports mar -> lyo",
+        "ITA: F lyo holds"
     ]);
     
     for (order, result) in results {
@@ -219,7 +219,7 @@ fn t6b06_support_cut_from_other_coast_succeeds() {
         "ENG: F nao -> mao",
         "FRA: F spa(nc) supports mao",
         "FRA: F mao holds",
-        "ITA: F gol -> spa(sc)"
+        "ITA: F lyo -> spa(sc)"
     ];
     let results = get_results(orders.clone());
     
