@@ -272,6 +272,69 @@ fn t6c03_three_army_circular_movement_disrupted_bounces() {
 }
 
 #[test]
+fn t6d01_supported_hold_can_prevent_dislodgement() {
+    let results = get_results(vec![
+        "AUS: F adr supports tri -> ven",
+        "AUS: A tri -> ven",
+        "ITA: A ven hold",
+        "ITA: A tyr supports ven"
+    ]);
+    
+    assert_eq!(Some(&OrderState::Fails), results.get(&ord("AUS: A tri -> ven")));
+}
+
+#[test]
+fn t6d02_move_cuts_support_on_hold() {
+    let results = get_results(vec![
+        "AUS: F adr supports tri -> ven",
+        "AUS: A tri -> ven",
+        "AUS: A vie -> tyr",
+        "ITA: A ven hold",
+        "ITA: A tyr supports ven"
+    ]);
+    
+    assert_eq!(Some(&OrderState::Succeeds), results.get(&ord("AUS: A tri -> ven")));
+}
+
+#[test]
+fn t6d03_move_cuts_support_on_move() {
+    let results = get_results(vec![
+        "AUS: F adr supports tri -> ven",
+        "AUS: A tri -> ven",
+        "ITA: A ven hold",
+        "ITA: F ion -> adr"
+    ]);
+    
+    assert_eq!(Some(&OrderState::Fails), results.get(&ord("AUS: A tri -> ven")));
+}
+
+#[test]
+fn t6d04_support_to_hold_on_unit_supporting_hold_allowed() {
+    let results = get_results(vec![
+        "GER: A ber supports kie",
+        "GER: F kie supports ber",
+        "RUS: F bal supports pru -> ber",
+        "RUS: A pru -> ber"
+    ]);
+    
+    assert_eq!(Some(&OrderState::Fails), results.get(&ord("RUS: A pru -> ber")));
+}
+
+#[test]
+fn t6d05_support_to_hold_on_unit_supporting_move_allowed() {
+    let results = get_results(vec![
+        "GER: A ber supports mun -> sil",
+        "GER: F kie supports ber",
+        "GER: A mun -> sil",
+        "RUS: F bal supports pru -> ber",
+        "RUS: A pru -> ber"
+    ]);
+    
+    assert_eq!(Some(&OrderState::Fails), results.get(&ord("RUS: A pru -> ber")));
+}
+
+
+#[test]
 fn t6d09_support_to_move_on_holding_unit_fails() {
     let results = get_results(vec![
         "ITA: A ven -> tri",
@@ -282,4 +345,47 @@ fn t6d09_support_to_move_on_holding_unit_fails() {
     
     report_results(&results);
     assert_eq!(&OrderState::Succeeds, results.get(&ord("ITA: A ven -> tri")).unwrap());
+}
+
+#[test]
+fn t6d33_unwanted_support_allowed() {
+    let results = get_results(vec![
+        "AUS: A ser -> bud",
+        "AUS: A vie -> bud",
+        "RUS: A gal supports ser -> bud",
+        "TUR: A bul -> ser"
+    ]);
+    
+    assert_eq!(Some(&OrderState::Succeeds), results.get(&ord("AUS: A ser -> bud")));
+    assert_eq!(Some(&OrderState::Succeeds), results.get(&ord("TUR: A bul -> ser")));
+    assert_eq!(Some(&OrderState::Fails), results.get(&ord("AUS: A vie -> bud")));
+}
+
+#[test]
+fn t6d34_support_targeting_own_area_not_allowed() {
+    let results = get_results(vec![
+        "GER: A ber -> pru",
+        "GER: A sil supports ber -> pru",
+        "GER: F bal supports ber -> pru",
+        "ITA: A pru supports lvn -> pru",
+        "RUS: A war supports lvn -> pru",
+        "RUS: A lvn -> pru"
+    ]);
+    
+    assert_eq!(Some(&OrderState::Succeeds), results.get(&ord("GER: A ber -> pru")));
+    assert_eq!(Some(&OrderState::Fails), results.get(&ord("RUS: A lvn -> pru")));
+}
+
+#[test]
+fn t6e01_dislodged_unit_has_no_effect_on_attacker_area() {
+    let results = get_results(vec![
+        "GER: A ber -> pru",
+        "GER: F kie -> ber",
+        "GER: A sil supports ber -> pru",
+        "RUS: A pru -> ber"
+    ]);
+    
+    assert_eq!(Some(&OrderState::Succeeds), results.get(&ord("GER: A ber -> pru")));
+    assert_eq!(Some(&OrderState::Succeeds), results.get(&ord("GER: F kie -> ber")));
+    assert_eq!(Some(&OrderState::Fails), results.get(&ord("RUS: A pru -> ber")));
 }

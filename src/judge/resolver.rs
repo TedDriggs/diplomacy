@@ -5,7 +5,9 @@ use super::{MappedMainOrder, OrderState, ResolutionState, Rulebook};
 use std::convert::From;
 use std::collections::HashMap;
 
+/// A clonable container for a rulebook which can be used to adjudicate a turn.
 pub trait Adjudicate: Clone {
+    /// Determine the success of an order.
     fn adjudicate<'a>(&self,
                       context: &'a ResolverContext<'a>,
                       resolver: &mut ResolverState<'a, Self>,
@@ -16,7 +18,10 @@ pub trait Adjudicate: Clone {
 /// The immutable inputs for a resolution equation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResolverContext<'a> {
+    /// Set of orders which were issued during this turn.
     pub orders: Vec<MappedMainOrder>,
+    
+    /// The map against which orders were issued.
     pub world_map: &'a Map,
 }
 
@@ -144,12 +149,6 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         use super::OrderState::*;
         use super::ResolutionState::*;
 
-        // print!("Resolving cycle of {}", cycle.len());
-        // for c in cycle {
-        //     print!("{} ;; ", c);
-        // }
-        // println!("");
-
         // if every order in the cycle is a move, then this is a circular move
         if cycle.iter().all(|o| o.command.is_move()) {
             for o in cycle {
@@ -221,7 +220,6 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                         // If there's a paradox but the outcome doesn't depend on this order,
                         // then all we've learned is the state of this one order.
                         if if_fails == if_succeeds {
-                            println!("Escaped paradox for {}", order);
                             self.set_state(order, Known(if_fails.clone()));
                             if_fails
                         } else {

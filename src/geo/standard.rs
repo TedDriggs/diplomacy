@@ -1,42 +1,47 @@
-use geo::{Map, Border, Coast, Terrain, MapBuilder, Province};
+use geo::{Map, Coast, Terrain, Province};
+use geo::builder::ProvinceRegistry;
 
 lazy_static! {
     static ref STANDARD_MAP : Map = load_standard();
 }
 
+/// Gets a static reference to the standard game world map.
+/// See [this SVG](https://upload.wikimedia.org/wikipedia/commons/a/a3/Diplomacy.svg)
+/// for the source names and borders.
 pub fn standard_map() -> &'static Map {
     &STANDARD_MAP
 }
 
 fn load_standard() -> Map {
-    let mut map_builder = MapBuilder::default();
 
-
+    let mut prov_reg = ProvinceRegistry::default();
     let provinces = include_str!("provinces.csv").lines().skip(1);
     for line in provinces {
         if let Ok(prov) = province_from_line(line) {
-            map_builder.register_province(prov);
+            prov_reg.register(prov).expect("standard map shouldn't have issues");
+        } else {
+            panic!(format!("Failed registering province: {}", line))
         }
     }
 
-
+    let mut region_reg = prov_reg.finish();
     let regions = include_str!("regions.csv").lines().skip(1);
     for line in regions {
         if let Ok((prov, coast, terrain)) = region_from_line(line) {
-            map_builder.register_region(prov, coast, terrain).unwrap();
-        }
-    }
-    
-    let borders = include_str!("borders.csv").lines().skip(1);
-    for line in borders {
-        if let Ok(border) = border_from_line_with_context(line, &map_builder) {
-            map_builder.register_border(border);
+            region_reg.register(prov, coast, terrain).unwrap();
         } else {
-            panic!("Border registration failed! {}", line);
+            panic!(format!("Failed registering region: {}", line))
         }
     }
 
-    Map::new(map_builder)
+    let mut border_reg = region_reg.finish();
+    let borders = include_str!("borders.csv").lines().skip(1);
+    for line in borders {
+        let words = line.split(",").collect::<Vec<_>>();
+        border_reg.register(words[0], words[1], terrain_from_word(words[2]).unwrap()).unwrap();
+    }
+
+    border_reg.finish()
 }
 
 fn province_from_line(s: &str) -> Result<Province, ()> {
@@ -55,17 +60,6 @@ fn region_from_line<'l>(s: &'l str) -> Result<(&'l str, Option<Coast>, Terrain),
     let words = s.split(",").collect::<Vec<_>>();
     if words.len() == 3 {
         Ok((words[0], coast_from_word(words[1])?, terrain_from_word(words[2])?))
-    } else {
-        Err(())
-    }
-}
-
-fn border_from_line_with_context(s: &str, ctx: &MapBuilder) -> Result<Border, ()> {
-    let words = s.split(",").collect::<Vec<_>>();
-    if words.len() == 3 {
-        Ok(Border::new(ctx.find_region(words[0]).or(Err(()))?.into(),
-                       ctx.find_region(words[1]).or(Err(()))?.into(),
-                       terrain_from_word(words[2])?))
     } else {
         Err(())
     }

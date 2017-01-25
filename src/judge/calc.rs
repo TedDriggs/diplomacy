@@ -2,6 +2,7 @@ use order::{Command, Order};
 use super::prelude::*;
 use super::{support, convoy};
 use geo::ProvinceKey;
+use ShortName;
 
 /// Returns true if `order` is a move AND between the source and dest, either:
 ///
@@ -12,14 +13,16 @@ pub fn path_exists<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                       order: &MappedMainOrder)
                                       -> bool {
     if let Some(dst) = order.command.move_dest() {
-        if let Some(reg) = context.world_map.find_region_with_key(dst).ok() {
+        if let Some(reg) = context.world_map.find_region(&dst.short_name()) {
             if order.unit_type.can_occupy(reg.terrain()) {
                 let border_exists = context.world_map
                     .find_border_between(&order.region, dst)
                     .map(|b| b.is_passable_by(&order.unit_type))
                     .unwrap_or(false);
 
-                // NOTE: This short-circuits convoy assessment when there is a border.
+                // NOTE: As-written, this short-circuits convoy assessment when 
+                // there is a border. Don't change that behavior, as it may impact
+                // how resolution works.
                 return border_exists || convoy::route_exists(context, resolver, order);
             }
         }
@@ -39,22 +42,21 @@ fn prevent_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                      order: &'a MappedMainOrder)
                                      -> Option<Prevent<'a>> {
     if order.command.is_move() {
-        Some(if !path_exists(context, resolver, order) {
-            Prevent::NoPath
+        if !path_exists(context, resolver, order) {
+            Some(Prevent::NoPath)
         } else {
+            
+            // A unit that lost a head-to-head cannot prevent.
             if let Some(h2h) = context.orders_ref()
                 .iter()
                 .find(|o| Order::is_head_to_head(o, order)) {
-                match resolver.resolve(context, h2h) {
-                    OrderState::Succeeds => Prevent::LostHeadToHead,
-                    OrderState::Fails => {
-                        Prevent::Prevents(order, support::find_for(context, resolver, order))
-                    }
+                if resolver.resolve(context, h2h).into() {
+                    return Some(Prevent::LostHeadToHead);
                 }
-            } else {
-                Prevent::Prevents(order, support::find_for(context, resolver, order))
             }
-        })
+
+            Some(Prevent::Prevents(order, support::find_for(context, resolver, order)))
+        }
     } else {
         None
     }
@@ -112,20 +114,20 @@ pub fn dislodger_of<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                        -> Option<&'a MappedMainOrder> {
     let order_ref = context.orders_ref();
     for dislodger in order_ref.into_iter().find(|o| is_move_to_province(o, &order.region)) {
-        
+
         // If we found someone trying to move into `order`'s old province, we
         // check to see if `order` vacated. If so, then it couldn't have been
         // dislodged.
         if order.command.is_move() && resolver.resolve(context, order).into() {
             return None;
         }
-        
+
         if resolver.resolve(context, dislodger).into() {
             return Some(dislodger);
         }
     }
-    
-    // If we couldn't find any orders that attempted to move into the province 
+
+    // If we couldn't find any orders that attempted to move into the province
     // `order` occupied, then there can't be any dislodgers.
     None
 }

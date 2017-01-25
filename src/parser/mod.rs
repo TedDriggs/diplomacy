@@ -7,7 +7,7 @@
 //! ```
 //!
 //! # Supported Commands
-//! 1. Hold: `hold`
+//! 1. Hold: `hold` or `holds`
 //! 1. Move: `-> {Destination}`
 //! 1. Support: `supports {Region} [-> {Dest}]`
 //! 1. Convoy: `convoys {Region} -> {Dest}`

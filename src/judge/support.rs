@@ -91,9 +91,23 @@ fn can_reach<'a>(world_map: &'a geo::Map,
                  -> bool {
     world_map.find_borders_between(&support_order.region, needed_at(supported))
         .iter()
-        .map(|b| { println!("{:?}", b); b })
         .find(|b| b.is_passable_by(&support_order.unit_type))
         .is_some()
+}
+
+/// Returns true if an order is a legal support order.
+fn is_legal(support_order: &MappedMainOrder) -> bool {
+    use order::MainCommand::*;
+
+    match support_order.command {
+        Support(SupportedOrder::Hold(ref tgt)) => tgt.province() != support_order.region.province(),
+
+        // test case 6.d.34; support targeting own area not allowed.
+        Support(SupportedOrder::Move(_, ref dst)) => {
+            dst.province() != support_order.region.province()
+        }
+        Hold | Move(..) | Convoy(..) => false,
+    }
 }
 
 /// Returns true if a given support order successfully supports the specified supported order.
@@ -103,7 +117,7 @@ pub fn is_successful<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
                                         support_order: &'a MappedMainOrder)
                                         -> bool {
     if let MainCommand::Support(ref beneficiary) = support_order.command {
-        beneficiary.is_legal() && beneficiary == supported &&
+        is_legal(support_order) && beneficiary.is_legal() && beneficiary == supported &&
         can_reach(&ctx.world_map, supported, support_order) &&
         resolver.resolve(ctx, support_order).into()
     } else {
@@ -178,7 +192,7 @@ mod test {
         let supporters = find_for(&resolver_ctx, &mut res_state, &orders[1]);
         assert!(!supporters.is_empty());
     }
-    
+
     #[test]
     fn support_t6b04_support_to_unreachable_coast_allowed() {
         let fra = Nation("fra".into());
@@ -189,7 +203,7 @@ mod test {
             Order::new(fra.clone(), UnitType::Fleet, reg("mar"), supp_com.clone().into()),
             Order::new(Nation("ita".into()), UnitType::Fleet, reg("wes"), MainCommand::Move(reg("spa(sc)"))),
         ];
-        
+
         assert_eq!(supp_com, orders[0]);
         assert!(super::can_reach(standard_map(), &orders[0], &orders[1]));
     }
