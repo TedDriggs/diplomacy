@@ -1,77 +1,77 @@
-short_name,full_name
-adr,Adriatic Sea
-aeg,Aegean Sea
-alb,Albania
-ank,Ankara
-apu,Apulia
-arm,Armenia
-bal,Baltic Sea
-bar,Barents Sea
-bel,Belgium
-ber,Berlin
-bla,Black Sea
-bre,Brest
-boh,Bohemia
-bot,Gulf of Bothel
-bud,Budapest
-bul,Bulgaria
-bur,Burgundy
-cly,Clyde
-con,Constantinople
-den,Denmark
-eas,Eastern Mediterranean
-edi,Edinburgh
-eng,English Channel
-fin,Finland
-gal,Galicia
-gas,Gascony
-gre,Greece
-hel,Helgoland Bight
-hol,Holland
-ion,Ionian Sea
-iri,Irish Sea
-kie,Kiel
-lon,London
-lvn,Livonia
-lvp,Liverpool
-lyo,Gulf of Lyon
-mar,Marseilles
-mao,Mid-Atlantic Ocean
-mos,Moscow
-mun,Munich
-naf,North Africa
-nao,North Atlantic
-nap,Naples
-nth,North Sea
-nwg,Norweigian Sea
-nwy,Norway
-par,Paris
-pic,Picardy
-pie,Piedmont
-por,Portugal
-pru,Prussia
-rom,Rome
-ruh,Ruhr Valley
-rum,Rumania
-ser,Serbia
-sev,Sevastopol
-sil,Silesia
-ska,Skagerrak
-smy,Smyrna
-spa,Spain
-stp,St. Petersburg
-swe,Sweden
-swi,Switzerland
-syr,Syria
-tri,Trieste
-tun,Tunisia
-tus,Tuscany
-tyr,Tyrolea
-tys,Tyrhenian Sea
-ukr,Ukraine
-ven,Venice
-vie,Vienna
-wal,Wales
-war,Warsaw
-wes,Western Mediterranean
-yor,York
+short_name,full_name,supply_center_for
+adr,Adriatic Sea,
+aeg,Aegean Sea,
+alb,Albania,
+ank,Ankara,tur
+apu,Apulia,
+arm,Armenia,
+bal,Baltic Sea,
+bar,Barents Sea,
+bel,Belgium,neutral
+ber,Berlin,ger
+bla,Black Sea,
+bre,Brest,fra
+boh,Bohemia,
+bot,Gulf of Bothel,
+bud,Budapest,aus
+bul,Bulgaria,neutral
+bur,Burgundy,
+cly,Clyde,
+con,Constantinople,tur
+den,Denmark,neutral
+eas,Eastern Mediterranean,
+edi,Edinburgh,eng
+eng,English Channel,
+fin,Finland,
+gal,Galicia,
+gas,Gascony,
+gre,Greece,neutral
+hel,Helgoland Bight,
+hol,Holland,neutral
+ion,Ionian Sea,
+iri,Irish Sea,
+kie,Kiel,ger
+lon,London,eng
+lvn,Livonia,
+lvp,Liverpool,eng
+lyo,Gulf of Lyon,
+mar,Marseilles,fra
+mao,Mid-Atlantic Ocean,
+mos,Moscow,rus
+mun,Munich,ger
+naf,North Africa,
+nao,North Atlantic,
+nap,Naples,ita
+nth,North Sea,
+nwg,Norweigian Sea,
+nwy,Norway,neutral
+par,Paris,fra
+pic,Picardy,
+pie,Piedmont,
+por,Portugal,neutral
+pru,Prussia,
+rom,Rome,ita
+ruh,Ruhr Valley,
+rum,Rumania,neutral
+ser,Serbia,neutral
+sev,Sevastopol,rus
+sil,Silesia,
+ska,Skagerrak,
+smy,Smyrna,tur
+spa,Spain,neutral
+stp,St. Petersburg,rus
+swe,Sweden,neutral
+swi,Switzerland,
+syr,Syria,
+tri,Trieste,aus
+tun,Tunisia,neutral
+tus,Tuscany,
+tyr,Tyrolea,
+tys,Tyrhenian Sea,
+ukr,Ukraine,
+ven,Venice,ita
+vie,Vienna,aus
+wal,Wales,
+war,Warsaw,rus
+wes,Western Mediterranean,
+yor,York,

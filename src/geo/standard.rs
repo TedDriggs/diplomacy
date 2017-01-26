@@ -1,5 +1,6 @@
 use geo::{Map, Coast, Terrain, Province};
 use geo::builder::ProvinceRegistry;
+use Nation;
 
 lazy_static! {
     static ref STANDARD_MAP : Map = load_standard();
@@ -46,13 +47,22 @@ fn load_standard() -> Map {
 
 fn province_from_line(s: &str) -> Result<Province, ()> {
     let words = s.split(",").collect::<Vec<_>>();
-    if words.len() == 2 {
+    if words.len() == 3 {
         Ok(Province {
             short_name: String::from(words[0]),
             full_name: String::from(words[1]),
+            supply_center_for: nation_from_word(words[2]),
         })
     } else {
         Err(())
+    }
+}
+
+fn nation_from_word(s: &str) -> Option<Nation> {
+    if s == "" {
+        None
+    } else {
+        Some(Nation(s.into()))
     }
 }
 

@@ -2,11 +2,10 @@
 
 use std::fmt;
 
-use UnitType;
 use ShortName;
 use Nation;
 use geo::Location;
-
+use UnitType;
 
 mod command;
 pub use self::command::{Command, MainCommand, SupportedOrder, ConvoyedMove, RetreatCommand,
@@ -43,9 +42,9 @@ impl<L: Location, C: Command<L>> Order<L, C> {
     /// This will return false if the start and destination are the
     /// same region.
     pub fn is_head_to_head(first: &Self, other: &Self) -> bool {
-        first.command.move_dest() != Some(&first.region) &&
-        first.command.move_dest().map(|d| d.province()) == Some(other.region.province()) &&
-        other.command.move_dest().map(|d| d.province()) == Some(first.region.province())
+        first.move_dest() != Some(&first.region) &&
+        first.move_dest().map(|d| d.province()) == Some(other.region.province()) &&
+        other.move_dest().map(|d| d.province()) == Some(first.region.province())
     }
     
     /// Write the canonical form of the order to the formatter.
@@ -58,6 +57,20 @@ impl<L: Location, C: Command<L>> Order<L, C> {
                self.unit_type.short_name(),
                self.region.short_name(),
                self.command)
+    }
+}
+
+impl<L: Location, C: Command<L>> Command<L> for Order<L, C> {
+    fn move_dest(&self) -> Option<&L> {
+        self.command.move_dest()
+    }
+    
+    fn is_move(&self) -> bool {
+        self.command.is_move()
+    }
+    
+    fn is_move_to_province(&self, p: &L::Province) -> bool {
+        self.command.is_move_to_province(p)
     }
 }
 

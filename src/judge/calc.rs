@@ -1,6 +1,7 @@
-use order::{Command, Order};
-use super::prelude::*;
+use order::{Command, MainCommand, Order};
 use super::{support, convoy};
+use super::{Adjudicate, ResolverContext, ResolverState, MappedMainOrder};
+use super::strength::{Prevent, Strength};
 use geo::ProvinceKey;
 use ShortName;
 
@@ -12,7 +13,7 @@ pub fn path_exists<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                       resolver: &mut ResolverState<'a, A>,
                                       order: &MappedMainOrder)
                                       -> bool {
-    if let Some(dst) = order.command.move_dest() {
+    if let Some(dst) = order.move_dest() {
         if let Some(reg) = context.world_map.find_region(&dst.short_name()) {
             if order.unit_type.can_occupy(reg.terrain()) {
                 let border_exists = context.world_map
@@ -20,7 +21,7 @@ pub fn path_exists<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                     .map(|b| b.is_passable_by(&order.unit_type))
                     .unwrap_or(false);
 
-                // NOTE: As-written, this short-circuits convoy assessment when 
+                // NOTE: As-written, this short-circuits convoy assessment when
                 // there is a border. Don't change that behavior, as it may impact
                 // how resolution works.
                 return border_exists || convoy::route_exists(context, resolver, order);
@@ -32,20 +33,15 @@ pub fn path_exists<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
     false
 }
 
-/// Checks if an order is a move to the province identified by `d`.
-fn is_move_to_province<'a, 'b, DST: Into<&'b ProvinceKey>>(o: &MappedMainOrder, d: DST) -> bool {
-    o.command.move_dest().map(|md| md.province() == d.into()).unwrap_or(false)
-}
-
 fn prevent_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                      resolver: &mut ResolverState<'a, A>,
                                      order: &'a MappedMainOrder)
                                      -> Option<Prevent<'a>> {
-    if order.command.is_move() {
+    if order.is_move() {
         if !path_exists(context, resolver, order) {
             Some(Prevent::NoPath)
         } else {
-            
+
             // A unit that lost a head-to-head cannot prevent.
             if let Some(h2h) = context.orders_ref()
                 .iter()
@@ -68,7 +64,7 @@ pub fn prevent_results<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                           province: &ProvinceKey)
                                           -> Vec<Prevent<'a>> {
     let mut prevents = vec![];
-    for order in context.orders_ref().iter().filter(|ord| is_move_to_province(ord, province)) {
+    for order in context.orders_ref().iter().filter(|ord| ord.is_move_to_province(province)) {
         if let Some(prev) = prevent_result(context, resolver, order) {
             prevents.push(prev);
         }
@@ -86,7 +82,7 @@ pub fn max_prevent_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
         let mut best_prevent_strength = 0;
         for order in context.orders_ref()
             .iter()
-            .filter(|ord| ord != &&preventing && is_move_to_province(ord, dst)) {
+            .filter(|ord| ord != &&preventing && ord.is_move_to_province(dst.into())) {
             if let Some(prev) = prevent_result(context, resolver, order) {
                 let nxt_str = prev.strength();
                 if nxt_str >= best_prevent_strength {
@@ -113,12 +109,12 @@ pub fn dislodger_of<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                        order: &'a MappedMainOrder)
                                        -> Option<&'a MappedMainOrder> {
     let order_ref = context.orders_ref();
-    for dislodger in order_ref.into_iter().find(|o| is_move_to_province(o, &order.region)) {
+    for dislodger in order_ref.into_iter().find(|o| o.is_move_to_province((&order.region).into())) {
 
         // If we found someone trying to move into `order`'s old province, we
         // check to see if `order` vacated. If so, then it couldn't have been
         // dislodged.
-        if order.command.is_move() && resolver.resolve(context, order).into() {
+        if order.is_move() && resolver.resolve(context, order).into() {
             return None;
         }
 

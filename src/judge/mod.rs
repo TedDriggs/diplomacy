@@ -5,19 +5,19 @@ mod strength;
 mod state_type;
 mod calc;
 mod convoy;
-mod prelude;
 pub mod support;
 mod rulebook;
+mod outcome;
 
 use std::collections::HashMap;
-use std::fmt;
 
+pub use self::outcome::Outcome;
 pub use self::state_type::{OrderState, ResolutionState, OccupationOutcome};
 
 use order::{Order, MainCommand};
 use geo::{Border, RegionKey, Map, Terrain};
 use UnitType;
-pub use self::resolver::{ResolverContext, ResolverState};
+pub use self::resolver::{Adjudicate, ResolverContext, ResolverState};
 pub use self::rulebook::Rulebook;
 
 pub type MappedMainOrder = Order<RegionKey, MainCommand<RegionKey>>;
@@ -30,8 +30,6 @@ pub fn adjudicate<'a, O: IntoIterator<Item = MappedMainOrder>>
     let ctx = ResolverContext::new(map, orders.into_iter().collect());
     ctx.resolve()
 }
-
-pub trait Outcome : fmt::Debug {}
 
 impl Border {
     fn is_passable_by(&self, unit_type: &UnitType) -> bool {

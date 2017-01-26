@@ -1,5 +1,6 @@
 use std::convert::From;
 
+use Nation;
 use ShortName;
 
 /// A controllable area of the environment.
@@ -7,6 +8,7 @@ use ShortName;
 pub struct Province {
     pub full_name : String,
     pub short_name : String,
+    pub supply_center_for : Option<Nation>,
 }
 
 impl ShortName for Province {

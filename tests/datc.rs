@@ -5,7 +5,7 @@ extern crate diplomacy;
 use std::collections::HashMap;
 
 use diplomacy::geo;
-use diplomacy::judge::{self, OrderState, MappedMainOrder, ResolverContext, ResolverState, Rulebook};
+use diplomacy::judge::{self, Outcome, OrderState, MappedMainOrder, ResolverContext, ResolverState, Rulebook};
 use diplomacy::Nation;
 use diplomacy::order::Command;
 
@@ -222,14 +222,6 @@ fn t6b06_support_cut_from_other_coast_succeeds() {
         "ITA: F lyo -> spa(sc)"
     ];
     let results = get_results(orders.clone());
-    
-    // let parsed = orders.clone().into_iter().map(|o| ord(o));
-    // let r_ctx = get_state(orders);
-    // let r_state = r_ctx.resolve_to_state();    
-    
-    // for ord in parsed {
-    //     r_ctx.explain(&mut r_state.clone(), &ord);
-    // }
     
     assert_eq!(Some(&OrderState::Fails), results.get(&ord("FRA: F spa(nc) supports F mao")));
 }

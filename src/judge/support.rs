@@ -1,10 +1,9 @@
 //! Contains helper functions for evaluating the success of support commands
 //! during the main phase of a turn.
 
-use super::prelude::*;
-use super::Outcome;
-use order::{Command, SupportedOrder};
-use geo;
+use geo::{Map, ProvinceKey};
+use order::{Command, MainCommand, SupportedOrder};
+use super::{Adjudicate, MappedMainOrder, ResolverContext, ResolverState, OrderState};
 use super::calc;
 
 fn order_cuts<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
@@ -74,7 +73,7 @@ pub fn is_supporting_self(support_order: &MappedMainOrder) -> bool {
 /// Returns the province which support needs to reach to benefit `supported`.
 /// For move orders, this is the **destination** province. For all other orders,
 /// it is the **currently occupied** province.
-fn needed_at(supported: &MappedMainOrder) -> &geo::ProvinceKey {
+fn needed_at(supported: &MappedMainOrder) -> &ProvinceKey {
     use order::MainCommand::*;
     match supported.command {
         Move(ref dest) => dest.province(),
@@ -85,7 +84,7 @@ fn needed_at(supported: &MappedMainOrder) -> &geo::ProvinceKey {
 /// Determines if a support order can reach the province where it is needed.
 /// This requires a border from the unit's current region to the province
 /// where support is needed.
-fn can_reach<'a>(world_map: &'a geo::Map,
+fn can_reach<'a>(world_map: &'a Map,
                  supported: &'a MappedMainOrder,
                  support_order: &'a MappedMainOrder)
                  -> bool {
@@ -100,7 +99,9 @@ fn is_legal(support_order: &MappedMainOrder) -> bool {
     use order::MainCommand::*;
 
     match support_order.command {
-        Support(SupportedOrder::Hold(_, ref tgt)) => tgt.province() != support_order.region.province(),
+        Support(SupportedOrder::Hold(_, ref tgt)) => {
+            tgt.province() != support_order.region.province()
+        }
 
         // test case 6.d.34; support targeting own area not allowed.
         Support(SupportedOrder::Move(_, _, ref dst)) => {
@@ -158,8 +159,6 @@ impl<'a> From<SupportOutcome<'a>> for OrderState {
         so.is_successful().into()
     }
 }
-
-impl<'a> Outcome for SupportOutcome<'a> {}
 
 #[cfg(test)]
 mod test {

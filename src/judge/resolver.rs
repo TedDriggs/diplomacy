@@ -35,7 +35,7 @@ impl<'a> ResolverContext<'a> {
     }
 
     /// Get a view of the orders.
-    pub fn orders_ref(&'a self) -> Vec<&'a MappedMainOrder> {
+    pub fn orders_ref(&self) -> Vec<&MappedMainOrder> {
         self.orders.iter().collect()
     }
 
@@ -44,8 +44,6 @@ impl<'a> ResolverContext<'a> {
         for order in self.orders_ref() {
             rs.resolve(&self, order);
         }
-
-        // rs.report_with_label("FINAL");
 
         rs
     }
@@ -75,7 +73,7 @@ impl<'a> ResolverContext<'a> {
 
         // TODO find a way to remove the clone() here
         for order in self.orders.clone() {
-            let order_state = rs.get_state(&order).expect("All orders should be resolved").into();
+            let order_state = rs.get(&order).expect("All orders should be resolved").into();
             out_map.insert(order, order_state);
         }
 
@@ -120,7 +118,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
     }
 
     /// Get the current projected outcome of an order.
-    fn get_state(&self, order: &MappedMainOrder) -> Option<OrderState> {
+    fn get(&self, order: &MappedMainOrder) -> Option<OrderState> {
         self.state.get(order).map(|rs| rs.into())
     }
 
@@ -232,4 +230,8 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
             }
         }
     }
+}
+
+pub fn get_state<'a, A: Adjudicate>(r: &ResolverState<'a, A>, order: &MappedMainOrder) -> Option<OrderState> {
+    r.get(order)
 }
