@@ -9,8 +9,6 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
-extern crate serde_json;
-
 pub mod geo;
 pub mod order;
 pub mod parser;

@@ -97,16 +97,8 @@ mod test {
     use std::str::FromStr;
     use super::{Order, MainCommand, BuildOrder};
     use geo::RegionKey;
-    use serde_json::to_string as json;
 
     fn ord(s: &str) -> Order<RegionKey, MainCommand<RegionKey>> {
         s.parse().expect("Should be valid")
-    }
-
-    #[test]
-    fn to_json() {
-        println!("{}", json(&ord("ENG: F nth(ec) -> ska")).unwrap());
-        println!("{}",
-                 json(&BuildOrder::<RegionKey>::from_str("ENG: F lon build").unwrap()).unwrap());
     }
 }

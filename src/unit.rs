@@ -8,9 +8,11 @@ use ShortName;
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum UnitType {
     /// A convoyable land-based unit which can traverse inland and coastal terrain.
+    #[serde(rename="A")]
     Army,
     
     /// A sea-based unit which can traverse sea and coastal terrain.
+    #[serde(rename="F")]
     Fleet,
 }
 

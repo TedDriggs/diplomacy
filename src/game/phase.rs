@@ -1,6 +1,10 @@
 use std::cmp::{PartialOrd, Ordering};
 use std::convert::From;
+use std::fmt;
 use std::str::FromStr;
+
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::de;
 use ShortName;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -22,13 +26,13 @@ impl ShortName for Phase {
 
 impl FromStr for Phase {
     type Err = ();
-    
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "M" => Ok(Phase::Main),
             "R" => Ok(Phase::Retreat),
             "B" => Ok(Phase::Build),
-            _ => Err(())
+            _ => Err(()),
         }
     }
 }
@@ -50,12 +54,12 @@ impl ShortName for Season {
 
 impl FromStr for Season {
     type Err = ();
-    
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "S" => Ok(Season::Spring),
             "F" => Ok(Season::Fall),
-            _ => Err(())
+            _ => Err(()),
         }
     }
 }
@@ -122,26 +126,49 @@ impl FromStr for Time {
     }
 }
 
+impl Serialize for Time {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&self.short_name())
+    }
+}
+
+impl Deserialize for Time {
+    fn deserialize<D: Deserializer>(d: D) -> Result<Self, D::Error> {
+
+        struct TimeVisitor;
+
+        impl de::Visitor for TimeVisitor {
+            type Value = Time;
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                write!(f,
+                       "a string representing a diplomacy time, such as 'S1901M'")
+            }
+
+            fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
+                v.parse().or(Err(E::custom(format!("Unable to parse time '{}'", v))))
+            }
+        }
+
+        d.deserialize_str(TimeVisitor)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::str::FromStr;
     use super::*;
-    
+
     #[test]
     fn parse_time() {
-        assert_eq!(Time::from((Season::Spring, 1901, Phase::Main)), "S1901M".parse().unwrap());
+        assert_eq!(Time::from((Season::Spring, 1901, Phase::Main)),
+                   "S1901M".parse().unwrap());
     }
-    
+
     #[test]
     fn cmp() {
-        let turns = vec![
-            "S1901M",
-            "S1901R",
-            "F1901M",
-            "F1901R",
-            "F1901B"
-        ];
-        
+        let turns = vec!["S1901M", "S1901R", "F1901M", "F1901R", "F1901B"];
+
         let parsed = turns.iter().map(|t| Time::from_str(t).unwrap()).collect::<Vec<_>>();
         let mut sorted = parsed.clone();
         sorted.sort();
