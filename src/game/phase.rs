@@ -7,6 +7,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de;
 use ShortName;
 
+/// The step in a current season. Not all seasons will have all steps.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Phase {
     Main = 0,
@@ -37,10 +38,11 @@ impl FromStr for Phase {
     }
 }
 
+/// The current season in the year. Not all game variants use all seasons.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Season {
     Spring = 0,
-    Fall = 1,
+    Fall = 2,
 }
 
 impl ShortName for Season {
@@ -69,14 +71,17 @@ impl FromStr for Season {
 pub struct Time(Season, usize, Phase);
 
 impl Time {
+    /// The season component of the time.
     pub fn season(&self) -> Season {
         self.0
     }
 
+    /// The year component.
     pub fn year(&self) -> usize {
         self.1
     }
 
+    /// The phase of the season and year.
     pub fn phase(&self) -> Phase {
         self.2
     }
@@ -125,6 +130,8 @@ impl FromStr for Time {
         }
     }
 }
+
+// Times are represented in their canonical string format.
 
 impl Serialize for Time {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {

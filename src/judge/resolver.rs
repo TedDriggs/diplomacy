@@ -1,6 +1,6 @@
 use geo::{Map, RegionKey, ProvinceKey};
 use order::{Command, MainCommand};
-use super::{MappedMainOrder, OrderState, ResolutionState, Rulebook};
+use super::{MappedMainOrder, OrderState, Rulebook};
 
 use std::convert::From;
 use std::collections::HashMap;
@@ -95,6 +95,21 @@ impl<'a> From<ResolverContext<'a>> for HashMap<MappedMainOrder, OrderState> {
     }
 }
 
+impl<'a> From<&'a ResolutionState> for OrderState {
+    fn from(rs: &'a ResolutionState) -> Self {
+        match *rs {
+            ResolutionState::Guessing(os) |
+            ResolutionState::Known(os) => os,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ResolutionState {
+    Guessing(OrderState),
+    Known(OrderState),
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResolverState<'a, A: Adjudicate> {
     state: HashMap<&'a MappedMainOrder, ResolutionState>,
@@ -145,7 +160,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
     /// When a dependency cycle is detected, attempt to resolve all orders in the cycle.
     fn resolve_dependency_cycle(&mut self, cycle: &[&'a MappedMainOrder]) {
         use super::OrderState::*;
-        use super::ResolutionState::*;
+        use self::ResolutionState::*;
 
         // if every order in the cycle is a move, then this is a circular move
         if cycle.iter().all(|o| o.command.is_move()) {
@@ -165,7 +180,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                    order: &'a MappedMainOrder)
                    -> OrderState {
         use super::OrderState::*;
-        use super::ResolutionState::*;
+        use self::ResolutionState::*;
 
         match self.state.get(order) {
             Some(&Known(order_state)) => order_state,

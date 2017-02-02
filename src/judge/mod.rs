@@ -12,7 +12,7 @@ mod outcome;
 use std::collections::HashMap;
 
 pub use self::outcome::Outcome;
-pub use self::state_type::{OrderState, ResolutionState, OccupationOutcome};
+pub use self::state_type::{OrderState, OccupationOutcome};
 
 use order::{Order, MainCommand};
 use geo::{Border, RegionKey, Map, Terrain};

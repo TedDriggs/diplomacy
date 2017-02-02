@@ -5,11 +5,13 @@ use super::support::{self, SupportOutcome};
 use order::{Command, Order};
 use judge::strength::{Strength, Prevent};
 
-/// The standard diplomacy rules.
+/// The standard Diplomacy rules.
 #[derive(Debug, Clone, Default)]
 pub struct Rulebook;
 
 impl Rulebook {
+    /// Determine the outcome of an order from a context, using the provided 
+    /// `resolver` to handle guesses and dependency resolutions.
     fn adjudicate<'a>(&self,
                       context: &'a ResolverContext<'a>,
                       resolver: &mut ResolverState<'a, Self>,
