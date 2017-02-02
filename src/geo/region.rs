@@ -7,7 +7,7 @@ use parser::{Error, ErrorKind};
 use ShortName;
 
 /// Differentiates regions within a province.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Coast {
     North,
     East,
@@ -43,7 +43,7 @@ impl FromStr for Coast {
 
 /// The type of environment (land, sea, coast). Armies cannot operate at sea, and
 /// fleets cannot operate on land.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Terrain {
     Land,
     Coast,
@@ -51,7 +51,7 @@ pub enum Terrain {
 }
 
 /// A space to which a unit can move. Provinces are made up of 1 or more regions.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Region(ProvinceKey, Option<Coast>, Terrain);
 
 impl Region {
@@ -99,7 +99,7 @@ impl Location for Region {
 }
 
 /// An identifier that references a region.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RegionKey(ProvinceKey, Option<Coast>);
 
 impl RegionKey {

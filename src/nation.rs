@@ -4,7 +4,7 @@ use std::fmt;
 use ShortName;
 
 /// An actor in the game. Nations can own units and issue orders.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Nation(pub String);
 
 impl ShortName for Nation {

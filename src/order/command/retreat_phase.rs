@@ -4,7 +4,7 @@ use super::Command;
 use std::fmt;
 
 /// Valid commands for the retreat phase of a turn.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum RetreatCommand<L : Location> {
     Hold,
     Move(L)

@@ -5,7 +5,7 @@ use super::Command;
 
 
 /// A command issued during the build/disband turn (typically "Winter").
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum BuildCommand {
     /// The recipient region is to spawn a new unit of the ordered type
     /// owned by the issuing nation. This will require that the province
@@ -17,9 +17,10 @@ pub enum BuildCommand {
     Disband,
 }
 
-/// A build command is never a move.
 impl<L: Location> Command<L> for BuildCommand {
+    
     fn move_dest<'a>(&'a self) -> Option<&'a L> {
+        // A build command is never a move.
         None
     }
 }

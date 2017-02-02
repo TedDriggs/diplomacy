@@ -24,7 +24,7 @@ impl PartialEq<ProvinceKey> for Province {
 }
 
 /// An identifier that can be resolved to a province
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ProvinceKey(String);
 
 impl ProvinceKey {

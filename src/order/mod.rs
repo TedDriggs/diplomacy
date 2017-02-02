@@ -12,7 +12,7 @@ pub use self::command::{Command, MainCommand, SupportedOrder, ConvoyedMove, Retr
                         BuildCommand};
 
 /// An order is issued by a nation and gives a command to a unit in a region.
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Order<L: Location, C: Command<L>> {
     /// The nation to which the commanded unit (or province) belongs.
     pub nation: Nation,
@@ -46,9 +46,9 @@ impl<L: Location, C: Command<L>> Order<L, C> {
         first.move_dest().map(|d| d.province()) == Some(other.region.province()) &&
         other.move_dest().map(|d| d.province()) == Some(first.region.province())
     }
-    
+
     /// Write the canonical form of the order to the formatter.
-    ///  
+    ///
     /// For readability, this is used by both the Debug and Display traits.
     fn write_short(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f,
@@ -64,11 +64,11 @@ impl<L: Location, C: Command<L>> Command<L> for Order<L, C> {
     fn move_dest(&self) -> Option<&L> {
         self.command.move_dest()
     }
-    
+
     fn is_move(&self) -> bool {
         self.command.is_move()
     }
-    
+
     fn is_move_to_province(&self, p: &L::Province) -> bool {
         self.command.is_move_to_province(p)
     }
@@ -91,3 +91,22 @@ pub type MainOrder<L> = Order<L, MainCommand<L>>;
 pub type RetreatOrder<L> = Order<L, RetreatCommand<L>>;
 
 pub type BuildOrder<L> = Order<L, BuildCommand>;
+
+#[cfg(test)]
+mod test {
+    use std::str::FromStr;
+    use super::{Order, MainCommand, BuildOrder};
+    use geo::RegionKey;
+    use serde_json::to_string as json;
+
+    fn ord(s: &str) -> Order<RegionKey, MainCommand<RegionKey>> {
+        s.parse().expect("Should be valid")
+    }
+
+    #[test]
+    fn to_json() {
+        println!("{}", json(&ord("ENG: F nth(ec) -> ska")).unwrap());
+        println!("{}",
+                 json(&BuildOrder::<RegionKey>::from_str("ENG: F lon build").unwrap()).unwrap());
+    }
+}
