@@ -16,7 +16,7 @@
 
 use std::str::FromStr;
 
-use geo::RegionKey;
+use geo::Location;
 use order::{Order, Command, MainCommand, BuildCommand, SupportedOrder, ConvoyedMove,
             RetreatCommand};
 use ::Nation;
@@ -36,7 +36,7 @@ pub trait FromWords: Sized {
 
 type ParseResult<T> = Result<T, Error>;
 
-impl<C: Command<RegionKey> + FromWords<Err = Error>> FromStr for Order<RegionKey, C> {
+impl<L: Location + FromStr<Err = Error>, C: Command<L> + FromWords<Err = Error>> FromStr for Order<L, C> {
     type Err = Error;
 
     fn from_str(s: &str) -> ParseResult<Self> {
@@ -56,7 +56,7 @@ impl<C: Command<RegionKey> + FromWords<Err = Error>> FromStr for Order<RegionKey
     }
 }
 
-impl FromWords for MainCommand<RegionKey> {
+impl<L: Location + FromStr<Err = Error>> FromWords for MainCommand<L> {
     type Err = Error;
 
     fn from_words(words: &[&str]) -> ParseResult<Self> {
@@ -70,10 +70,10 @@ impl FromWords for MainCommand<RegionKey> {
     }
 }
 
-impl FromWords for SupportedOrder<RegionKey> {
+impl<L: Location + FromStr<Err = Error>> FromWords for SupportedOrder<L> {
     type Err = Error;
 
-    fn from_words(w: &[&str]) -> ParseResult<SupportedOrder<RegionKey>> {
+    fn from_words(w: &[&str]) -> ParseResult<Self> {
         match w.len() {
             // {unitType} {in}
             2 => Ok(SupportedOrder::Hold(w[0].parse()?, w[1].parse()?)),
@@ -84,7 +84,7 @@ impl FromWords for SupportedOrder<RegionKey> {
     }
 }
 
-impl FromWords for ConvoyedMove<RegionKey> {
+impl<L: Location + FromStr<Err = Error>> FromWords for ConvoyedMove<L> {
     type Err = Error;
 
     fn from_words(w: &[&str]) -> ParseResult<Self> {
@@ -96,7 +96,7 @@ impl FromWords for ConvoyedMove<RegionKey> {
     }
 }
 
-impl FromWords for RetreatCommand<RegionKey> {
+impl<L: Location + FromStr<Err = Error>> FromWords for RetreatCommand<L> {
     type Err = Error;
 
     fn from_words(w: &[&str]) -> ParseResult<Self> {

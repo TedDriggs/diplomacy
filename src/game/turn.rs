@@ -1,16 +1,14 @@
 use std::collections::HashMap;
 
-use geo::{Map, RegionKey};
+use geo::RegionKey;
 use Nation;
-use order::{Order, Command, MainCommand};
+use order::{Order, MainCommand};
 use UnitType;
 
-pub struct Turn<'a> {
-    map: &'a Map,
+#[derive(Clone)]
+pub struct Turn {
     units: HashMap<RegionKey, (Nation, UnitType)>,
     main_phase_orders: Vec<Order<RegionKey, MainCommand<RegionKey>>>,
 }
 
-impl<'a> Turn<'a> {
-    
-}
+impl Turn {}

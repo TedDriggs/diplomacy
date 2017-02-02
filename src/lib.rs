@@ -8,6 +8,7 @@ pub mod geo;
 pub mod order;
 pub mod parser;
 
+mod game;
 mod unit;
 pub use unit::UnitType;
 

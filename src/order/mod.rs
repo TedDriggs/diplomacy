@@ -85,3 +85,9 @@ impl<L: Location, C: Command<L>> fmt::Debug for Order<L, C> {
         self.write_short(f)
     }
 }
+
+pub type MainOrder<L> = Order<L, MainCommand<L>>;
+
+pub type RetreatOrder<L> = Order<L, RetreatCommand<L>>;
+
+pub type BuildOrder<L> = Order<L, BuildCommand>;

@@ -1,5 +1,5 @@
 use geo::{Map, ProvinceKey};
-use order::MainCommand;
+use order::{Command, MainCommand};
 use super::{MappedMainOrder, ResolverState, ResolverContext, Adjudicate};
 use UnitType;
 
@@ -12,22 +12,22 @@ pub enum ConvoyRouteError {
     CanOnlyConvoyMove,
 }
 
-/// Checks whether `convoy` is a valid convoy that will carry `move_order` from
+/// Checks whether `convoy` is a valid convoy that will carry `mv_ord` from
 /// its current location to the destination.
-fn is_convoy_for(convoy: &MappedMainOrder, move_order: &MappedMainOrder) -> bool {
+fn is_convoy_for(convoy: &MappedMainOrder, mv_ord: &MappedMainOrder) -> bool {
     match &convoy.command {
-        &MainCommand::Convoy(ref cm) => cm == move_order,
+        &MainCommand::Convoy(ref cm) => cm == mv_ord,
         _ => false,
     }
 }
 
 /// Find all routes from `origin` to `dest` given a set of valid convoys.
-pub fn route_steps<'a>(map: &Map,
-                       convoys: Vec<&'a MappedMainOrder>,
-                       origin: &ProvinceKey,
-                       dest: &ProvinceKey,
-                       working_path: Vec<&'a MappedMainOrder>)
-                       -> Vec<Vec<&'a MappedMainOrder>> {
+fn route_steps<'a>(map: &Map,
+                   convoys: Vec<&'a MappedMainOrder>,
+                   origin: &ProvinceKey,
+                   dest: &ProvinceKey,
+                   working_path: Vec<&'a MappedMainOrder>)
+                   -> Vec<Vec<&'a MappedMainOrder>> {
 
     let adjacent_regions = map.find_bordering(origin, None);
     // if we've got a convoy going and there is one hop to the destination,
@@ -56,32 +56,29 @@ pub fn route_steps<'a>(map: &Map,
     }
 }
 
-
-pub fn find_routes<'a, A: Adjudicate>
-    (ctx: &'a ResolverContext<'a>,
-     state: &mut ResolverState<'a, A>,
-     move_order: &MappedMainOrder)
-     -> Result<Vec<Vec<&'a MappedMainOrder>>, ConvoyRouteError> {
-    if move_order.unit_type == UnitType::Fleet {
+/// Finds all valid convoy routes for a given move order.
+pub fn routes<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
+                                 state: &mut ResolverState<'a, A>,
+                                 mv_ord: &MappedMainOrder)
+                                 -> Result<Vec<Vec<&'a MappedMainOrder>>, ConvoyRouteError> {
+    if mv_ord.unit_type == UnitType::Fleet {
         Err(ConvoyRouteError::CanOnlyConvoyArmy)
     } else {
-        use order::MainCommand::*;
-        match move_order.command {
-            Hold | Support(..) | Convoy(..) => Err(ConvoyRouteError::CanOnlyConvoyMove),
-            Move(ref dst) => {
-                let mut convoy_steps = vec![];
-                for order in ctx.orders_ref() {
-                    if is_convoy_for(order, move_order) && state.resolve(ctx, order).into() {
-                        convoy_steps.push(order);
-                    }
+        if let Some(dst) = mv_ord.move_dest() {
+            let mut convoy_steps = vec![];
+            for order in ctx.orders_ref() {
+                if is_convoy_for(order, mv_ord) && state.resolve(ctx, order).into() {
+                    convoy_steps.push(order);
                 }
-
-                Ok(route_steps(ctx.world_map,
-                               convoy_steps,
-                               (&move_order.region).into(),
-                               dst.into(),
-                               vec![]))
             }
+
+            Ok(route_steps(ctx.world_map,
+                           convoy_steps,
+                           (&mv_ord.region).into(),
+                           dst.into(),
+                           vec![]))
+        } else {
+            Err(ConvoyRouteError::CanOnlyConvoyMove)
         }
     }
 }
@@ -89,14 +86,13 @@ pub fn find_routes<'a, A: Adjudicate>
 /// Determines if any valid convoy route exists for the given move order.
 pub fn route_exists<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
                                        state: &mut ResolverState<'a, A>,
-                                       move_order: &MappedMainOrder)
+                                       mv_ord: &MappedMainOrder)
                                        -> bool {
-    find_routes(ctx, state, move_order).map(|r| !r.is_empty()).unwrap_or(false)
+    routes(ctx, state, mv_ord).map(|r| !r.is_empty()).unwrap_or(false)
 }
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use order::{ConvoyedMove, Order};
     use geo::{self, RegionKey, ProvinceKey};
     use judge::MappedMainOrder;
@@ -121,7 +117,7 @@ mod test {
             convoy("nwg", "lon", "swe"),
         ];
 
-        let routes = route_steps(geo::standard_map(),
+        let routes = super::route_steps(geo::standard_map(),
                                  convoys.iter().collect(),
                                  &ProvinceKey::new("lon"),
                                  &ProvinceKey::new("swe"),

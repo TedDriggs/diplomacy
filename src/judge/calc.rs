@@ -1,4 +1,4 @@
-use order::{Command, MainCommand, Order};
+use order::{Command, Order};
 use super::{support, convoy};
 use super::{Adjudicate, ResolverContext, ResolverState, MappedMainOrder};
 use super::strength::{Prevent, Strength};
@@ -77,7 +77,7 @@ pub fn max_prevent_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                              resolver: &mut ResolverState<'a, A>,
                                              preventing: &MappedMainOrder)
                                              -> Option<Prevent<'a>> {
-    if let &MainCommand::Move(ref dst) = &preventing.command {
+    if let Some(dst) = preventing.move_dest() {
         let mut best_prevent = None;
         let mut best_prevent_strength = 0;
         for order in context.orders_ref()
