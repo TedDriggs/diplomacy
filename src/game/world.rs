@@ -1,8 +1,17 @@
-use game::Turn;
-use geo::Map;
+use std::default::Default;
+use game::{Config, Turn};
 
 #[derive(Clone)]
-pub struct World<'a> {
-    map: &'a Map,
+pub struct World {
+    config: Config,
     history: Vec<Turn>,
+}
+
+impl Default for World {
+    fn default() -> Self {
+        World {
+            config: Config::standard(),
+            history: vec![],
+        }
+    }
 }

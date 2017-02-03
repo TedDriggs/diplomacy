@@ -112,6 +112,12 @@ impl<'a> From<&'a Time> for usize {
     }
 }
 
+impl PartialEq<(Season, Phase)> for Time {
+    fn eq(&self, rhs: &(Season, Phase)) -> bool {
+        self.0 == rhs.0 && self.2 == rhs.1
+    }
+}
+
 impl PartialOrd for Time {
     fn partial_cmp(&self, rhs: &Time) -> Option<Ordering> {
         usize::partial_cmp(&self.ord_id(), &rhs.ord_id())
