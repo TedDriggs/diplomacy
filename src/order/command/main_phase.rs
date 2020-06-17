@@ -11,7 +11,7 @@ pub type MainOrder<L> = Order<L, MainCommand<L>>;
 
 /// A command that is issued to a unit at a location during the main phase of a season.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum MainCommand<L: Location> {
+pub enum MainCommand<L> {
     /// The unit is to remain in place and do nothing else.
     Hold,
 
@@ -55,7 +55,7 @@ impl<L: Location> fmt::Display for MainCommand<L> {
 
 /// Declaration of the order to be supported by a support command.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum SupportedOrder<L: Location> {
+pub enum SupportedOrder<L> {
     /// The supporting unit will attempt to keep the unit in `Region` in place.
     /// A "hold" support covers units that have hold, support, or convoy commands.
     Hold(UnitType, L),
@@ -74,7 +74,7 @@ impl<L: Location> SupportedOrder<L> {
     }
 }
 
-impl<L: Location> fmt::Display for SupportedOrder<L> {
+impl<L: ShortName> fmt::Display for SupportedOrder<L> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             SupportedOrder::Hold(ref ut, ref region) => {
@@ -91,7 +91,7 @@ impl<L: Location> fmt::Display for SupportedOrder<L> {
     }
 }
 
-impl<L: Location> From<SupportedOrder<L>> for MainCommand<L> {
+impl<L> From<SupportedOrder<L>> for MainCommand<L> {
     fn from(support: SupportedOrder<L>) -> Self {
         MainCommand::Support(support)
     }
@@ -116,9 +116,9 @@ impl<L: Location> PartialEq<Order<L, MainCommand<L>>> for SupportedOrder<L> {
 
 /// An army's move which a fleet should convoy.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct ConvoyedMove<L: Location>(L, L);
+pub struct ConvoyedMove<L>(L, L);
 
-impl<L: Location> ConvoyedMove<L> {
+impl<L> ConvoyedMove<L> {
     /// Create a new convoyed move
     pub fn new(from: L, to: L) -> Self {
         ConvoyedMove(from, to)
@@ -133,7 +133,7 @@ impl<L: Location> ConvoyedMove<L> {
     }
 }
 
-impl<L: Location> fmt::Display for ConvoyedMove<L> {
+impl<L: ShortName> fmt::Display for ConvoyedMove<L> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "A {} -> {}", self.0.short_name(), self.1.short_name())
     }
@@ -152,7 +152,7 @@ impl<L: Location> PartialEq<MainOrder<L>> for ConvoyedMove<L> {
     }
 }
 
-impl<L: Location> From<ConvoyedMove<L>> for MainCommand<L> {
+impl<L> From<ConvoyedMove<L>> for MainCommand<L> {
     fn from(cm: ConvoyedMove<L>) -> Self {
         MainCommand::Convoy(cm)
     }
