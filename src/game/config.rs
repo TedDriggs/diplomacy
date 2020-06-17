@@ -1,5 +1,5 @@
 use geo::{self, Map};
-use game::{Phase, Season, Time};
+use game::{Phase, Season};
 
 #[derive(Debug, Clone)]
 pub struct Config {

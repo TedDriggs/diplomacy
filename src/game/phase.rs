@@ -145,12 +145,12 @@ impl Serialize for Time {
     }
 }
 
-impl Deserialize for Time {
-    fn deserialize<D: Deserializer>(d: D) -> Result<Self, D::Error> {
+impl<'de> Deserialize<'de> for Time {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
 
         struct TimeVisitor;
 
-        impl de::Visitor for TimeVisitor {
+        impl de::Visitor<'_> for TimeVisitor {
             type Value = Time;
 
             fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {

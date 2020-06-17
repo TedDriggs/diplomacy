@@ -4,6 +4,5 @@ version = "0.1.0"
 authors = ["Ted Driggs <ted.driggs@outlook.com>"]
 
 [dependencies]
-lazy_static = "0.2.*"
-serde="0.9"
-serde_derive="0.9"
+lazy_static = "1.4.0"
+serde = { version = "1.0.112", features = [ "derive" ] }
