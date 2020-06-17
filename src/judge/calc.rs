@@ -43,7 +43,7 @@ fn prevent_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
         } else {
 
             // A unit that lost a head-to-head cannot prevent.
-            if let Some(h2h) = context.orders_ref()
+            if let Some(h2h) = context.orders()
                 .iter()
                 .find(|o| Order::is_head_to_head(o, order)) {
                 if resolver.resolve(context, h2h).into() {
@@ -64,7 +64,7 @@ pub fn prevent_results<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                           province: &ProvinceKey)
                                           -> Vec<Prevent<'a>> {
     let mut prevents = vec![];
-    for order in context.orders_ref().iter().filter(|ord| ord.is_move_to_province(province)) {
+    for order in context.orders().iter().filter(|ord| ord.is_move_to_province(province)) {
         if let Some(prev) = prevent_result(context, resolver, order) {
             prevents.push(prev);
         }
@@ -80,9 +80,9 @@ pub fn max_prevent_result<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
     if let Some(dst) = preventing.move_dest() {
         let mut best_prevent = None;
         let mut best_prevent_strength = 0;
-        for order in context.orders_ref()
-            .iter()
-            .filter(|ord| ord != &&preventing && ord.is_move_to_province(dst.into())) {
+        for order in context.orders()
+            .into_iter()
+            .filter(|ord| ord != &preventing && ord.is_move_to_province(dst.into())) {
             if let Some(prev) = prevent_result(context, resolver, order) {
                 let nxt_str = prev.strength();
                 if nxt_str >= best_prevent_strength {
@@ -108,7 +108,7 @@ pub fn dislodger_of<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
                                        resolver: &mut ResolverState<'a, A>,
                                        order: &'a MappedMainOrder)
                                        -> Option<&'a MappedMainOrder> {
-    let order_ref = context.orders_ref();
+    let order_ref = context.orders();
     for dislodger in order_ref.into_iter().find(|o| o.is_move_to_province((&order.region).into())) {
 
         // If we found someone trying to move into `order`'s old province, we

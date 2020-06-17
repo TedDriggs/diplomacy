@@ -32,7 +32,7 @@ fn route_steps<'a>(map: &Map,
     let adjacent_regions = map.find_bordering(origin, None);
     // if we've got a convoy going and there is one hop to the destination,
     // we've found a valid solution.
-    if !working_path.is_empty() && adjacent_regions.iter().find(|&&r| r == dest).is_some() {
+    if !working_path.is_empty() && adjacent_regions.iter().any(|&r| r == dest) {
         vec![working_path]
     } else {
         let mut paths = vec![];
@@ -66,7 +66,7 @@ pub fn routes<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
     } else {
         if let Some(dst) = mv_ord.move_dest() {
             let mut convoy_steps = vec![];
-            for order in ctx.orders_ref() {
+            for order in ctx.orders() {
                 if is_convoy_for(order, mv_ord) && state.resolve(ctx, order).into() {
                     convoy_steps.push(order);
                 }

@@ -35,7 +35,7 @@ pub fn find_cutting_order<'a, A: Adjudicate>(
     resolver: &mut ResolverState<'a, A>,
     support_order: &MappedMainOrder,
 ) -> Option<&'a MappedMainOrder> {
-    for order in ctx.orders_ref() {
+    for order in ctx.orders() {
         if order_cuts(ctx, resolver, support_order, order) {
             return Some(order);
         }
@@ -57,13 +57,9 @@ pub fn is_order_cut<'a, A: Adjudicate>(
     resolver: &mut ResolverState<'a, A>,
     support_order: &MappedMainOrder,
 ) -> bool {
-    for order in &ctx.orders {
-        if order_cuts(ctx, resolver, support_order, &order) {
-            return true;
-        }
-    }
-
-    false
+    ctx.orders()
+        .into_iter()
+        .any(|order| order_cuts(ctx, resolver, support_order, &order))
 }
 
 pub fn is_supporting_self(support_order: &MappedMainOrder) -> bool {
@@ -140,14 +136,10 @@ pub fn find_for<'a, A: Adjudicate>(
     resolver: &mut ResolverState<'a, A>,
     supported: &MappedMainOrder,
 ) -> Vec<&'a MappedMainOrder> {
-    let mut supports = vec![];
-    for order in ctx.orders_ref() {
-        if is_successful(ctx, resolver, supported, order) {
-            supports.push(order)
-        }
-    }
-
-    supports
+    ctx.orders()
+        .into_iter()
+        .filter(|order| is_successful(ctx, resolver, supported, order))
+        .collect()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

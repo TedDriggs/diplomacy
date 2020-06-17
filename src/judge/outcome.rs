@@ -18,7 +18,7 @@ pub struct Outcome<'a, A: Adjudicate> {
 impl<'a, A: Adjudicate> Outcome<'a, A> {
     pub fn moved(&self) -> Vec<&MappedMainOrder> {
         self.context
-            .orders_ref()
+            .orders()
             .into_iter()
             .filter(|o| o.is_move() && self.get(o) == Some(OrderState::Succeeds))
             .collect()
@@ -27,7 +27,7 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
     /// Gets a map of orders whose recipients were dislodged to the order which dislodged them.
     pub fn dislodged(&self) -> HashMap<&MappedMainOrder, &MappedMainOrder> {
         let mut dislodged = HashMap::new();
-        for order in self.context.orders_ref() {
+        for order in self.context.orders() {
             if let Some(dl_ord) = dislodger_of(&self.context, &mut self.resolver.clone(), order) {
                 dislodged.insert(order, dl_ord);
             }
@@ -56,12 +56,12 @@ impl<'a, A: Adjudicate> fmt::Display for Outcome<'a, A> {
         for ord in self.moved() {
             writeln!(f, "  {}", ord)?;
         }
-        
+
         writeln!(f, "DISLODGED")?;
         for (dislodged, dislodger) in self.dislodged() {
             writeln!(f, "  {} | {}", dislodged, dislodger)?;
         }
-        
+
         Ok(())
     }
 }
