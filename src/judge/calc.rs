@@ -18,7 +18,7 @@ pub fn path_exists<'a, A: Adjudicate>(context: &'a ResolverContext<'a>,
             if order.unit_type.can_occupy(reg.terrain()) {
                 let border_exists = context.world_map
                     .find_border_between(&order.region, dst)
-                    .map(|b| b.is_passable_by(&order.unit_type))
+                    .map(|b| b.is_passable_by(order.unit_type))
                     .unwrap_or(false);
 
                 // NOTE: As-written, this short-circuits convoy assessment when

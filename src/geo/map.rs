@@ -42,7 +42,7 @@ impl Map {
         let ter = terrain.into();
         self.borders_containing(region)
             .iter()
-            .filter(|b| ter.as_ref().map(|t| t == b.terrain()).unwrap_or(true))
+            .filter(|b| ter.map(|t| t == b.terrain()).unwrap_or(true))
             .filter_map(|b| b.dest_from(region))
             .collect()
     }

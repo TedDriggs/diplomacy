@@ -1,16 +1,17 @@
 //! Contains helper functions for evaluating the success of support commands
 //! during the main phase of a turn.
 
+use super::calc;
+use super::{Adjudicate, MappedMainOrder, OrderState, ResolverContext, ResolverState};
 use crate::geo::{Map, ProvinceKey};
 use crate::order::{Command, MainCommand, SupportedOrder};
-use super::{Adjudicate, MappedMainOrder, ResolverContext, ResolverState, OrderState};
-use super::calc;
 
-fn order_cuts<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
-                                 resolver: &mut ResolverState<'a, A>,
-                                 support_order: &MappedMainOrder,
-                                 cutting_order: &MappedMainOrder)
-                                 -> bool {
+fn order_cuts<'a, A: Adjudicate>(
+    ctx: &'a ResolverContext<'a>,
+    resolver: &mut ResolverState<'a, A>,
+    support_order: &MappedMainOrder,
+    cutting_order: &MappedMainOrder,
+) -> bool {
     if let Some(ref dst) = cutting_order.command.move_dest() {
         let supporting_attack_on_cutter = match support_order.command {
             MainCommand::Support(SupportedOrder::Move(_, _, ref supported_dst)) => {
@@ -19,19 +20,21 @@ fn order_cuts<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
             _ => false,
         };
 
-        dst == &support_order.region.province() && !supporting_attack_on_cutter &&
-        support_order.nation != cutting_order.nation &&
-        calc::path_exists(ctx, resolver, cutting_order)
+        dst == &support_order.region.province()
+            && !supporting_attack_on_cutter
+            && support_order.nation != cutting_order.nation
+            && calc::path_exists(ctx, resolver, cutting_order)
     } else {
         false
     }
 }
 
 /// Find all orders which cut a specified support order.
-pub fn find_cutting_order<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
-                                             resolver: &mut ResolverState<'a, A>,
-                                             support_order: &MappedMainOrder)
-                                             -> Option<&'a MappedMainOrder> {
+pub fn find_cutting_order<'a, A: Adjudicate>(
+    ctx: &'a ResolverContext<'a>,
+    resolver: &mut ResolverState<'a, A>,
+    support_order: &MappedMainOrder,
+) -> Option<&'a MappedMainOrder> {
     for order in ctx.orders_ref() {
         if order_cuts(ctx, resolver, support_order, order) {
             return Some(order);
@@ -49,10 +52,11 @@ pub fn find_cutting_order<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
 /// in 'cut' when the DISLODGE decision of the unit has status 'dislodged' (dislodge rule).
 ///
 /// This method short-circuits the search after any hit has been found.
-pub fn is_order_cut<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
-                                       resolver: &mut ResolverState<'a, A>,
-                                       support_order: &MappedMainOrder)
-                                       -> bool {
+pub fn is_order_cut<'a, A: Adjudicate>(
+    ctx: &'a ResolverContext<'a>,
+    resolver: &mut ResolverState<'a, A>,
+    support_order: &MappedMainOrder,
+) -> bool {
     for order in &ctx.orders {
         if order_cuts(ctx, resolver, support_order, &order) {
             return true;
@@ -84,14 +88,15 @@ fn needed_at(supported: &MappedMainOrder) -> &ProvinceKey {
 /// Determines if a support order can reach the province where it is needed.
 /// This requires a border from the unit's current region to the province
 /// where support is needed.
-fn can_reach<'a>(world_map: &'a Map,
-                 supported: &'a MappedMainOrder,
-                 support_order: &'a MappedMainOrder)
-                 -> bool {
-    world_map.find_borders_between(&support_order.region, needed_at(supported))
+fn can_reach<'a>(
+    world_map: &'a Map,
+    supported: &'a MappedMainOrder,
+    support_order: &'a MappedMainOrder,
+) -> bool {
+    world_map
+        .find_borders_between(&support_order.region, needed_at(supported))
         .iter()
-        .find(|b| b.is_passable_by(&support_order.unit_type))
-        .is_some()
+        .any(|b| b.is_passable_by(support_order.unit_type))
 }
 
 /// Returns true if an order is a legal support order.
@@ -112,25 +117,29 @@ fn is_legal(support_order: &MappedMainOrder) -> bool {
 }
 
 /// Returns true if a given support order successfully supports the specified supported order.
-pub fn is_successful<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
-                                        resolver: &mut ResolverState<'a, A>,
-                                        supported: &MappedMainOrder,
-                                        support_order: &'a MappedMainOrder)
-                                        -> bool {
+pub fn is_successful<'a, A: Adjudicate>(
+    ctx: &'a ResolverContext<'a>,
+    resolver: &mut ResolverState<'a, A>,
+    supported: &MappedMainOrder,
+    support_order: &'a MappedMainOrder,
+) -> bool {
     if let MainCommand::Support(ref beneficiary) = support_order.command {
-        is_legal(support_order) && beneficiary.is_legal() && beneficiary == supported &&
-        can_reach(&ctx.world_map, supported, support_order) &&
-        resolver.resolve(ctx, support_order).into()
+        is_legal(support_order)
+            && beneficiary.is_legal()
+            && beneficiary == supported
+            && can_reach(&ctx.world_map, supported, support_order)
+            && resolver.resolve(ctx, support_order).into()
     } else {
         false
     }
 }
 
 /// Finds all successful orders which support a given order.
-pub fn find_for<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
-                                   resolver: &mut ResolverState<'a, A>,
-                                   supported: &MappedMainOrder)
-                                   -> Vec<&'a MappedMainOrder> {
+pub fn find_for<'a, A: Adjudicate>(
+    ctx: &'a ResolverContext<'a>,
+    resolver: &mut ResolverState<'a, A>,
+    supported: &MappedMainOrder,
+) -> Vec<&'a MappedMainOrder> {
     let mut supports = vec![];
     for order in ctx.orders_ref() {
         if is_successful(ctx, resolver, supported, order) {
@@ -162,13 +171,13 @@ impl<'a> From<SupportOutcome<'a>> for OrderState {
 
 #[cfg(test)]
 mod test {
-    use std::str::FromStr;
-    use crate::geo::{RegionKey, standard_map};
+    use super::super::{ResolverContext, ResolverState};
+    use super::*;
+    use crate::geo::{standard_map, RegionKey};
+    use crate::order::{MainCommand, Order, SupportedOrder};
     use crate::Nation;
     use crate::UnitType;
-    use crate::order::{Order, MainCommand, SupportedOrder};
-    use super::*;
-    use super::super::{ResolverState, ResolverContext};
+    use std::str::FromStr;
 
     fn reg(s: &str) -> RegionKey {
         RegionKey::from_str(s).unwrap()
@@ -179,8 +188,18 @@ mod test {
         let ger = Nation("ger".into());
         let supp_com = SupportedOrder::Move(UnitType::Fleet, reg("nth"), reg("nwy"));
         let orders = vec![
-            Order::new(ger.clone(), UnitType::Fleet, reg("ska"), MainCommand::Support(supp_com.clone())),
-            Order::new(ger.clone(), UnitType::Fleet, reg("nth"), MainCommand::Move(reg("nwy"))),
+            Order::new(
+                ger.clone(),
+                UnitType::Fleet,
+                reg("ska"),
+                MainCommand::Support(supp_com.clone()),
+            ),
+            Order::new(
+                ger.clone(),
+                UnitType::Fleet,
+                reg("nth"),
+                MainCommand::Move(reg("nwy")),
+            ),
         ];
 
         assert_eq!(supp_com, orders[1]);
@@ -198,9 +217,24 @@ mod test {
         let spa_nc = RegionKey::from_str("spa(nc)").unwrap();
         let supp_com = SupportedOrder::Move(UnitType::Fleet, reg("gas"), spa_nc.clone());
         let orders = vec![
-            Order::new(fra.clone(), UnitType::Fleet, reg("gas"), MainCommand::Move(spa_nc.clone())),
-            Order::new(fra.clone(), UnitType::Fleet, reg("mar"), supp_com.clone().into()),
-            Order::new(Nation("ita".into()), UnitType::Fleet, reg("wes"), MainCommand::Move(reg("spa(sc)"))),
+            Order::new(
+                fra.clone(),
+                UnitType::Fleet,
+                reg("gas"),
+                MainCommand::Move(spa_nc.clone()),
+            ),
+            Order::new(
+                fra.clone(),
+                UnitType::Fleet,
+                reg("mar"),
+                supp_com.clone().into(),
+            ),
+            Order::new(
+                Nation("ita".into()),
+                UnitType::Fleet,
+                reg("wes"),
+                MainCommand::Move(reg("spa(sc)")),
+            ),
         ];
 
         assert_eq!(supp_com, orders[0]);

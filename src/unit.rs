@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 /// The type of a military unit. Armies are convoyable land-based units; fleets
 /// are sea-going units which are able to convoy armies.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum UnitType {
     /// A convoyable land-based unit which can traverse inland and coastal terrain.
     #[serde(rename = "A")]

@@ -32,17 +32,17 @@ pub fn adjudicate<'a, O: IntoIterator<Item = MappedMainOrder>>
 }
 
 impl Border {
-    fn is_passable_by(&self, unit_type: &UnitType) -> bool {
+    fn is_passable_by(&self, unit_type: UnitType) -> bool {
         unit_type.can_occupy(self.terrain())
     }
 }
 
 impl UnitType {
-    fn can_occupy(&self, terrain: &Terrain) -> bool {
-        match *terrain {
+    fn can_occupy(self, terrain: Terrain) -> bool {
+        match terrain {
             Terrain::Coast => true,
-            Terrain::Land => self == &UnitType::Army,
-            Terrain::Sea => self == &UnitType::Fleet,
+            Terrain::Land => self == UnitType::Army,
+            Terrain::Sea => self == UnitType::Fleet,
         }
     }
 }

@@ -7,7 +7,7 @@ use crate::parser::{Error, ErrorKind};
 use crate::ShortName;
 
 /// Differentiates regions within a province.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Coast {
     North,
     East,
@@ -43,7 +43,7 @@ impl FromStr for Coast {
 
 /// The type of environment (land, sea, coast). Armies cannot operate at sea, and
 /// fleets cannot operate on land.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Terrain {
     Land,
     Coast,
@@ -69,13 +69,13 @@ impl Region {
     }
 
     /// Gets the coast of the region.
-    pub fn coast(&self) -> &Option<Coast> {
-        &self.1
+    pub fn coast(&self) -> Option<Coast> {
+        self.1
     }
 
     /// Gets the region's terrain.
-    pub fn terrain(&self) -> &Terrain {
-        &self.2
+    pub fn terrain(&self) -> Terrain {
+        self.2
     }
 }
 
@@ -84,8 +84,8 @@ impl ShortName for Region {
         format!("{}{}",
                 self.province().short_name(),
                 match self.coast() {
-                    &Some(ref val) => val.short_name(),
-                    &None => String::from(""),
+                    Some(val) => val.short_name(),
+                    None => String::from(""),
                 })
     }
 }
@@ -114,8 +114,8 @@ impl RegionKey {
     }
 
     /// Gets the coast of the region.
-    pub fn coast(&self) -> &Option<Coast> {
-        &self.1
+    pub fn coast(&self) -> Option<Coast> {
+        self.1
     }
 }
 
@@ -154,8 +154,8 @@ impl ShortName for RegionKey {
         format!("{}{}",
                 self.province().short_name(),
                 match self.coast() {
-                    &Some(ref val) => val.short_name(),
-                    &None => String::from(""),
+                    Some(val) => val.short_name(),
+                    None => String::from(""),
                 })
     }
 }

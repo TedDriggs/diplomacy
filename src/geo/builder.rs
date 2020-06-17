@@ -116,7 +116,7 @@ impl BorderRegistry {
             let rk1 = self.find_region(r1)?;
             let rk2 = self.find_region(r2)?;
 
-            BorderRegistry::validate_terrain(rk1.terrain(), rk2.terrain(), &terrain)?;
+            BorderRegistry::validate_terrain(rk1.terrain(), rk2.terrain(), terrain)?;
         }
 
         self.borders.push(Border::new(r1.parse().unwrap(), r2.parse().unwrap(), terrain));
@@ -142,14 +142,14 @@ impl BorderRegistry {
         }
     }
 
-    fn validate_terrain(rt1: &Terrain, rt2: &Terrain, bt: &Terrain) -> Result<(), MapError> {
+    fn validate_terrain(rt1: Terrain, rt2: Terrain, bt: Terrain) -> Result<(), MapError> {
         use crate::geo::Terrain::*;
 
-        if (*rt1 == Land || *rt2 == Land) && *bt != Land {
+        if (rt1 == Land || rt2 == Land) && bt != Land {
             Err(MapError::IncompatibleBorderTerrain)
-        } else if (*rt1 == Sea || *rt2 == Sea) && *bt != Sea {
+        } else if (rt1 == Sea || rt2 == Sea) && bt != Sea {
             Err(MapError::IncompatibleBorderTerrain)
-        } else if (*rt1 == Sea && *rt2 == Land) || (*rt1 == Land && *rt2 == Sea) {
+        } else if (rt1 == Sea && rt2 == Land) || (rt1 == Land && rt2 == Sea) {
             Err(MapError::IncompatibleBorderTerrain)
         } else {
             Ok(())
