@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::convert::From;
 use std::fmt;
 use serde::{Deserialize, Serialize};
@@ -8,8 +9,8 @@ use crate::ShortName;
 pub struct Nation(pub String);
 
 impl ShortName for Nation {
-    fn short_name(&self) -> String {
-        self.0.clone()
+    fn short_name<'a>(&'a self) -> Cow<'a, str> {
+        Cow::Borrowed(&self.0)
     }
 }
 

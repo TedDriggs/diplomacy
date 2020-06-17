@@ -9,10 +9,9 @@
 use std::collections::HashMap;
 use std::convert::From;
 
-use super::{Map, Province, Region, Border, Coast, Terrain, ProvinceKey};
+use super::{Border, Coast, Map, Province, ProvinceKey, Region, Terrain};
 
 use crate::ShortName;
-
 
 #[derive(Debug, Clone)]
 pub enum MapError {
@@ -30,7 +29,7 @@ pub struct ProvinceRegistry {
 impl ProvinceRegistry {
     /// Inserts a new province into the registry.
     pub fn register(&mut self, p: Province) -> Result<(), MapError> {
-        self.provinces.insert(p.short_name(), p);
+        self.provinces.insert(p.short_name().into_owned(), p);
         Ok(())
     }
 
@@ -60,18 +59,23 @@ impl RegionRegistry {
     /// This function validates that:
     ///
     /// 1. `province_name` identifies a known province.
-    pub fn register<IC: Into<Option<Coast>>>(&mut self,
-                                             province_name: &str,
-                                             coast: IC,
-                                             terrain: Terrain)
-                                             -> Result<(), MapError> {
+    pub fn register<IC: Into<Option<Coast>>>(
+        &mut self,
+        province_name: &str,
+        coast: IC,
+        terrain: Terrain,
+    ) -> Result<(), MapError> {
         let region = Region::new(self.find_province(province_name)?, coast, terrain);
-        self.regions.insert(region.short_name(), region);
+        self.regions
+            .insert(region.short_name().into_owned(), region);
         Ok(())
     }
 
     fn find_province(&self, k: &str) -> Result<ProvinceKey, MapError> {
-        self.provinces.get(k).map(|p| ProvinceKey::from(p)).ok_or(MapError::ProvinceNotFound)
+        self.provinces
+            .get(k)
+            .map(|p| ProvinceKey::from(p))
+            .ok_or(MapError::ProvinceNotFound)
     }
 
     /// Stops accepting regions and starts accepting borders.
@@ -111,7 +115,6 @@ impl BorderRegistry {
     /// 1. `r1` and `r2` are keys to known regions.
     /// 1. Border terrain is valid compared to the two regions.
     pub fn register(&mut self, r1: &str, r2: &str, terrain: Terrain) -> Result<(), MapError> {
-
         {
             let rk1 = self.find_region(r1)?;
             let rk2 = self.find_region(r2)?;
@@ -119,7 +122,11 @@ impl BorderRegistry {
             BorderRegistry::validate_terrain(rk1.terrain(), rk2.terrain(), terrain)?;
         }
 
-        self.borders.push(Border::new(r1.parse().unwrap(), r2.parse().unwrap(), terrain));
+        self.borders.push(Border::new(
+            r1.parse().unwrap(),
+            r2.parse().unwrap(),
+            terrain,
+        ));
         Ok(())
     }
 
@@ -129,7 +136,13 @@ impl BorderRegistry {
     }
 
     /// Get a view of the contents in a format that `Map` can use.
-    pub fn contents(self) -> (HashMap<String, Province>, HashMap<String, Region>, Vec<Border>) {
+    pub fn contents(
+        self,
+    ) -> (
+        HashMap<String, Province>,
+        HashMap<String, Region>,
+        Vec<Border>,
+    ) {
         (self.provinces, self.regions, self.borders)
     }
 

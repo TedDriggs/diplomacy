@@ -1,10 +1,11 @@
-use std::fmt;
-use std::convert::From;
-use std::str::FromStr;
-use serde::{Deserialize, Serialize};
-use crate::geo::{ProvinceKey, Location};
+use crate::geo::{Location, ProvinceKey};
 use crate::parser::{Error, ErrorKind};
 use crate::ShortName;
+use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
+use std::convert::From;
+use std::fmt;
+use std::str::FromStr;
 
 /// Differentiates regions within a province.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -16,9 +17,9 @@ pub enum Coast {
 }
 
 impl ShortName for Coast {
-    fn short_name(&self) -> String {
+    fn short_name<'a>(&'a self) -> Cow<'a, str> {
         use self::Coast::*;
-        String::from(match *self {
+        Cow::Borrowed(match *self {
             North => "(nc)",
             East => "(ec)",
             South => "(sc)",
@@ -56,10 +57,11 @@ pub struct Region(ProvinceKey, Option<Coast>, Terrain);
 
 impl Region {
     /// Creates a new region.
-    pub fn new<IP: Into<ProvinceKey>, IC: Into<Option<Coast>>>(province: IP,
-                                                               coast: IC,
-                                                               terrain: Terrain)
-                                                               -> Self {
+    pub fn new<IP: Into<ProvinceKey>, IC: Into<Option<Coast>>>(
+        province: IP,
+        coast: IC,
+        terrain: Terrain,
+    ) -> Self {
         Region(province.into(), coast.into(), terrain)
     }
 
@@ -80,13 +82,16 @@ impl Region {
 }
 
 impl ShortName for Region {
-    fn short_name(&self) -> String {
-        format!("{}{}",
+    fn short_name<'a>(&'a self) -> Cow<'a, str> {
+        if let Some(val) = self.coast() {
+            Cow::Owned(format!(
+                "{}{}",
                 self.province().short_name(),
-                match self.coast() {
-                    Some(val) => val.short_name(),
-                    None => String::from(""),
-                })
+                val.short_name()
+            ))
+        } else {
+            self.province().short_name()
+        }
     }
 }
 
@@ -150,13 +155,16 @@ impl PartialEq<RegionKey> for ProvinceKey {
 }
 
 impl ShortName for RegionKey {
-    fn short_name(&self) -> String {
-        format!("{}{}",
+    fn short_name<'a>(&'a self) -> Cow<'a, str> {
+        if let Some(val) = self.coast() {
+            Cow::Owned(format!(
+                "{}{}",
                 self.province().short_name(),
-                match self.coast() {
-                    Some(val) => val.short_name(),
-                    None => String::from(""),
-                })
+                val.short_name()
+            ))
+        } else {
+            self.province().short_name()
+        }
     }
 }
 
@@ -186,7 +194,10 @@ impl FromStr for RegionKey {
         } else if parts.len() == 2 {
             // Extract the coast identifier.
             let coast_id = parts[1].chars().take(2).collect::<String>();
-            Ok(RegionKey::new(String::from(parts[0]), Coast::from_str(&coast_id)?))
+            Ok(RegionKey::new(
+                String::from(parts[0]),
+                Coast::from_str(&coast_id)?,
+            ))
         } else {
             Err(Error::new(ErrorKind::MalformedRegion, s))
         }
@@ -197,8 +208,8 @@ impl FromStr for RegionKey {
 mod test {
     use std::str::FromStr;
 
-    use crate::parser::ErrorKind;
     use super::{Coast, RegionKey};
+    use crate::parser::ErrorKind;
 
     #[test]
     fn parse_coast() {
@@ -208,9 +219,13 @@ mod test {
 
     #[test]
     fn parse_region() {
-        assert_eq!(RegionKey::new("aeg", None),
-                   RegionKey::from_str("aeg").expect("aeg is a valid region"));
-        assert_eq!(&ErrorKind::BadCoast,
-                   RegionKey::from_str("foo(bar)").unwrap_err().kind());
+        assert_eq!(
+            RegionKey::new("aeg", None),
+            RegionKey::from_str("aeg").expect("aeg is a valid region")
+        );
+        assert_eq!(
+            &ErrorKind::BadCoast,
+            RegionKey::from_str("foo(bar)").unwrap_err().kind()
+        );
     }
 }

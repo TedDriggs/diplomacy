@@ -1,11 +1,12 @@
-use std::cmp::{PartialOrd, Ordering};
+use std::borrow::Cow;
+use std::cmp::{Ordering, PartialOrd};
 use std::convert::From;
 use std::fmt;
 use std::str::FromStr;
 
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde::de;
 use crate::ShortName;
+use serde::de;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// The step in a current season. Not all seasons will have all steps.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -16,11 +17,11 @@ pub enum Phase {
 }
 
 impl ShortName for Phase {
-    fn short_name(&self) -> String {
-        match *self {
-            Phase::Main => String::from("M"),
-            Phase::Retreat => String::from("R"),
-            Phase::Build => String::from("B"),
+    fn short_name<'a>(&'a self) -> std::borrow::Cow<'a, str> {
+        match self {
+            Phase::Main => Cow::Borrowed("M"),
+            Phase::Retreat => Cow::Borrowed("R"),
+            Phase::Build => Cow::Borrowed("B"),
         }
     }
 }
@@ -46,10 +47,10 @@ pub enum Season {
 }
 
 impl ShortName for Season {
-    fn short_name(&self) -> String {
-        match *self {
-            Season::Spring => String::from("S"),
-            Season::Fall => String::from("F"),
+    fn short_name<'a>(&'a self) -> std::borrow::Cow<'a, str> {
+        match self {
+            Season::Spring => Cow::Borrowed("S"),
+            Season::Fall => Cow::Borrowed("F"),
         }
     }
 }
@@ -92,11 +93,13 @@ impl Time {
 }
 
 impl ShortName for Time {
-    fn short_name(&self) -> String {
-        format!("{}{}{}",
-                self.season().short_name(),
-                self.year(),
-                self.phase().short_name())
+    fn short_name<'a>(&'a self) -> std::borrow::Cow<'a, str> {
+        Cow::Owned(format!(
+            "{}{}{}",
+            self.season().short_name(),
+            self.year(),
+            self.phase().short_name()
+        ))
     }
 }
 
@@ -128,9 +131,11 @@ impl FromStr for Time {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.len() == 6 {
-            Ok(Time(s[0..1].parse()?,
-                    s[1..5].parse().or(Err(()))?,
-                    s[5..6].parse()?))
+            Ok(Time(
+                s[0..1].parse()?,
+                s[1..5].parse().or(Err(()))?,
+                s[5..6].parse()?,
+            ))
         } else {
             Err(())
         }
@@ -147,19 +152,21 @@ impl Serialize for Time {
 
 impl<'de> Deserialize<'de> for Time {
     fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
-
         struct TimeVisitor;
 
         impl de::Visitor<'_> for TimeVisitor {
             type Value = Time;
 
             fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                write!(f,
-                       "a string representing a diplomacy time, such as 'S1901M'")
+                write!(
+                    f,
+                    "a string representing a diplomacy time, such as 'S1901M'"
+                )
             }
 
             fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
-                v.parse().or(Err(E::custom(format!("Unable to parse time '{}'", v))))
+                v.parse()
+                    .or(Err(E::custom(format!("Unable to parse time '{}'", v))))
             }
         }
 
@@ -169,20 +176,25 @@ impl<'de> Deserialize<'de> for Time {
 
 #[cfg(test)]
 mod test {
-    use std::str::FromStr;
     use super::*;
+    use std::str::FromStr;
 
     #[test]
     fn parse_time() {
-        assert_eq!(Time::from((Season::Spring, 1901, Phase::Main)),
-                   "S1901M".parse::<Time>().unwrap());
+        assert_eq!(
+            Time::from((Season::Spring, 1901, Phase::Main)),
+            "S1901M".parse::<Time>().unwrap()
+        );
     }
 
     #[test]
     fn cmp() {
         let turns = vec!["S1901M", "S1901R", "F1901M", "F1901R", "F1901B"];
 
-        let parsed = turns.iter().map(|t| Time::from_str(t).unwrap()).collect::<Vec<_>>();
+        let parsed = turns
+            .iter()
+            .map(|t| Time::from_str(t).unwrap())
+            .collect::<Vec<_>>();
         let mut sorted = parsed.clone();
         sorted.sort();
         assert_eq!(parsed, sorted);

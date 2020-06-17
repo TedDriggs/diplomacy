@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::convert::From;
 use serde::{Deserialize, Serialize};
 
@@ -13,8 +14,8 @@ pub struct Province {
 }
 
 impl ShortName for Province {
-    fn short_name(&self) -> String {
-        self.short_name.clone()
+    fn short_name<'a>(&'a self) -> Cow<'a, str> {
+        Cow::Borrowed(&self.short_name)
     }
 }
 
@@ -36,7 +37,7 @@ impl ProvinceKey {
 
 impl<'a> From<&'a Province> for ProvinceKey {
     fn from(p: &Province) -> Self {
-        ProvinceKey(p.short_name())
+        ProvinceKey(p.short_name().into_owned())
     }
 }
 
@@ -53,8 +54,8 @@ impl<'a> From<&'a str> for ProvinceKey {
 }
 
 impl ShortName for ProvinceKey {
-    fn short_name(&self) -> String {
-        self.0.clone()
+    fn short_name<'a>(&'a self) -> Cow<'a, str> {
+        Cow::Borrowed(&self.0)
     }
 }
 

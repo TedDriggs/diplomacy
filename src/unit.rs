@@ -2,6 +2,7 @@ use crate::parser::{Error, ErrorKind};
 use crate::ShortName;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
+use std::borrow::Cow;
 
 /// The type of a military unit. Armies are convoyable land-based units; fleets
 /// are sea-going units which are able to convoy armies.
@@ -29,8 +30,8 @@ impl FromStr for UnitType {
 }
 
 impl ShortName for UnitType {
-    fn short_name(&self) -> String {
-        String::from(match *self {
+    fn short_name<'a>(&'a self) -> std::borrow::Cow<'a, str> {
+        Cow::Borrowed(match *self {
             UnitType::Army => "A",
             UnitType::Fleet => "F",
         })
