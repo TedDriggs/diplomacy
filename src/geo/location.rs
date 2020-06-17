@@ -1,4 +1,4 @@
-use ShortName;
+use crate::ShortName;
 
 use std::fmt::Debug;
 use std::hash::Hash;

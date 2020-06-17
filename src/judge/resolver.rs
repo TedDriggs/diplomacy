@@ -1,5 +1,5 @@
-use geo::{Map, RegionKey, ProvinceKey};
-use order::{Command, MainCommand};
+use crate::geo::{Map, RegionKey, ProvinceKey};
+use crate::order::{Command, MainCommand};
 use super::{MappedMainOrder, OrderState, Rulebook};
 
 use std::convert::From;

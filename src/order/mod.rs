@@ -1,15 +1,16 @@
 //! The model for an order issued to a unit.
 
+use crate::geo::Location;
+use crate::Nation;
+use crate::ShortName;
+use crate::UnitType;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use ShortName;
-use Nation;
-use geo::Location;
-use UnitType;
-
 mod command;
-pub use self::command::{Command, MainCommand, SupportedOrder, ConvoyedMove, RetreatCommand,
-                        BuildCommand};
+pub use self::command::{
+    BuildCommand, Command, ConvoyedMove, MainCommand, RetreatCommand, SupportedOrder,
+};
 
 /// An order is issued by a nation and gives a command to a unit in a region.
 #[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -42,21 +43,23 @@ impl<L: Location, C: Command<L>> Order<L, C> {
     /// This will return false if the start and destination are the
     /// same region.
     pub fn is_head_to_head(first: &Self, other: &Self) -> bool {
-        first.move_dest() != Some(&first.region) &&
-        first.move_dest().map(|d| d.province()) == Some(other.region.province()) &&
-        other.move_dest().map(|d| d.province()) == Some(first.region.province())
+        first.move_dest() != Some(&first.region)
+            && first.move_dest().map(|d| d.province()) == Some(other.region.province())
+            && other.move_dest().map(|d| d.province()) == Some(first.region.province())
     }
 
     /// Write the canonical form of the order to the formatter.
     ///
     /// For readability, this is used by both the Debug and Display traits.
     fn write_short(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "{}: {} {} {}",
-               self.nation.short_name(),
-               self.unit_type.short_name(),
-               self.region.short_name(),
-               self.command)
+        write!(
+            f,
+            "{}: {} {} {}",
+            self.nation.short_name(),
+            self.unit_type.short_name(),
+            self.region.short_name(),
+            self.command
+        )
     }
 }
 
@@ -93,10 +96,10 @@ pub type RetreatOrder<L> = Order<L, RetreatCommand<L>>;
 pub type BuildOrder<L> = Order<L, BuildCommand>;
 
 #[cfg(test)]
+#[allow(dead_code)]
 mod test {
-    use std::str::FromStr;
-    use super::{Order, MainCommand, BuildOrder};
-    use geo::RegionKey;
+    use super::{MainCommand, Order};
+    use crate::geo::RegionKey;
 
     fn ord(s: &str) -> Order<RegionKey, MainCommand<RegionKey>> {
         s.parse().expect("Should be valid")

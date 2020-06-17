@@ -11,7 +11,7 @@ use std::convert::From;
 
 use super::{Map, Province, Region, Border, Coast, Terrain, ProvinceKey};
 
-use ShortName;
+use crate::ShortName;
 
 
 #[derive(Debug, Clone)]
@@ -143,7 +143,7 @@ impl BorderRegistry {
     }
 
     fn validate_terrain(rt1: &Terrain, rt2: &Terrain, bt: &Terrain) -> Result<(), MapError> {
-        use geo::Terrain::*;
+        use crate::geo::Terrain::*;
 
         if (*rt1 == Land || *rt2 == Land) && *bt != Land {
             Err(MapError::IncompatibleBorderTerrain)

@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de;
-use ShortName;
+use crate::ShortName;
 
 /// The step in a current season. Not all seasons will have all steps.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -175,7 +175,7 @@ mod test {
     #[test]
     fn parse_time() {
         assert_eq!(Time::from((Season::Spring, 1901, Phase::Main)),
-                   "S1901M".parse().unwrap());
+                   "S1901M".parse::<Time>().unwrap());
     }
 
     #[test]

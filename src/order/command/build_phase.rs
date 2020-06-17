@@ -1,6 +1,6 @@
 use std::fmt;
-
-use geo::Location;
+use serde::{Deserialize, Serialize};
+use crate::geo::Location;
 use super::Command;
 
 
@@ -18,7 +18,7 @@ pub enum BuildCommand {
 }
 
 impl<L: Location> Command<L> for BuildCommand {
-    
+
     fn move_dest<'a>(&'a self) -> Option<&'a L> {
         // A build command is never a move.
         None

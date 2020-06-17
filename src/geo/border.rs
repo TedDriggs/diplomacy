@@ -1,4 +1,4 @@
-use geo::{RegionKey, Terrain};
+use crate::geo::{RegionKey, Terrain};
 
 /// An undirected edge between two regions in a graph of the map. Units move
 /// between regions via borders.

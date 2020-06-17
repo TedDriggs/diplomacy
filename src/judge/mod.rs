@@ -14,9 +14,9 @@ use std::collections::HashMap;
 pub use self::outcome::Outcome;
 pub use self::state_type::{OrderState, OccupationOutcome};
 
-use order::{Order, MainCommand};
-use geo::{Border, RegionKey, Map, Terrain};
-use UnitType;
+use crate::order::{Order, MainCommand};
+use crate::geo::{Border, RegionKey, Map, Terrain};
+use crate::UnitType;
 pub use self::resolver::{Adjudicate, ResolverContext, ResolverState};
 pub use self::rulebook::Rulebook;
 

@@ -1,7 +1,8 @@
 use std::convert::From;
+use serde::{Deserialize, Serialize};
 
-use Nation;
-use ShortName;
+use crate::Nation;
+use crate::ShortName;
 
 /// A controllable area of the environment.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

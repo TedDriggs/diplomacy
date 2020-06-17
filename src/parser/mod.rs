@@ -16,10 +16,10 @@
 
 use std::str::FromStr;
 
-use geo::Location;
-use order::{Order, Command, MainCommand, BuildCommand, SupportedOrder, ConvoyedMove,
+use crate::geo::Location;
+use crate::order::{Order, Command, MainCommand, BuildCommand, SupportedOrder, ConvoyedMove,
             RetreatCommand};
-use ::Nation;
+use crate::Nation;
 
 mod error;
 
@@ -123,8 +123,8 @@ impl FromWords for BuildCommand {
 #[cfg(test)]
 mod test {
     use super::*;
-    use order::{MainCommand, Order};
-    use geo::RegionKey;
+    use crate::order::{MainCommand, Order};
+    use crate::geo::RegionKey;
 
     type OrderParseResult = Result<Order<RegionKey, MainCommand<RegionKey>>, Error>;
 

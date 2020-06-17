@@ -1,10 +1,10 @@
 use std::fmt;
 use std::convert::From;
 use std::str::FromStr;
-
-use geo::{ProvinceKey, Location};
-use parser::{Error, ErrorKind};
-use ShortName;
+use serde::{Deserialize, Serialize};
+use crate::geo::{ProvinceKey, Location};
+use crate::parser::{Error, ErrorKind};
+use crate::ShortName;
 
 /// Differentiates regions within a province.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -197,7 +197,7 @@ impl FromStr for RegionKey {
 mod test {
     use std::str::FromStr;
 
-    use parser::ErrorKind;
+    use crate::parser::ErrorKind;
     use super::{Coast, RegionKey};
 
     #[test]

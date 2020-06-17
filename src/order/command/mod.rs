@@ -1,4 +1,4 @@
-use geo::Location;
+use crate::geo::Location;
 
 use std::fmt;
 

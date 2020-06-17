@@ -1,7 +1,7 @@
 use std::convert::From;
 use std::fmt;
-
-use ShortName;
+use serde::{Deserialize, Serialize};
+use crate::ShortName;
 
 /// An actor in the game. Nations can own units and issue orders.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

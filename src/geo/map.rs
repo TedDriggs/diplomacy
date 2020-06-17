@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::{Province, Region, RegionKey, Border, Terrain, ProvinceKey};
-use geo::builder::BorderRegistry;
+use crate::geo::builder::BorderRegistry;
 
 /// A collection of provinces, their constituent regions, and the interconnecting borders.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]

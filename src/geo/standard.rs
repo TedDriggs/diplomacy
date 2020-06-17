@@ -1,6 +1,7 @@
-use geo::{Map, Coast, Terrain, Province};
-use geo::builder::ProvinceRegistry;
-use Nation;
+use crate::geo::{Map, Coast, Terrain, Province};
+use crate::geo::builder::ProvinceRegistry;
+use crate::Nation;
+use lazy_static::lazy_static;
 
 lazy_static! {
     static ref STANDARD_MAP : Map = load_standard();

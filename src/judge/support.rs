@@ -1,8 +1,8 @@
 //! Contains helper functions for evaluating the success of support commands
 //! during the main phase of a turn.
 
-use geo::{Map, ProvinceKey};
-use order::{Command, MainCommand, SupportedOrder};
+use crate::geo::{Map, ProvinceKey};
+use crate::order::{Command, MainCommand, SupportedOrder};
 use super::{Adjudicate, MappedMainOrder, ResolverContext, ResolverState, OrderState};
 use super::calc;
 
@@ -74,7 +74,7 @@ pub fn is_supporting_self(support_order: &MappedMainOrder) -> bool {
 /// For move orders, this is the **destination** province. For all other orders,
 /// it is the **currently occupied** province.
 fn needed_at(supported: &MappedMainOrder) -> &ProvinceKey {
-    use order::MainCommand::*;
+    use crate::order::MainCommand::*;
     match supported.command {
         Move(ref dest) => dest.province(),
         Hold | Support(..) | Convoy(..) => supported.region.province(),
@@ -96,7 +96,7 @@ fn can_reach<'a>(world_map: &'a Map,
 
 /// Returns true if an order is a legal support order.
 fn is_legal(support_order: &MappedMainOrder) -> bool {
-    use order::MainCommand::*;
+    use crate::order::MainCommand::*;
 
     match support_order.command {
         Support(SupportedOrder::Hold(_, ref tgt)) => {
@@ -163,10 +163,10 @@ impl<'a> From<SupportOutcome<'a>> for OrderState {
 #[cfg(test)]
 mod test {
     use std::str::FromStr;
-    use geo::{RegionKey, standard_map};
-    use Nation;
-    use UnitType;
-    use order::{Order, MainCommand, SupportedOrder};
+    use crate::geo::{RegionKey, standard_map};
+    use crate::Nation;
+    use crate::UnitType;
+    use crate::order::{Order, MainCommand, SupportedOrder};
     use super::*;
     use super::super::{ResolverState, ResolverContext};
 

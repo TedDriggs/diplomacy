@@ -10,7 +10,7 @@ use diplomacy::judge::{adjudicate, OrderState};
 
 use diplomacy::{Nation, UnitType};
 
-use util::*;
+use crate::util::*;
 
 #[test]
 fn dipmath_figure9() {

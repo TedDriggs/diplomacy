@@ -1,9 +1,9 @@
-use order::{Command, Order};
+use crate::order::{Command, Order};
 use super::{support, convoy};
 use super::{Adjudicate, ResolverContext, ResolverState, MappedMainOrder};
 use super::strength::{Prevent, Strength};
-use geo::ProvinceKey;
-use ShortName;
+use crate::geo::ProvinceKey;
+use crate::ShortName;
 
 /// Returns true if `order` is a move AND between the source and dest, either:
 ///

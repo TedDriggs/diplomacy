@@ -1,5 +1,5 @@
 use std::default::Default;
-use game::{Config, Turn};
+use crate::game::{Config, Turn};
 
 #[derive(Clone)]
 pub struct World {

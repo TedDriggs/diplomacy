@@ -1,7 +1,7 @@
-use geo::{Map, ProvinceKey};
-use order::{Command, MainCommand};
+use crate::geo::{Map, ProvinceKey};
+use crate::order::{Command, MainCommand};
 use super::{MappedMainOrder, ResolverState, ResolverContext, Adjudicate};
-use UnitType;
+use crate::UnitType;
 
 /// Failure cases for convoy route lookup.
 pub enum ConvoyRouteError {
@@ -93,11 +93,11 @@ pub fn route_exists<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
 
 #[cfg(test)]
 mod test {
-    use order::{ConvoyedMove, Order};
-    use geo::{self, RegionKey, ProvinceKey};
-    use judge::MappedMainOrder;
-    use Nation;
-    use UnitType;
+    use crate::order::{ConvoyedMove, Order};
+    use crate::geo::{self, RegionKey, ProvinceKey};
+    use crate::judge::MappedMainOrder;
+    use crate::Nation;
+    use crate::UnitType;
 
     fn convoy(l: &str, f: &str, t: &str) -> MappedMainOrder {
         Order::new(Nation("eng".into()),

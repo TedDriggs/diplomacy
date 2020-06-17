@@ -2,8 +2,8 @@ use super::calc::{max_prevent_result, dislodger_of, path_exists};
 use super::resolver::{Adjudicate, ResolverState, ResolverContext};
 use super::{MappedMainOrder, OrderState};
 use super::support::{self, SupportOutcome};
-use order::{Command, Order};
-use judge::strength::{Strength, Prevent};
+use crate::order::{Command, Order};
+use crate::judge::strength::{Strength, Prevent};
 
 /// The standard Diplomacy rules.
 #[derive(Debug, Clone, Default)]
@@ -17,7 +17,7 @@ impl Rulebook {
                       resolver: &mut ResolverState<'a, Self>,
                       order: &'a MappedMainOrder)
                       -> OrderState {
-        use order::MainCommand::*;
+        use crate::order::MainCommand::*;
         match order.command {
             // A move order succeeds when the unit successfully transitions to the target.
             Move(..) => Rulebook::adjudicate_move(context, resolver, order).into(),

@@ -1,5 +1,5 @@
-use geo::{self, Map};
-use game::{Phase, Season};
+use crate::geo::{self, Map};
+use crate::game::{Phase, Season};
 
 #[derive(Debug, Clone)]
 pub struct Config {

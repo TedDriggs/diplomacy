@@ -1,4 +1,4 @@
-use geo::RegionKey;
+use crate::geo::RegionKey;
 use std::convert::From;
 
 /// Struct representing the success or failure of an order.

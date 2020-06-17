@@ -1,22 +1,16 @@
 //! An adjudicator for orders in the board game Diplomacy. This adjudicator will
 //! be fully compatible with the [Diplomacy Adjudicator Test Cases](http://web.inter.nl.net/users/L.B.Kruijswijk/).
 
-#[macro_use]
-extern crate lazy_static;
-
-#[macro_use]
-extern crate serde;
-
 pub mod geo;
 pub mod order;
 pub mod parser;
 
 mod game;
 mod unit;
-pub use unit::UnitType;
+pub use crate::unit::UnitType;
 
 mod nation;
-pub use nation::Nation;
+pub use crate::nation::Nation;
 
 pub mod judge;
 
