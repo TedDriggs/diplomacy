@@ -18,7 +18,7 @@ impl Error {
             input: input.into(),
         }
     }
-    
+
     /// Gets the kind of error observed.
     pub fn kind(&self) -> &ErrorKind {
         &self.kind

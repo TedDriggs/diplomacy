@@ -1,8 +1,8 @@
 use crate::parser::{Error, ErrorKind};
 use crate::ShortName;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 use std::borrow::Cow;
+use std::str::FromStr;
 
 /// The type of a military unit. Armies are convoyable land-based units; fleets
 /// are sea-going units which are able to convoy armies.

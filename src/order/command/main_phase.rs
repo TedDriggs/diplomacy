@@ -1,8 +1,8 @@
-use crate::geo::Location;
 use super::Command;
+use crate::geo::Location;
 use crate::order::Order;
-use crate::UnitType;
 use crate::ShortName;
+use crate::UnitType;
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::fmt;
@@ -80,13 +80,13 @@ impl<L: ShortName> fmt::Display for SupportedOrder<L> {
             SupportedOrder::Hold(ref ut, ref region) => {
                 write!(f, "{} {}", ut.short_name(), region.short_name())
             }
-            SupportedOrder::Move(ref ut, ref fr, ref to) => {
-                write!(f,
-                       "{} {} -> {}",
-                       ut.short_name(),
-                       fr.short_name(),
-                       to.short_name())
-            }
+            SupportedOrder::Move(ref ut, ref fr, ref to) => write!(
+                f,
+                "{} {} -> {}",
+                ut.short_name(),
+                fr.short_name(),
+                to.short_name()
+            ),
         }
     }
 }

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{Province, Region, RegionKey, Border, Terrain, ProvinceKey};
+use super::{Border, Province, ProvinceKey, Region, RegionKey, Terrain};
 use crate::geo::builder::BorderRegistry;
 
 /// A collection of provinces, their constituent regions, and the interconnecting borders.
@@ -34,11 +34,11 @@ impl Map {
 
     /// Gets the set of regions which connect to the specified region. If `terrain`
     /// is provided, only borders matching that terrain will be provided.
-    pub fn find_bordering<'a, RK: PartialEq<RegionKey>, IT: Into<Option<Terrain>>>
-        (&'a self,
-         region: &RK,
-         terrain: IT)
-         -> Vec<&RegionKey> {
+    pub fn find_bordering<'a, RK: PartialEq<RegionKey>, IT: Into<Option<Terrain>>>(
+        &'a self,
+        region: &RK,
+        terrain: IT,
+    ) -> Vec<&RegionKey> {
         let ter = terrain.into();
         self.borders_containing(region)
             .iter()

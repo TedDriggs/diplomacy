@@ -6,7 +6,6 @@ use crate::geo::{RegionKey, Terrain};
 pub struct Border(RegionKey, RegionKey, Terrain);
 
 impl Border {
-
     /// Create a new border between two regions.
     pub fn new(r1: RegionKey, r2: RegionKey, t: Terrain) -> Border {
         Border(r1, r2, t)
@@ -26,7 +25,11 @@ impl Border {
     }
 
     /// Returns true when the border contains both `r1` and `r2`.
-    pub fn connects<'a, IR1: PartialEq<&'a RegionKey>, IR2: PartialEq<&'a RegionKey>>(&'a self, r1: IR1, r2: IR2) -> bool {
+    pub fn connects<'a, IR1: PartialEq<&'a RegionKey>, IR2: PartialEq<&'a RegionKey>>(
+        &'a self,
+        r1: IR1,
+        r2: IR2,
+    ) -> bool {
         self.contains(r1) && self.contains(r2)
     }
 

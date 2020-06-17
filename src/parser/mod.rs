@@ -17,8 +17,9 @@
 use std::str::FromStr;
 
 use crate::geo::Location;
-use crate::order::{Order, Command, MainCommand, BuildCommand, SupportedOrder, ConvoyedMove,
-            RetreatCommand};
+use crate::order::{
+    BuildCommand, Command, ConvoyedMove, MainCommand, Order, RetreatCommand, SupportedOrder,
+};
 use crate::Nation;
 
 mod error;
@@ -36,7 +37,9 @@ pub trait FromWords: Sized {
 
 type ParseResult<T> = Result<T, Error>;
 
-impl<L: Location + FromStr<Err = Error>, C: Command<L> + FromWords<Err = Error>> FromStr for Order<L, C> {
+impl<L: Location + FromStr<Err = Error>, C: Command<L> + FromWords<Err = Error>> FromStr
+    for Order<L, C>
+{
     type Err = Error;
 
     fn from_str(s: &str) -> ParseResult<Self> {
@@ -78,7 +81,11 @@ impl<L: Location + FromStr<Err = Error>> FromWords for SupportedOrder<L> {
             // {unitType} {in}
             2 => Ok(SupportedOrder::Hold(w[0].parse()?, w[1].parse()?)),
             // {unitType} {from} -> {to}
-            4 => Ok(SupportedOrder::Move(w[0].parse()?, w[1].parse()?, w[3].parse()?)),
+            4 => Ok(SupportedOrder::Move(
+                w[0].parse()?,
+                w[1].parse()?,
+                w[3].parse()?,
+            )),
             _ => Err(Error::new(ErrorKind::MalformedSupport, w.join(" "))),
         }
     }
@@ -123,8 +130,8 @@ impl FromWords for BuildCommand {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::order::{MainCommand, Order};
     use crate::geo::RegionKey;
+    use crate::order::{MainCommand, Order};
 
     type OrderParseResult = Result<Order<RegionKey, MainCommand<RegionKey>>, Error>;
 

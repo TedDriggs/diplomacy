@@ -2,11 +2,11 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::fmt;
 
-use crate::order::{Command};
-use crate::judge::resolver::{self, Adjudicate};
-use super::{MappedMainOrder, ResolverState, ResolverContext, OrderState};
+use super::{MappedMainOrder, OrderState, ResolverContext, ResolverState};
 use crate::judge::calc::dislodger_of;
+use crate::judge::resolver::{self, Adjudicate};
 use crate::judge::Rulebook;
+use crate::order::Command;
 
 /// Contains information about the outcome of a turn, used for reporting back
 /// to players and for setting up the next turn.

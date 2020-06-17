@@ -1,10 +1,10 @@
-use crate::geo::{Map, Coast, Terrain, Province};
 use crate::geo::builder::ProvinceRegistry;
+use crate::geo::{Coast, Map, Province, Terrain};
 use crate::Nation;
 use lazy_static::lazy_static;
 
 lazy_static! {
-    static ref STANDARD_MAP : Map = load_standard();
+    static ref STANDARD_MAP: Map = load_standard();
 }
 
 /// Gets a static reference to the standard game world map.
@@ -15,12 +15,13 @@ pub fn standard_map() -> &'static Map {
 }
 
 fn load_standard() -> Map {
-
     let mut prov_reg = ProvinceRegistry::default();
     let provinces = include_str!("provinces.csv").lines().skip(1);
     for line in provinces {
         if let Ok(prov) = province_from_line(line) {
-            prov_reg.register(prov).expect("standard map shouldn't have issues");
+            prov_reg
+                .register(prov)
+                .expect("standard map shouldn't have issues");
         } else {
             panic!(format!("Failed registering province: {}", line))
         }
@@ -40,7 +41,9 @@ fn load_standard() -> Map {
     let borders = include_str!("borders.csv").lines().skip(1);
     for line in borders {
         let words = line.split(",").collect::<Vec<_>>();
-        border_reg.register(words[0], words[1], terrain_from_word(words[2]).unwrap()).unwrap();
+        border_reg
+            .register(words[0], words[1], terrain_from_word(words[2]).unwrap())
+            .unwrap();
     }
 
     border_reg.finish()
@@ -70,7 +73,11 @@ fn nation_from_word(s: &str) -> Option<Nation> {
 fn region_from_line<'l>(s: &'l str) -> Result<(&'l str, Option<Coast>, Terrain), ()> {
     let words = s.split(",").collect::<Vec<_>>();
     if words.len() == 3 {
-        Ok((words[0], coast_from_word(words[1])?, terrain_from_word(words[2])?))
+        Ok((
+            words[0],
+            coast_from_word(words[1])?,
+            terrain_from_word(words[2])?,
+        ))
     } else {
         Err(())
     }

@@ -1,8 +1,7 @@
-use std::fmt;
-use serde::{Deserialize, Serialize};
-use crate::geo::Location;
 use super::Command;
-
+use crate::geo::Location;
+use serde::{Deserialize, Serialize};
+use std::fmt;
 
 /// A command issued during the build/disband turn (typically "Winter").
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -18,7 +17,6 @@ pub enum BuildCommand {
 }
 
 impl<L: Location> Command<L> for BuildCommand {
-
     fn move_dest<'a>(&'a self) -> Option<&'a L> {
         // A build command is never a move.
         None
@@ -27,11 +25,13 @@ impl<L: Location> Command<L> for BuildCommand {
 
 impl fmt::Display for BuildCommand {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "{}",
-               match self {
-                   &BuildCommand::Build => "build",
-                   &BuildCommand::Disband => "disband",
-               })
+        write!(
+            f,
+            "{}",
+            match self {
+                &BuildCommand::Build => "build",
+                &BuildCommand::Disband => "disband",
+            }
+        )
     }
 }

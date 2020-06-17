@@ -1,4 +1,4 @@
-use super::{MappedMainOrder};
+use super::MappedMainOrder;
 
 pub trait Strength {
     /// Compute the strength of an action from its result.

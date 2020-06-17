@@ -1,6 +1,6 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::convert::From;
-use serde::{Deserialize, Serialize};
 
 use crate::Nation;
 use crate::ShortName;
@@ -8,9 +8,9 @@ use crate::ShortName;
 /// A controllable area of the environment.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Province {
-    pub full_name : String,
-    pub short_name : String,
-    pub supply_center_for : Option<Nation>,
+    pub full_name: String,
+    pub short_name: String,
+    pub supply_center_for: Option<Nation>,
 }
 
 impl ShortName for Province {
@@ -30,7 +30,7 @@ impl PartialEq<ProvinceKey> for Province {
 pub struct ProvinceKey(String);
 
 impl ProvinceKey {
-    pub fn new<IS : Into<String>>(short_name: IS) -> Self {
+    pub fn new<IS: Into<String>>(short_name: IS) -> Self {
         ProvinceKey(short_name.into())
     }
 }

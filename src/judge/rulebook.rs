@@ -1,22 +1,23 @@
-use super::calc::{max_prevent_result, dislodger_of, path_exists};
-use super::resolver::{Adjudicate, ResolverState, ResolverContext};
-use super::{MappedMainOrder, OrderState};
+use super::calc::{dislodger_of, max_prevent_result, path_exists};
+use super::resolver::{Adjudicate, ResolverContext, ResolverState};
 use super::support::{self, SupportOutcome};
+use super::{MappedMainOrder, OrderState};
+use crate::judge::strength::{Prevent, Strength};
 use crate::order::{Command, Order};
-use crate::judge::strength::{Strength, Prevent};
 
 /// The standard Diplomacy rules.
 #[derive(Debug, Clone, Default)]
 pub struct Rulebook;
 
 impl Rulebook {
-    /// Determine the outcome of an order from a context, using the provided 
+    /// Determine the outcome of an order from a context, using the provided
     /// `resolver` to handle guesses and dependency resolutions.
-    fn adjudicate<'a>(&self,
-                      context: &'a ResolverContext<'a>,
-                      resolver: &mut ResolverState<'a, Self>,
-                      order: &'a MappedMainOrder)
-                      -> OrderState {
+    fn adjudicate<'a>(
+        &self,
+        context: &'a ResolverContext<'a>,
+        resolver: &mut ResolverState<'a, Self>,
+        order: &'a MappedMainOrder,
+    ) -> OrderState {
         use crate::order::MainCommand::*;
         match order.command {
             // A move order succeeds when the unit successfully transitions to the target.
@@ -32,17 +33,16 @@ impl Rulebook {
     }
 
     /// Apply rules to determine move outcome.
-    pub fn adjudicate_move<'a>(ctx: &'a ResolverContext<'a>,
-                               rslv: &mut ResolverState<'a, Self>,
-                               ord: &'a MappedMainOrder)
-                               -> AttackOutcome<'a> {
-
+    pub fn adjudicate_move<'a>(
+        ctx: &'a ResolverContext<'a>,
+        rslv: &mut ResolverState<'a, Self>,
+        ord: &'a MappedMainOrder,
+    ) -> AttackOutcome<'a> {
         if ord.command.move_dest() == Some(&ord.region) {
             AttackOutcome::MoveToSelf
         } else if !path_exists(ctx, rslv, ord) {
             AttackOutcome::NoPath
         } else if ord.command.is_move() {
-
             let mut atk_supports = support::find_for(ctx, rslv, ord);
             let mut atk_strength = 1 + atk_supports.len();
             let prevent = max_prevent_result(ctx, rslv, ord);
@@ -55,7 +55,8 @@ impl Rulebook {
                 AttackOutcome::Prevented(prevent.unwrap())
             } else {
                 if let Some(occupier) =
-                       ctx.find_order_to_province(ord.command.move_dest().unwrap().into()) {
+                    ctx.find_order_to_province(ord.command.move_dest().unwrap().into())
+                {
                     let mut resistance = 0;
 
                     // head-to-heads and non-moves get their support
@@ -94,11 +95,11 @@ impl Rulebook {
                     if resistance > 0 && ord.nation == occupier.nation {
                         return AttackOutcome::FriendlyFire;
                     } else if resistance > 0 {
-
                         // Supports to a foreign unit can not be used to dislodge an own unit.
                         // Therefore, we remove any move supports from the nation whose unit
                         // is resisting the move.
-                        atk_supports = atk_supports.into_iter()
+                        atk_supports = atk_supports
+                            .into_iter()
                             .filter(|sup| sup.nation != occupier.nation)
                             .collect();
                         atk_strength = 1 + atk_supports.len();
@@ -116,10 +117,11 @@ impl Rulebook {
         }
     }
 
-    pub fn adjudicate_support<'a>(ctx: &'a ResolverContext<'a>,
-                                  rslv: &mut ResolverState<'a, Self>,
-                                  ord: &'a MappedMainOrder)
-                                  -> SupportOutcome<'a> {
+    pub fn adjudicate_support<'a>(
+        ctx: &'a ResolverContext<'a>,
+        rslv: &mut ResolverState<'a, Self>,
+        ord: &'a MappedMainOrder,
+    ) -> SupportOutcome<'a> {
         if support::is_supporting_self(ord) {
             SupportOutcome::SupportingSelf
         } else {
@@ -132,11 +134,12 @@ impl Rulebook {
 }
 
 impl Adjudicate for Rulebook {
-    fn adjudicate<'a>(&self,
-                      context: &'a ResolverContext<'a>,
-                      resolver: &mut ResolverState<'a, Self>,
-                      order: &'a MappedMainOrder)
-                      -> OrderState {
+    fn adjudicate<'a>(
+        &self,
+        context: &'a ResolverContext<'a>,
+        resolver: &mut ResolverState<'a, Self>,
+        order: &'a MappedMainOrder,
+    ) -> OrderState {
         Rulebook::adjudicate(&self, context, resolver, order)
     }
 }

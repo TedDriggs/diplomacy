@@ -1,32 +1,32 @@
 //! Contains the logic needed to adjudicate a turn.
 
-mod resolver;
-mod strength;
-mod state_type;
 mod calc;
 mod convoy;
-pub mod support;
-mod rulebook;
 mod outcome;
+mod resolver;
+mod rulebook;
+mod state_type;
+mod strength;
+pub mod support;
 
 use std::collections::HashMap;
 
 pub use self::outcome::Outcome;
-pub use self::state_type::{OrderState, OccupationOutcome};
+pub use self::state_type::{OccupationOutcome, OrderState};
 
-use crate::order::{Order, MainCommand};
-use crate::geo::{Border, RegionKey, Map, Terrain};
-use crate::UnitType;
 pub use self::resolver::{Adjudicate, ResolverContext, ResolverState};
 pub use self::rulebook::Rulebook;
+use crate::geo::{Border, Map, RegionKey, Terrain};
+use crate::order::{MainCommand, Order};
+use crate::UnitType;
 
 pub type MappedMainOrder = Order<RegionKey, MainCommand<RegionKey>>;
 
 /// Adjudicate a set of orders
-pub fn adjudicate<'a, O: IntoIterator<Item = MappedMainOrder>>
-    (map: &'a Map,
-     orders: O)
-     -> HashMap<MappedMainOrder, OrderState> {
+pub fn adjudicate<'a, O: IntoIterator<Item = MappedMainOrder>>(
+    map: &'a Map,
+    orders: O,
+) -> HashMap<MappedMainOrder, OrderState> {
     let ctx = ResolverContext::new(map, orders.into_iter().collect());
     ctx.resolve()
 }

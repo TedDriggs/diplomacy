@@ -9,7 +9,7 @@ pub enum OrderState {
     /// For move commands, the order results in a move.
     /// For all other commands, the unit is not dislodged.
     Succeeds,
-    
+
     Fails,
 }
 

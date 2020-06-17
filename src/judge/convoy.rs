@@ -1,6 +1,6 @@
+use super::{Adjudicate, MappedMainOrder, ResolverContext, ResolverState};
 use crate::geo::{Map, ProvinceKey};
 use crate::order::{Command, MainCommand};
-use super::{MappedMainOrder, ResolverState, ResolverContext, Adjudicate};
 use crate::UnitType;
 
 /// Failure cases for convoy route lookup.
@@ -22,13 +22,13 @@ fn is_convoy_for(convoy: &MappedMainOrder, mv_ord: &MappedMainOrder) -> bool {
 }
 
 /// Find all routes from `origin` to `dest` given a set of valid convoys.
-fn route_steps<'a>(map: &Map,
-                   convoys: Vec<&'a MappedMainOrder>,
-                   origin: &ProvinceKey,
-                   dest: &ProvinceKey,
-                   working_path: Vec<&'a MappedMainOrder>)
-                   -> Vec<Vec<&'a MappedMainOrder>> {
-
+fn route_steps<'a>(
+    map: &Map,
+    convoys: Vec<&'a MappedMainOrder>,
+    origin: &ProvinceKey,
+    dest: &ProvinceKey,
+    working_path: Vec<&'a MappedMainOrder>,
+) -> Vec<Vec<&'a MappedMainOrder>> {
     let adjacent_regions = map.find_bordering(origin, None);
     // if we've got a convoy going and there is one hop to the destination,
     // we've found a valid solution.
@@ -41,11 +41,13 @@ fn route_steps<'a>(map: &Map,
             if !working_path.contains(&convoy) && adjacent_regions.contains(&&convoy.region) {
                 let mut next_path = working_path.clone();
                 next_path.push(&convoy);
-                let mut steps = route_steps(map,
-                                            convoys.clone(),
-                                            (&convoy.region).into(),
-                                            dest,
-                                            next_path);
+                let mut steps = route_steps(
+                    map,
+                    convoys.clone(),
+                    (&convoy.region).into(),
+                    dest,
+                    next_path,
+                );
                 if !steps.is_empty() {
                     paths.append(&mut steps);
                 }
@@ -57,10 +59,11 @@ fn route_steps<'a>(map: &Map,
 }
 
 /// Finds all valid convoy routes for a given move order.
-pub fn routes<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
-                                 state: &mut ResolverState<'a, A>,
-                                 mv_ord: &MappedMainOrder)
-                                 -> Result<Vec<Vec<&'a MappedMainOrder>>, ConvoyRouteError> {
+pub fn routes<'a, A: Adjudicate>(
+    ctx: &'a ResolverContext<'a>,
+    state: &mut ResolverState<'a, A>,
+    mv_ord: &MappedMainOrder,
+) -> Result<Vec<Vec<&'a MappedMainOrder>>, ConvoyRouteError> {
     if mv_ord.unit_type == UnitType::Fleet {
         Err(ConvoyRouteError::CanOnlyConvoyArmy)
     } else {
@@ -72,11 +75,13 @@ pub fn routes<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
                 }
             }
 
-            Ok(route_steps(ctx.world_map,
-                           convoy_steps,
-                           (&mv_ord.region).into(),
-                           dst.into(),
-                           vec![]))
+            Ok(route_steps(
+                ctx.world_map,
+                convoy_steps,
+                (&mv_ord.region).into(),
+                dst.into(),
+                vec![],
+            ))
         } else {
             Err(ConvoyRouteError::CanOnlyConvoyMove)
         }
@@ -84,28 +89,35 @@ pub fn routes<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
 }
 
 /// Determines if any valid convoy route exists for the given move order.
-pub fn route_exists<'a, A: Adjudicate>(ctx: &'a ResolverContext<'a>,
-                                       state: &mut ResolverState<'a, A>,
-                                       mv_ord: &MappedMainOrder)
-                                       -> bool {
-    routes(ctx, state, mv_ord).map(|r| !r.is_empty()).unwrap_or(false)
+pub fn route_exists<'a, A: Adjudicate>(
+    ctx: &'a ResolverContext<'a>,
+    state: &mut ResolverState<'a, A>,
+    mv_ord: &MappedMainOrder,
+) -> bool {
+    routes(ctx, state, mv_ord)
+        .map(|r| !r.is_empty())
+        .unwrap_or(false)
 }
 
 #[cfg(test)]
 mod test {
-    use crate::order::{ConvoyedMove, Order};
-    use crate::geo::{self, RegionKey, ProvinceKey};
+    use crate::geo::{self, ProvinceKey, RegionKey};
     use crate::judge::MappedMainOrder;
+    use crate::order::{ConvoyedMove, Order};
     use crate::Nation;
     use crate::UnitType;
 
     fn convoy(l: &str, f: &str, t: &str) -> MappedMainOrder {
-        Order::new(Nation("eng".into()),
-                   UnitType::Fleet,
-                   RegionKey::new(String::from(l), None),
-                   ConvoyedMove::new(RegionKey::new(String::from(f), None),
-                                     RegionKey::new(String::from(t), None))
-                       .into())
+        Order::new(
+            Nation("eng".into()),
+            UnitType::Fleet,
+            RegionKey::new(String::from(l), None),
+            ConvoyedMove::new(
+                RegionKey::new(String::from(f), None),
+                RegionKey::new(String::from(t), None),
+            )
+            .into(),
+        )
     }
 
     #[test]
@@ -117,11 +129,13 @@ mod test {
             convoy("nwg", "lon", "swe"),
         ];
 
-        let routes = super::route_steps(geo::standard_map(),
-                                 convoys.iter().collect(),
-                                 &ProvinceKey::new("lon"),
-                                 &ProvinceKey::new("swe"),
-                                 vec![]);
+        let routes = super::route_steps(
+            geo::standard_map(),
+            convoys.iter().collect(),
+            &ProvinceKey::new("lon"),
+            &ProvinceKey::new("swe"),
+            vec![],
+        );
         for r in &routes {
             println!("CHAIN");
             for o in r.iter() {
