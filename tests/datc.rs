@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use diplomacy::judge::OrderState::{Fails, Succeeds};
 use diplomacy::judge::{self, MappedMainOrder, OrderState, ResolverContext};
-use diplomacy::{geo, order::Command, Nation};
+use diplomacy::geo;
 
 macro_rules! get_state {
     ($results:ident, $order:tt) => {
@@ -15,17 +15,50 @@ macro_rules! get_state {
     };
 }
 
+macro_rules! assert_state {
+    ($results:ident, $order:tt, $expectation:ident) => {
+        assert_eq!($expectation, get_state!($results, $order), $order);
+    };
+}
+
+/// Adjudicate a set of orders and - if specified - assert that order's success or failure.
+macro_rules! judge {
+    (@using $resolver:path => $($rule:tt $(: $outcome:ident)?),+) => {
+        {
+            let results = $resolver(vec![$($rule),*]);
+            $(
+                $(assert_state!(results, $rule, $outcome);)*
+            )*
+
+            results
+        }
+    };
+    (@explain $($rule:tt $(: $outcome:ident)?),+) => {
+        judge!(@using get_with_explanation => $($rule $(: $outcome)*),*)
+    };
+    (@explain $($rule:tt $(: $outcome:ident)?,)+) => {
+        judge!(@using get_with_explanation => $($rule $(: $outcome)*),*)
+    };
+    ($($rule:tt $(: $outcome:ident)?),+) => {
+        judge!(@using get_results => $($rule $(: $outcome)*),*)
+    };
+    ($($rule:tt $(: $outcome:ident)?,)+) => {
+        judge!(@using get_results => $($rule $(: $outcome)*),*)
+    };
+}
+
 fn ord(s: &str) -> MappedMainOrder {
     s.parse()
         .expect(&format!("'{}' should be a valid order", s))
 }
 
 fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
-    let parsed = orders.into_iter().map(ord).collect::<Vec<_>>();
+    let parsed = orders.into_iter().map(ord);
 
     judge::adjudicate(geo::standard_map(), parsed)
 }
 
+#[allow(dead_code)]
 fn get_with_explanation(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
     let parsed = orders.into_iter().map(ord).collect::<Vec<_>>();
     let ctx = ResolverContext::new(geo::standard_map(), parsed.clone());
@@ -49,15 +82,6 @@ fn all_fail(orders: Vec<&str>) {
     }
 }
 
-fn all_succeed(orders: Vec<&str>) {
-    let results = get_results(orders);
-    for (o, outcome) in results {
-        if outcome == Fails {
-            panic!("{} should have succeeded", o);
-        }
-    }
-}
-
 fn report_results(map: &HashMap<MappedMainOrder, OrderState>) {
     for (o, r) in map {
         println!("{} {:?}", o, r)
@@ -71,31 +95,28 @@ fn t6a01_move_to_non_neighbor_fails() {
 
 #[test]
 fn t6a02_move_army_to_sea() {
-    all_fail(vec!["ENG: A lvp -> iri"]);
+    judge! { "ENG: A lvp -> iri": Fails };
 }
 
 #[test]
 fn t6a03_move_fleet_to_land() {
-    all_fail(vec!["GER: F kie -> mun"]);
+    judge! { "GER: F kie -> mun": Fails };
 }
 
 #[test]
 fn t6a04_move_to_own_sector() {
-    all_fail(vec!["GER: F kie -> kie"]);
+    judge! { "GER: F kie -> kie": Fails };
 }
 
 #[test]
 fn t6a05_move_to_own_sector_with_convoy() {
-    let results = get_with_explanation(vec![
-        "ENG: F nth convoys yor -> yor",
-        "ENG: A yor -> yor",
-        "ENG: A lvp supports A yor -> yor",
-        "GER: F lon -> yor",
-        "GER: A wal supports F lon -> yor",
-    ]);
-
-    assert_eq!(Succeeds, get_state!(results, "GER: F lon -> yor"));
-    assert_eq!(Fails, get_state!(results, "ENG: A yor -> yor"));
+    judge! {
+        "ENG: F nth convoys yor -> yor": Succeeds,
+        "ENG: A yor -> yor": Fails,
+        "ENG: A lvp supports A yor -> yor": Succeeds,
+        "GER: F lon -> yor": Succeeds,
+        "GER: A wal supports F lon -> yor": Succeeds,
+    };
 }
 
 #[test]
@@ -106,136 +127,105 @@ fn t6a06_ordering_a_unit_of_another_country() {
 
 #[test]
 fn t6a07_only_armies_can_be_convoyed() {
-    let results = get_results(vec!["ENG: F lon -> bel", "ENG: F nth convoys lon -> bel"]);
-
-    for (order, result) in results {
-        if order.command.move_dest().is_some() {
-            assert_eq!(Fails, result);
-        } else {
-            assert_eq!(Succeeds, result);
-        }
-    }
+    judge! {
+        "ENG: F lon -> bel": Fails,
+        "ENG: F nth convoys lon -> bel": Succeeds,
+    };
 }
 
 #[test]
 fn t6a08_support_to_hold_yourself_is_not_possible() {
-    let results = get_results(vec![
-        "ITA: A ven -> tri",
-        "ITA: A tyr supports A ven -> tri",
-        "AUS: F tri supports F tri",
-    ]);
-
-    for (o, r) in results {
-        if r.into() && o.nation != Nation::from("ITA") {
-            panic!("Why did AUS succeed?");
-        }
-    }
+    judge! {
+        "ITA: A ven -> tri": Succeeds,
+        "ITA: A tyr supports A ven -> tri": Succeeds,
+        "AUS: F tri supports F tri": Fails,
+    };
 }
 
 #[test]
 fn t6a09_fleets_must_follow_coast_if_not_on_sea() {
-    all_fail(vec!["ITA: F rom -> ven"]);
+    judge! { "ITA: F rom -> ven": Fails };
 }
 
 #[test]
 fn t6a10_support_on_unreachable_destination_not_possible() {
-    let results = get_results(vec![
-        "AUS: A ven holds",
+    judge! {
+        "AUS: A ven holds": Succeeds,
         "ITA: F rom supports A apu -> ven",
-        "ITA: A apu -> ven",
-    ]);
-
-    for (order, result) in results {
-        if order.nation == Nation(String::from("AUS")) {
-            assert_eq!(Succeeds, result);
-        } else if order.command.move_dest().is_some() {
-            assert_eq!(Fails, result);
-        }
-    }
+        "ITA: A apu -> ven": Fails,
+    };
 }
 
 #[test]
 fn t6a11_simple_bounce() {
-    all_fail(vec!["AUS: A vie -> tyr", "ITA: A ven -> tyr"]);
+    judge![
+        "AUS: A vie -> tyr": Fails,
+        "ITA: A ven -> tyr": Fails,
+    ];
 }
 
 #[test]
 fn t6a12_bounce_of_three_units() {
-    all_fail(vec![
-        "AUS: A vie -> tyr",
-        "ITA: A ven -> tyr",
-        "GER: A mun -> tyr",
-    ]);
+    judge![
+        "AUS: A vie -> tyr": Fails,
+        "ITA: A ven -> tyr": Fails,
+        "GER: A mun -> tyr": Fails,
+    ];
 }
 
 #[test]
 fn t6b01_moving_without_required_coast_fails() {
-    all_fail(vec!["FRA: F por -> spa"]);
+    judge! { "FRA: F por -> spa": Fails };
 }
 
 #[test]
 fn t6b02_moving_with_unspecified_coast_when_coast_is_not_necessary() {
-    all_fail(vec!["FRA: F gas -> spa"]);
+    judge! { "FRA: F gas -> spa": Fails };
 }
 
 #[test]
 fn t6b03_moving_with_wrong_coast_when_coast_is_not_necessary() {
-    all_fail(vec!["FRA: F gas -> spa(sc)"]);
+    judge! { "FRA: F gas -> spa(sc)": Fails };
 }
 
 #[test]
 fn t6b04_support_to_unreachable_coast_allowed() {
-    let results = get_results(vec![
-        "FRA: F gas -> spa(nc)",
+    judge! {
+        "FRA: F gas -> spa(nc)": Succeeds,
         "FRA: F mar supports F gas -> spa(nc)",
-        "ITA: F wes -> spa(sc)",
-    ]);
-
-    for (order, result) in results {
-        assert_eq!(result, (order.nation == Nation(String::from("FRA"))).into());
-    }
+        "ITA: F wes -> spa(sc)": Fails,
+    };
 }
 
 #[test]
 fn t6b05_support_from_unreachable_coast_not_allowed() {
-    let results = get_results(vec![
-        "FRA: F mar -> lyo",
+    judge![
+        "FRA: F mar -> lyo": Fails,
         "FRA: F spa(nc) supports F mar -> lyo",
-        "ITA: F lyo holds",
-    ]);
-
-    for (order, result) in results {
-        if order.command.move_dest().is_some() {
-            assert_eq!(result, Fails);
-        } else {
-            assert_eq!(result, Succeeds);
-        }
-    }
+        "ITA: F lyo holds": Succeeds,
+    ];
 }
 
 #[test]
 fn t6b06_support_can_be_cut_with_other_coast() {
-    let orders = vec![
-        "ENG: F iri supports F nao -> mao",
-        "ENG: F nao -> mao",
-        "FRA: F spa(nc) supports F mao",
-        "FRA: F mao holds",
-        "ITA: F lyo -> spa(sc)",
+    judge![
+        "ENG: F iri supports F nao -> mao": Succeeds,
+        "ENG: F nao -> mao": Succeeds,
+        "FRA: F spa(nc) supports F mao": Fails,
+        "FRA: F mao holds": Fails,
+        "ITA: F lyo -> spa(sc)": Fails,
     ];
-    let results = get_results(orders.clone());
-
-    assert_eq!(Fails, get_state!(results, "FRA: F spa(nc) supports F mao"));
 }
 
 #[test]
 #[ignore]
 fn t6b07_supporting_with_unspecified_coast() {
-    let results = get_results(vec![
+    judge![
         "FRA: F por Supports F mao -> spa",
         "FRA: F mao -> spa(nc)",
         "ITA: F lyo Supports F wes -> spa(sc)",
         "ITA: F wes -> spa(sc)",
-    ]);
+    ];
 }
 
 #[test]
@@ -280,7 +270,10 @@ fn t6b12_army_movement_with_coastal_specification() {
 
 #[test]
 fn t6b13_coastal_crawl_not_allowed() {
-    all_fail(vec!["TUR: F bul(sc) -> con", "TUR: F con -> bul(ec)"]);
+    judge![
+        "TUR: F bul(sc) -> con": Fails,
+        "TUR: F con -> bul(ec)": Fails,
+    ];
 }
 
 #[test]
@@ -291,79 +284,69 @@ fn t6b14_building_with_unspecified_coast() {
 
 #[test]
 fn t6c01_three_army_circular_movement_succeeds() {
-    all_succeed(vec![
-        "TUR: F ank -> con",
-        "TUR: A con -> smy",
-        "TUR: A smy -> ank",
-    ]);
+    judge![
+        "TUR: F ank -> con": Succeeds,
+        "TUR: A con -> smy": Succeeds,
+        "TUR: A smy -> ank": Succeeds,
+    ];
 }
 
 #[test]
 fn t6c02_three_army_circular_movement_with_support() {
-    all_succeed(vec![
-        "TUR: F ank -> con",
-        "TUR: A con -> smy",
-        "TUR: A smy -> ank",
-        "TUR: A bul supports F ank -> con",
-    ]);
+    judge![
+        "TUR: F ank -> con": Succeeds,
+        "TUR: A con -> smy": Succeeds,
+        "TUR: A smy -> ank": Succeeds,
+        "TUR: A bul supports F ank -> con": Succeeds,
+    ];
 }
 
 #[test]
 fn t6c03_a_disrupted_three_army_circular_movement() {
-    all_fail(vec![
-        "TUR: F ank -> con",
-        "TUR: A bul -> con",
-        "TUR: A smy -> ank",
-        "TUR: A con -> smy",
-    ]);
+    judge![
+        "TUR: F ank -> con": Fails,
+        "TUR: A bul -> con": Fails,
+        "TUR: A smy -> ank": Fails,
+        "TUR: A con -> smy": Fails,
+    ];
 }
 
 #[test]
 fn t6c04_a_circular_movement_with_attacked_convoy() {
-    let results = get_results(vec![
-        "AUS: A tri -> ser",
-        "AUS: A ser -> bul",
-        "TUR: A bul -> tri",
+    judge![
+        "AUS: A tri -> ser": Succeeds,
+        "AUS: A ser -> bul": Succeeds,
+        "TUR: A bul -> tri": Succeeds,
         "TUR: F aeg convoys bul -> tri",
         "TUR: F ion convoys bul -> tri",
         "TUR: F adr convoys bul -> tri",
-        "ITA: F nap -> ion",
-    ]);
-
-    assert_eq!(Succeeds, get_state!(results, "AUS: A tri -> ser"));
-    assert_eq!(Succeeds, get_state!(results, "AUS: A ser -> bul"));
-    assert_eq!(Succeeds, get_state!(results, "TUR: A bul -> tri"));
-    assert_eq!(Fails, get_state!(results, "ITA: F nap -> ion"));
+        "ITA: F nap -> ion": Fails,
+    ];
 }
 
 #[test]
 fn t6c05_a_disrupted_circular_movement_due_to_dislodged_convoy() {
-    let results = get_results(vec![
-        "AUS: A tri -> ser",
-        "AUS: A ser -> bul",
-        "TUR: A bul -> tri",
+    judge![
+        "AUS: A tri -> ser": Fails,
+        "AUS: A ser -> bul": Fails,
+        "TUR: A bul -> tri": Fails,
         "TUR: F aeg convoys bul -> tri",
         "TUR: F ion convoys bul -> tri",
         "TUR: F adr convoys bul -> tri",
-        "ITA: F nap -> ion",
+        "ITA: F nap -> ion": Succeeds,
         "ITA: F tun supports F nap -> ion",
-    ]);
-
-    assert_eq!(Fails, get_state!(results, "AUS: A tri -> ser"));
-    assert_eq!(Fails, get_state!(results, "AUS: A ser -> bul"));
-    assert_eq!(Fails, get_state!(results, "TUR: A bul -> tri"));
-    assert_eq!(Succeeds, get_state!(results, "ITA: F nap -> ion"));
+    ];
 }
 
 #[test]
-#[ignore]
 fn t6c06_two_armies_with_two_convoys() {
-    let results = get_results(vec![
+    judge![
+        @explain
         "ENG: F nor convoys lon -> bel",
-        "ENG: A lon -> bel",
+        "ENG: A lon -> bel": Succeeds,
         "FRA: F eng convoys bel -> lon",
-        "FRA: A bel -> lon",
-    ]);
+        "FRA: A bel -> lon": Succeeds,
+    ];
 }
 
 #[test]
@@ -466,67 +449,63 @@ fn t6d07_support_to_hold_on_moving_unit_not_allowed() {
 
 #[test]
 fn t6d08_failed_convoy_can_not_receive_hold_support() {
-    let results = get_results(vec![
+    judge![
         "AUS: F ion hold",
         "AUS: A ser Supports A alb -> gre",
-        "AUS: A alb -> gre",
-        "TUR: A gre -> nap",
+        "AUS: A alb -> gre": Succeeds,
+        "TUR: A gre -> nap": Fails,
         "TUR: A bul Supports A gre",
-    ]);
-
-    assert_eq!(Succeeds, get_state!(results, "AUS: A alb -> gre"));
-    assert_eq!(Fails, get_state!(results, "TUR: A gre -> nap"));
+    ];
 }
 
 #[test]
 fn t6d09_support_to_move_on_holding_unit_not_allowed() {
-    let results = get_results(vec![
-        "ITA: A ven -> tri",
+    let results = judge![
+        "ITA: A ven -> tri": Succeeds,
         "ITA: A tyr supports A ven -> tri",
         "AUS: A alb supports A tri -> ser",
         "AUS: A tri holds",
-    ]);
+    ];
 
     report_results(&results);
-    assert_eq!(Succeeds, get_state!(results, "ITA: A ven -> tri"));
 }
 
 #[test]
 fn t6d10_self_dislodgment_prohibited() {
-    let results = get_results(vec![
+    judge![
         "GER: A ber Hold",
         "GER: F kie -> ber",
         "GER: A mun Supports F kie -> ber",
-    ]);
+    ];
 }
 
 #[test]
 fn t6d11_no_self_dislodgment_of_returning_unit() {
-    let results = get_results(vec![
+    judge![
         "GER: A ber -> pru",
         "GER: F kie -> ber",
         "GER: A mun Supports F kie -> ber",
         "RUS: A war -> pru",
-    ]);
+    ];
 }
 
 #[test]
 fn t6d12_supporting_a_foreign_unit_to_dislodge_own_unit_prohibited() {
-    let results = get_results(vec![
+    judge![
         "AUS: F tri Hold",
         "AUS: A vie Supports A ven -> tri",
-        "ITA: A ven -> tri",
-    ]);
+        "ITA: A ven -> tri": Fails,
+    ];
 }
 
 #[test]
 fn t6d13_supporting_a_foreign_unit_to_dislodge_a_returning_own_unit_prohibited() {
-    let results = get_results(vec![
-        "AUS: F tri -> adr",
+    judge![
+        "AUS: F tri -> adr": Fails,
         "AUS: A vie Supports A ven -> tri",
-        "ITA: A ven -> tri",
-        "ITA: F apu -> adr",
-    ]);
+        "ITA: A ven -> tri": Fails,
+        "ITA: F apu -> adr": Fails,
+    ];
 }
 
 #[test]
@@ -542,11 +521,11 @@ fn t6d14_supporting_a_foreign_unit_is_not_enough_to_prevent_dislodgement() {
 
 #[test]
 fn t6d15_defender_can_not_cut_support_for_attack_on_itself() {
-    let results = get_results(vec![
+    judge![
         "RUS: F con Supports F bla -> ank",
-        "RUS: F bla -> ank",
-        "TUR: F ank -> con",
-    ]);
+        "RUS: F bla -> ank": Fails,
+        "TUR: F ank -> con": Succeeds,
+    ];
 }
 
 #[test]
@@ -594,16 +573,14 @@ fn t6d20_unit_can_not_cut_support_of_its_own_country() {
 
 #[test]
 fn t6d21_dislodging_does_not_cancel_a_support_cut() {
-    let results = get_results(vec![
-        "AUS: F tri Hold",
-        "ITA: A ven -> tri",
+    judge![
+        "AUS: F tri Hold": Succeeds,
+        "ITA: A ven -> tri": Fails,
         "ITA: A tyr supports A ven -> tri",
-        "GER: A mun -> tyr",
-        "RUS: A sil -> mun",
+        "GER: A mun -> tyr": Fails,
+        "RUS: A sil -> mun": Succeeds,
         "RUS: A ber Supports A sil -> mun",
-    ]);
-
-    assert_eq!(Succeeds, get_state!(results, "AUS: F tri Hold"));
+    ];
 }
 
 #[test]
@@ -715,16 +692,12 @@ fn t6d32_a_missing_fleet() {
 
 #[test]
 fn t6d33_unwanted_support_allowed() {
-    let results = get_results(vec![
-        "AUS: A ser -> bud",
-        "AUS: A vie -> bud",
+    judge![
+        "AUS: A ser -> bud": Succeeds,
+        "AUS: A vie -> bud": Fails,
         "RUS: A gal supports A ser -> bud",
-        "TUR: A bul -> ser",
-    ]);
-
-    assert_eq!(Succeeds, get_state!(results, "AUS: A ser -> bud"));
-    assert_eq!(Succeeds, get_state!(results, "TUR: A bul -> ser"));
-    assert_eq!(Fails, get_state!(results, "AUS: A vie -> bud"));
+        "TUR: A bul -> ser": Succeeds,
+    ];
 }
 
 #[test]
