@@ -39,7 +39,7 @@ fn dipmath_figure9() {
             MainCommand::Move(reg("nwg")),
         ),
         Order::new(
-            ger.clone(),
+            ger,
             UnitType::Fleet,
             reg("ska"),
             MainCommand::Support(SupportedOrder::Move(
@@ -126,7 +126,7 @@ fn dipmath_figure16() {
             MainCommand::Move(reg("ion")),
         ),
         Order::new(
-            tur.clone(),
+            tur,
             Fleet,
             reg("gre"),
             SupportedOrder::Move(UnitType::Fleet, reg("aeg"), reg("ion")).into(),

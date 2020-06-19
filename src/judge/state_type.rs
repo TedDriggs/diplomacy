@@ -15,9 +15,10 @@ pub enum OrderState {
 
 impl From<bool> for OrderState {
     fn from(b: bool) -> Self {
-        match b {
-            true => OrderState::Succeeds,
-            false => OrderState::Fails,
+        if b {
+            OrderState::Succeeds
+        } else {
+            OrderState::Fails
         }
     }
 }

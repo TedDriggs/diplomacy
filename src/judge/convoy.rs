@@ -16,7 +16,7 @@ pub enum ConvoyRouteError {
 /// its current location to the destination.
 fn is_convoy_for(convoy: &MappedMainOrder, mv_ord: &MappedMainOrder) -> bool {
     match &convoy.command {
-        &MainCommand::Convoy(ref cm) => cm == mv_ord,
+        MainCommand::Convoy(ref cm) => cm == mv_ord,
         _ => false,
     }
 }
@@ -66,25 +66,23 @@ pub fn routes<'a, A: Adjudicate>(
 ) -> Result<Vec<Vec<&'a MappedMainOrder>>, ConvoyRouteError> {
     if mv_ord.unit_type == UnitType::Fleet {
         Err(ConvoyRouteError::CanOnlyConvoyArmy)
-    } else {
-        if let Some(dst) = mv_ord.move_dest() {
-            let mut convoy_steps = vec![];
-            for order in ctx.orders() {
-                if is_convoy_for(order, mv_ord) && state.resolve(ctx, order).into() {
-                    convoy_steps.push(order);
-                }
+    } else if let Some(dst) = mv_ord.move_dest() {
+        let mut convoy_steps = vec![];
+        for order in ctx.orders() {
+            if is_convoy_for(order, mv_ord) && state.resolve(ctx, order).into() {
+                convoy_steps.push(order);
             }
-
-            Ok(route_steps(
-                ctx.world_map,
-                convoy_steps,
-                (&mv_ord.region).into(),
-                dst.into(),
-                vec![],
-            ))
-        } else {
-            Err(ConvoyRouteError::CanOnlyConvoyMove)
         }
+
+        Ok(route_steps(
+            ctx.world_map,
+            convoy_steps,
+            (&mv_ord.region).into(),
+            dst.into(),
+            vec![],
+        ))
+    } else {
+        Err(ConvoyRouteError::CanOnlyConvoyMove)
     }
 }
 

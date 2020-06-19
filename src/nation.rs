@@ -9,7 +9,7 @@ use std::fmt;
 pub struct Nation(pub String);
 
 impl ShortName for Nation {
-    fn short_name<'a>(&'a self) -> Cow<'a, str> {
+    fn short_name(&self) -> Cow<'_, str> {
         Cow::Borrowed(&self.0)
     }
 }

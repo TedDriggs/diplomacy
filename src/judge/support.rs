@@ -58,7 +58,7 @@ pub fn is_order_cut<'a, A: Adjudicate>(
     support_order: &MappedMainOrder,
 ) -> bool {
     ctx.orders()
-        .into_iter()
+        .iter()
         .any(|order| order_cuts(ctx, resolver, support_order, &order))
 }
 
@@ -137,7 +137,7 @@ pub fn find_for<'a, A: Adjudicate>(
     supported: &MappedMainOrder,
 ) -> Vec<&'a MappedMainOrder> {
     ctx.orders()
-        .into_iter()
+        .iter()
         .filter(|order| is_successful(ctx, resolver, supported, order))
         .collect()
 }
@@ -187,7 +187,7 @@ mod test {
                 MainCommand::Support(supp_com.clone()),
             ),
             Order::new(
-                ger.clone(),
+                ger,
                 UnitType::Fleet,
                 reg("nth"),
                 MainCommand::Move(reg("nwy")),
@@ -213,10 +213,10 @@ mod test {
                 fra.clone(),
                 UnitType::Fleet,
                 reg("gas"),
-                MainCommand::Move(spa_nc.clone()),
+                MainCommand::Move(spa_nc),
             ),
             Order::new(
-                fra.clone(),
+                fra,
                 UnitType::Fleet,
                 reg("mar"),
                 supp_com.clone().into(),

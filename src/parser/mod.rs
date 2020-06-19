@@ -45,14 +45,14 @@ impl<L: Location + FromStr<Err = Error>, C: Command<L> + FromWords<Err = Error>>
     fn from_str(s: &str) -> ParseResult<Self> {
         let words = s.split_whitespace().collect::<Vec<_>>();
 
-        let nation = Nation(words[0].trim_end_matches(":").into());
+        let nation = Nation(words[0].trim_end_matches(':').into());
         let unit_type = words[1].parse()?;
         let location = words[2].parse()?;
         let cmd = C::from_words(&words[3..])?;
 
         Ok(Order {
-            nation: nation,
-            unit_type: unit_type,
+            nation,
+            unit_type,
             region: location,
             command: cmd,
         })

@@ -28,8 +28,8 @@ impl<'a> ResolverContext<'a> {
     /// Creates a new resolver context for a set of orders on a map.
     pub fn new(world_map: &'a Map, orders: Vec<MappedMainOrder>) -> Self {
         ResolverContext {
-            world_map: world_map,
-            orders: orders,
+            world_map,
+            orders,
         }
     }
 
@@ -81,14 +81,15 @@ impl<'a> ResolverContext<'a> {
     }
 
     pub fn find_order_to_province(&'a self, p: &ProvinceKey) -> Option<&'a MappedMainOrder> {
-        self.orders().into_iter().find(|o| &o.region == p)
+        self.orders().iter().find(|o| &o.region == p)
     }
 
     pub fn find_order_to_region(&'a self, r: &RegionKey) -> Option<&'a MappedMainOrder> {
-        self.orders().into_iter().find(|o| &o.region == r)
+        self.orders().iter().find(|o| &o.region == r)
     }
 }
 
+#[allow(clippy::implicit_hasher)]
 impl<'a> From<ResolverContext<'a>> for HashMap<MappedMainOrder, OrderState> {
     fn from(rc: ResolverContext<'a>) -> Self {
         rc.resolve()
@@ -122,7 +123,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         ResolverState {
             state: HashMap::new(),
             dependency_chain: vec![],
-            adjudicator: adjudicator,
+            adjudicator,
         }
     }
 
@@ -235,7 +236,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                         // If there's a paradox but the outcome doesn't depend on this order,
                         // then all we've learned is the state of this one order.
                         if if_fails == if_succeeds {
-                            self.set_state(order, Known(if_fails.clone()));
+                            self.set_state(order, Known(if_fails));
                             if_fails
                         } else {
                             let tail_start = self.dependency_chain.len();

@@ -14,7 +14,7 @@ pub struct Province {
 }
 
 impl ShortName for Province {
-    fn short_name<'a>(&'a self) -> Cow<'a, str> {
+    fn short_name(&self) -> Cow<'_, str> {
         Cow::Borrowed(&self.short_name)
     }
 }
@@ -54,7 +54,7 @@ impl<'a> From<&'a str> for ProvinceKey {
 }
 
 impl ShortName for ProvinceKey {
-    fn short_name<'a>(&'a self) -> Cow<'a, str> {
+    fn short_name(&self) -> Cow<'_, str> {
         Cow::Borrowed(&self.0)
     }
 }

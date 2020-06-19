@@ -74,7 +74,7 @@ impl RegionRegistry {
     fn find_province(&self, k: &str) -> Result<ProvinceKey, MapError> {
         self.provinces
             .get(k)
-            .map(|p| ProvinceKey::from(p))
+            .map(ProvinceKey::from)
             .ok_or(MapError::ProvinceNotFound)
     }
 
@@ -158,11 +158,10 @@ impl BorderRegistry {
     fn validate_terrain(rt1: Terrain, rt2: Terrain, bt: Terrain) -> Result<(), MapError> {
         use crate::geo::Terrain::*;
 
-        if (rt1 == Land || rt2 == Land) && bt != Land {
-            Err(MapError::IncompatibleBorderTerrain)
-        } else if (rt1 == Sea || rt2 == Sea) && bt != Sea {
-            Err(MapError::IncompatibleBorderTerrain)
-        } else if (rt1 == Sea && rt2 == Land) || (rt1 == Land && rt2 == Sea) {
+        if ((rt1 == Sea || rt2 == Sea) && bt != Sea)
+            || ((rt1 == Land || rt2 == Land) && bt != Land)
+            || ((rt1 == Sea && rt2 == Land) || (rt1 == Land && rt2 == Sea))
+        {
             Err(MapError::IncompatibleBorderTerrain)
         } else {
             Ok(())

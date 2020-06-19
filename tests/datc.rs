@@ -1,5 +1,5 @@
 #![cfg(test)]
-#![allow(unused_variables)]
+#![allow(unused_variables, clippy::let_and_return)]
 
 use std::collections::HashMap;
 
@@ -47,7 +47,7 @@ macro_rules! judge {
 
 fn ord(s: &str) -> MappedMainOrder {
     s.parse()
-        .expect(&format!("'{}' should be a valid order", s))
+        .unwrap_or_else(|_| panic!(format!("'{}' should be a valid order", s)))
 }
 
 fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {

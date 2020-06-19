@@ -17,7 +17,7 @@ pub enum Phase {
 }
 
 impl ShortName for Phase {
-    fn short_name<'a>(&'a self) -> std::borrow::Cow<'a, str> {
+    fn short_name(&self) -> std::borrow::Cow<'_, str> {
         match self {
             Phase::Main => Cow::Borrowed("M"),
             Phase::Retreat => Cow::Borrowed("R"),
@@ -47,7 +47,7 @@ pub enum Season {
 }
 
 impl ShortName for Season {
-    fn short_name<'a>(&'a self) -> std::borrow::Cow<'a, str> {
+    fn short_name(&self) -> std::borrow::Cow<'_, str> {
         match self {
             Season::Spring => Cow::Borrowed("S"),
             Season::Fall => Cow::Borrowed("F"),
@@ -93,7 +93,7 @@ impl Time {
 }
 
 impl ShortName for Time {
-    fn short_name<'a>(&'a self) -> std::borrow::Cow<'a, str> {
+    fn short_name(&self) -> std::borrow::Cow<'_, str> {
         Cow::Owned(format!(
             "{}{}{}",
             self.season().short_name(),
@@ -166,7 +166,7 @@ impl<'de> Deserialize<'de> for Time {
 
             fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
                 v.parse()
-                    .or(Err(E::custom(format!("Unable to parse time '{}'", v))))
+                    .or_else(|_| Err(E::custom(format!("Unable to parse time '{}'", v))))
             }
         }
 

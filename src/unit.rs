@@ -30,7 +30,7 @@ impl FromStr for UnitType {
 }
 
 impl ShortName for UnitType {
-    fn short_name<'a>(&'a self) -> std::borrow::Cow<'a, str> {
+    fn short_name(&self) -> std::borrow::Cow<'_, str> {
         Cow::Borrowed(match *self {
             UnitType::Army => "A",
             UnitType::Fleet => "F",

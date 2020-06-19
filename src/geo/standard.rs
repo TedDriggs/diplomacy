@@ -40,7 +40,7 @@ fn load_standard() -> Map {
     let mut border_reg = region_reg.finish();
     let borders = include_str!("borders.csv").lines().skip(1);
     for line in borders {
-        let words = line.split(",").collect::<Vec<_>>();
+        let words = line.split(',').collect::<Vec<_>>();
         border_reg
             .register(words[0], words[1], terrain_from_word(words[2]).unwrap())
             .unwrap();
@@ -50,7 +50,7 @@ fn load_standard() -> Map {
 }
 
 fn province_from_line(s: &str) -> Result<Province, ()> {
-    let words = s.split(",").collect::<Vec<_>>();
+    let words = s.split(',').collect::<Vec<_>>();
     if words.len() == 3 {
         Ok(Province {
             short_name: String::from(words[0]),
@@ -70,8 +70,8 @@ fn nation_from_word(s: &str) -> Option<Nation> {
     }
 }
 
-fn region_from_line<'l>(s: &'l str) -> Result<(&'l str, Option<Coast>, Terrain), ()> {
-    let words = s.split(",").collect::<Vec<_>>();
+fn region_from_line(s: &str) -> Result<(&str, Option<Coast>, Terrain), ()> {
+    let words = s.split(',').collect::<Vec<_>>();
     if words.len() == 3 {
         Ok((
             words[0],

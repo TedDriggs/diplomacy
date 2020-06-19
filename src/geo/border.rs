@@ -15,7 +15,7 @@ impl Border {
         self.2
     }
 
-    pub fn sides<'a>(&'a self) -> (&'a RegionKey, &'a RegionKey) {
+    pub fn sides(&self) -> (&RegionKey, &RegionKey) {
         (&self.0, &self.1)
     }
 
@@ -34,7 +34,7 @@ impl Border {
     }
 
     /// If this region contains `r`, returns the other region in the border.
-    pub fn dest_from<'a, IR: PartialEq<RegionKey>>(&self, r: &IR) -> Option<&RegionKey> {
+    pub fn dest_from(&self, r: &impl PartialEq<RegionKey>) -> Option<&RegionKey> {
         if r == &self.0 {
             Some(&self.1)
         } else if r == &self.1 {

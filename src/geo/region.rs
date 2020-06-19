@@ -17,7 +17,7 @@ pub enum Coast {
 }
 
 impl ShortName for Coast {
-    fn short_name<'a>(&'a self) -> Cow<'a, str> {
+    fn short_name(&self) -> Cow<'_, str> {
         use self::Coast::*;
         Cow::Borrowed(match *self {
             North => "(nc)",
@@ -82,7 +82,7 @@ impl Region {
 }
 
 impl ShortName for Region {
-    fn short_name<'a>(&'a self) -> Cow<'a, str> {
+    fn short_name(&self) -> Cow<'_, str> {
         if let Some(val) = self.coast() {
             Cow::Owned(format!(
                 "{}{}",
@@ -126,7 +126,7 @@ impl RegionKey {
 
 impl<'a> From<&'a Region> for RegionKey {
     fn from(r: &'a Region) -> Self {
-        RegionKey(r.0.clone(), r.1.clone())
+        RegionKey(r.0.clone(), r.1)
     }
 }
 
@@ -155,7 +155,7 @@ impl PartialEq<RegionKey> for ProvinceKey {
 }
 
 impl ShortName for RegionKey {
-    fn short_name<'a>(&'a self) -> Cow<'a, str> {
+    fn short_name(&self) -> Cow<'_, str> {
         if let Some(val) = self.coast() {
             Cow::Owned(format!(
                 "{}{}",

@@ -19,7 +19,7 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
     pub fn moved(&self) -> Vec<&MappedMainOrder> {
         self.context
             .orders()
-            .into_iter()
+            .iter()
             .filter(|o| o.is_move() && self.get(o) == Some(OrderState::Succeeds))
             .collect()
     }

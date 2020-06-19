@@ -36,10 +36,6 @@ impl<'a> Strength for Prevent<'a> {
 
 impl<T: Strength> Strength for Option<T> {
     fn strength(&self) -> usize {
-        if let &Some(ref streng) = self {
-            streng.strength()
-        } else {
-            0
-        }
+        self.as_ref().map(Strength::strength).unwrap_or_default()
     }
 }

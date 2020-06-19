@@ -26,7 +26,7 @@ pub enum MainCommand<L> {
 }
 
 impl<L: Location> Command<L> for MainCommand<L> {
-    fn move_dest<'a>(&'a self) -> Option<&'a L> {
+    fn move_dest(&self) -> Option<&L> {
         match *self {
             MainCommand::Move(ref dst) => Some(dst),
             _ => None,
@@ -45,10 +45,10 @@ impl<L: Location> fmt::Display for MainCommand<L> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::MainCommand::*;
         match self {
-            &Hold => write!(f, "holds"),
-            &Move(ref dest) => write!(f, "-> {}", dest.short_name()),
-            &Support(ref order) => write!(f, "supports {}", order),
-            &Convoy(ref mv) => write!(f, "convoys {}", mv),
+            Hold => write!(f, "holds"),
+            Move(ref dest) => write!(f, "-> {}", dest.short_name()),
+            Support(ref order) => write!(f, "supports {}", order),
+            Convoy(ref mv) => write!(f, "convoys {}", mv),
         }
     }
 }
@@ -100,10 +100,10 @@ impl<L> From<SupportedOrder<L>> for MainCommand<L> {
 impl<L: Location> PartialEq<Order<L, MainCommand<L>>> for SupportedOrder<L> {
     fn eq(&self, other: &Order<L, MainCommand<L>>) -> bool {
         match self {
-            &SupportedOrder::Hold(ref ut, ref loc) => {
+            SupportedOrder::Hold(ref ut, ref loc) => {
                 !other.command.is_move() && loc == &other.region && ut == &other.unit_type
             }
-            &SupportedOrder::Move(ref ut, ref fr, ref to) => {
+            SupportedOrder::Move(ref ut, ref fr, ref to) => {
                 if let MainCommand::Move(ref dst) = other.command {
                     ut == &other.unit_type && fr == &other.region && to == dst
                 } else {
@@ -143,7 +143,7 @@ impl<L: Location> PartialEq<MainOrder<L>> for ConvoyedMove<L> {
     fn eq(&self, rhs: &MainOrder<L>) -> bool {
         if rhs.unit_type == UnitType::Army {
             match &rhs.command {
-                &MainCommand::Move(ref dst) => self.from() == &rhs.region && self.to() == dst,
+                MainCommand::Move(ref dst) => self.from() == &rhs.region && self.to() == dst,
                 _ => false,
             }
         } else {

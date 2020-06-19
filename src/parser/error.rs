@@ -14,7 +14,7 @@ impl Error {
     /// found, not the entire order.
     pub fn new(kind: ErrorKind, input: impl Into<String>) -> Self {
         Error {
-            kind: kind,
+            kind,
             input: input.into(),
         }
     }

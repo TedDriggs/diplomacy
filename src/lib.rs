@@ -17,5 +17,5 @@ pub mod judge;
 /// Format trait for short naming of objects in orders.
 pub trait ShortName {
     /// This method returns the short display name of the object.
-    fn short_name<'a>(&'a self) -> std::borrow::Cow<'a, str>;
+    fn short_name(&self) -> std::borrow::Cow<'_, str>;
 }

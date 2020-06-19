@@ -17,7 +17,7 @@ pub enum BuildCommand {
 }
 
 impl<L: Location> Command<L> for BuildCommand {
-    fn move_dest<'a>(&'a self) -> Option<&'a L> {
+    fn move_dest(&self) -> Option<&L> {
         // A build command is never a move.
         None
     }
@@ -29,8 +29,8 @@ impl fmt::Display for BuildCommand {
             f,
             "{}",
             match self {
-                &BuildCommand::Build => "build",
-                &BuildCommand::Disband => "disband",
+                BuildCommand::Build => "build",
+                BuildCommand::Disband => "disband",
             }
         )
     }

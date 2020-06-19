@@ -23,8 +23,8 @@ use crate::UnitType;
 pub type MappedMainOrder = Order<RegionKey, MainCommand<RegionKey>>;
 
 /// Adjudicate a set of orders
-pub fn adjudicate<'a, O: IntoIterator<Item = MappedMainOrder>>(
-    map: &'a Map,
+pub fn adjudicate<O: IntoIterator<Item = MappedMainOrder>>(
+    map: &Map,
     orders: O,
 ) -> HashMap<MappedMainOrder, OrderState> {
     let ctx = ResolverContext::new(map, orders.into_iter().collect());

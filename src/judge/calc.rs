@@ -95,7 +95,7 @@ pub fn max_prevent_result<'a, A: Adjudicate>(
         let mut best_prevent_strength = 0;
         for order in context
             .orders()
-            .into_iter()
+            .iter()
             .filter(|ord| ord != &preventing && ord.is_move_to_province(dst.into()))
         {
             if let Some(prev) = prevent_result(context, resolver, order) {
@@ -125,8 +125,8 @@ pub fn dislodger_of<'a, A: Adjudicate>(
     order: &'a MappedMainOrder,
 ) -> Option<&'a MappedMainOrder> {
     let order_ref = context.orders();
-    for dislodger in order_ref
-        .into_iter()
+    if let Some(dislodger) = order_ref
+        .iter()
         .find(|o| o.is_move_to_province((&order.region).into()))
     {
         // If we found someone trying to move into `order`'s old province, we

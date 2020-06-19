@@ -110,7 +110,7 @@ impl Rulebook {
                     }
                 }
 
-                return AttackOutcome::Succeeds;
+                AttackOutcome::Succeeds
             }
         } else {
             panic!("Don't try to adjudicate non-moves as moves");

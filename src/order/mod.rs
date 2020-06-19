@@ -32,10 +32,10 @@ impl<L: Location, C: Command<L>> Order<L, C> {
     /// Create a new order.
     pub fn new(nation: Nation, unit_type: UnitType, region: L, command: C) -> Self {
         Order {
-            nation: nation,
-            unit_type: unit_type,
-            region: region,
-            command: command,
+            nation,
+            unit_type,
+            region,
+            command,
         }
     }
 
