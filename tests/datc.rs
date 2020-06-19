@@ -77,26 +77,31 @@ fn report_results(map: &HashMap<MappedMainOrder, OrderState>) {
     }
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.1
 #[test]
 fn t6a01_move_to_non_neighbor_fails() {
     judge! { "ENG: F nth -> pic": Fails };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.2
 #[test]
 fn t6a02_move_army_to_sea() {
     judge! { "ENG: A lvp -> iri": Fails };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.3
 #[test]
 fn t6a03_move_fleet_to_land() {
     judge! { "GER: F kie -> mun": Fails };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.4
 #[test]
 fn t6a04_move_to_own_sector() {
     judge! { "GER: F kie -> kie": Fails };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.5
 #[test]
 fn t6a05_move_to_own_sector_with_convoy() {
     judge! {
@@ -108,12 +113,14 @@ fn t6a05_move_to_own_sector_with_convoy() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.6
 #[test]
 #[ignore]
 fn t6a06_ordering_a_unit_of_another_country() {
     judge! { "GER: F lon -> nor" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.7
 #[test]
 fn t6a07_only_armies_can_be_convoyed() {
     judge! {
@@ -122,6 +129,7 @@ fn t6a07_only_armies_can_be_convoyed() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.8
 #[test]
 fn t6a08_support_to_hold_yourself_is_not_possible() {
     judge! {
@@ -131,11 +139,13 @@ fn t6a08_support_to_hold_yourself_is_not_possible() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.9
 #[test]
 fn t6a09_fleets_must_follow_coast_if_not_on_sea() {
     judge! { "ITA: F rom -> ven": Fails };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.10
 #[test]
 fn t6a10_support_on_unreachable_destination_not_possible() {
     judge! {
@@ -145,6 +155,7 @@ fn t6a10_support_on_unreachable_destination_not_possible() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.11
 #[test]
 fn t6a11_simple_bounce() {
     judge! {
@@ -153,6 +164,7 @@ fn t6a11_simple_bounce() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.12
 #[test]
 fn t6a12_bounce_of_three_units() {
     judge! {
@@ -162,21 +174,25 @@ fn t6a12_bounce_of_three_units() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.B.1
 #[test]
 fn t6b01_moving_without_required_coast_fails() {
     judge! { "FRA: F por -> spa": Fails };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.B.2
 #[test]
 fn t6b02_moving_with_unspecified_coast_when_coast_is_not_necessary() {
     judge! { "FRA: F gas -> spa": Fails };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.B.3
 #[test]
 fn t6b03_moving_with_wrong_coast_when_coast_is_not_necessary() {
     judge! { "FRA: F gas -> spa(sc)": Fails };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.B.4
 #[test]
 fn t6b04_support_to_unreachable_coast_allowed() {
     judge! {
@@ -186,6 +202,7 @@ fn t6b04_support_to_unreachable_coast_allowed() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.B.5
 #[test]
 fn t6b05_support_from_unreachable_coast_not_allowed() {
     judge! {
@@ -195,6 +212,7 @@ fn t6b05_support_from_unreachable_coast_not_allowed() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.B.6
 #[test]
 fn t6b06_support_can_be_cut_with_other_coast() {
     judge! {
@@ -206,6 +224,7 @@ fn t6b06_support_can_be_cut_with_other_coast() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.B.7
 #[test]
 #[ignore]
 fn t6b07_supporting_with_unspecified_coast() {
@@ -217,6 +236,7 @@ fn t6b07_supporting_with_unspecified_coast() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.B.8
 #[test]
 #[ignore]
 fn t6b08_supporting_with_unspecified_coast_when_only_one_coast_is_possible() {
@@ -228,6 +248,7 @@ fn t6b08_supporting_with_unspecified_coast_when_only_one_coast_is_possible() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.B.9
 #[test]
 #[ignore]
 fn t6b09_supporting_with_wrong_coast() {
@@ -239,24 +260,28 @@ fn t6b09_supporting_with_wrong_coast() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.B.10
 #[test]
 #[ignore]
 fn t6b10_unit_ordered_with_wrong_coast() {
     judge! { "FRA: F spa(nc) -> lyo" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.B.11
 #[test]
 #[ignore]
 fn t6b11_coast_can_not_be_ordered_to_change() {
     judge! { "FRA: F spa(sc) -> lyo" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.B.12
 #[test]
 #[ignore]
 fn t6b12_army_movement_with_coastal_specification() {
     judge! { "FRA: A gas -> spa(nc)" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.B.13
 #[test]
 fn t6b13_coastal_crawl_not_allowed() {
     judge! {
@@ -265,12 +290,14 @@ fn t6b13_coastal_crawl_not_allowed() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.B.14
 #[test]
 #[ignore]
 fn t6b14_building_with_unspecified_coast() {
     judge! { "RUS: Build F St Petersburg" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.C.1
 #[test]
 fn t6c01_three_army_circular_movement_succeeds() {
     judge! {
@@ -280,6 +307,7 @@ fn t6c01_three_army_circular_movement_succeeds() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.C.2
 #[test]
 fn t6c02_three_army_circular_movement_with_support() {
     judge! {
@@ -290,6 +318,7 @@ fn t6c02_three_army_circular_movement_with_support() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.C.3
 #[test]
 fn t6c03_a_disrupted_three_army_circular_movement() {
     judge! {
@@ -300,6 +329,7 @@ fn t6c03_a_disrupted_three_army_circular_movement() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.C.4
 #[test]
 fn t6c04_a_circular_movement_with_attacked_convoy() {
     judge! {
@@ -313,6 +343,7 @@ fn t6c04_a_circular_movement_with_attacked_convoy() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.C.5
 #[test]
 fn t6c05_a_disrupted_circular_movement_due_to_dislodged_convoy() {
     judge! {
@@ -327,6 +358,7 @@ fn t6c05_a_disrupted_circular_movement_due_to_dislodged_convoy() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.C.6
 #[test]
 fn t6c06_two_armies_with_two_convoys() {
     judge! {
@@ -338,6 +370,7 @@ fn t6c06_two_armies_with_two_convoys() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.C.7
 #[test]
 #[ignore]
 fn t6c07_disrupted_unit_swap() {
@@ -350,6 +383,7 @@ fn t6c07_disrupted_unit_swap() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.1
 #[test]
 fn t6d01_supported_hold_can_prevent_dislodgement() {
     judge! {
@@ -360,6 +394,7 @@ fn t6d01_supported_hold_can_prevent_dislodgement() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.2
 #[test]
 fn t6d02_a_move_cuts_support_on_hold() {
     judge! {
@@ -371,6 +406,7 @@ fn t6d02_a_move_cuts_support_on_hold() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.3
 #[test]
 fn t6d03_a_move_cuts_support_on_move() {
     judge! {
@@ -381,6 +417,7 @@ fn t6d03_a_move_cuts_support_on_move() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.4
 #[test]
 fn t6d04_support_to_hold_on_unit_supporting_a_hold_allowed() {
     judge! {
@@ -391,6 +428,7 @@ fn t6d04_support_to_hold_on_unit_supporting_a_hold_allowed() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.5
 #[test]
 fn t6d05_support_to_hold_on_unit_supporting_a_move_allowed() {
     judge! {
@@ -402,6 +440,7 @@ fn t6d05_support_to_hold_on_unit_supporting_a_move_allowed() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.6
 #[test]
 fn t6d06_support_to_hold_on_convoying_unit_allowed() {
     judge! {
@@ -413,6 +452,7 @@ fn t6d06_support_to_hold_on_convoying_unit_allowed() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.7
 #[test]
 fn t6d07_support_to_hold_on_moving_unit_not_allowed() {
     judge! {
@@ -424,6 +464,7 @@ fn t6d07_support_to_hold_on_moving_unit_not_allowed() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.8
 #[test]
 fn t6d08_failed_convoy_can_not_receive_hold_support() {
     judge! {
@@ -435,6 +476,7 @@ fn t6d08_failed_convoy_can_not_receive_hold_support() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.9
 #[test]
 fn t6d09_support_to_move_on_holding_unit_not_allowed() {
     let results = judge! {
@@ -445,6 +487,7 @@ fn t6d09_support_to_move_on_holding_unit_not_allowed() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.10
 #[test]
 fn t6d10_self_dislodgment_prohibited() {
     judge! {
@@ -454,6 +497,7 @@ fn t6d10_self_dislodgment_prohibited() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.11
 #[test]
 fn t6d11_no_self_dislodgment_of_returning_unit() {
     judge! {
@@ -464,6 +508,7 @@ fn t6d11_no_self_dislodgment_of_returning_unit() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.12
 #[test]
 fn t6d12_supporting_a_foreign_unit_to_dislodge_own_unit_prohibited() {
     judge! {
@@ -473,6 +518,7 @@ fn t6d12_supporting_a_foreign_unit_to_dislodge_own_unit_prohibited() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.13
 #[test]
 fn t6d13_supporting_a_foreign_unit_to_dislodge_a_returning_own_unit_prohibited() {
     judge! {
@@ -483,6 +529,7 @@ fn t6d13_supporting_a_foreign_unit_to_dislodge_a_returning_own_unit_prohibited()
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.14
 #[test]
 fn t6d14_supporting_a_foreign_unit_is_not_enough_to_prevent_dislodgement() {
     judge! {
@@ -494,6 +541,7 @@ fn t6d14_supporting_a_foreign_unit_is_not_enough_to_prevent_dislodgement() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.15
 #[test]
 fn t6d15_defender_can_not_cut_support_for_attack_on_itself() {
     judge! {
@@ -503,6 +551,7 @@ fn t6d15_defender_can_not_cut_support_for_attack_on_itself() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.17
 #[test]
 fn t6d17_dislodgement_cuts_supports() {
     judge! {
@@ -514,6 +563,7 @@ fn t6d17_dislodgement_cuts_supports() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.18
 #[test]
 fn t6d18_a_surviving_unit_will_sustain_support() {
     judge! {
@@ -526,6 +576,7 @@ fn t6d18_a_surviving_unit_will_sustain_support() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.19
 #[test]
 fn t6d19_even_when_surviving_is_in_alternative_way() {
     judge! {
@@ -536,6 +587,7 @@ fn t6d19_even_when_surviving_is_in_alternative_way() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.20
 #[test]
 fn t6d20_unit_can_not_cut_support_of_its_own_country() {
     judge! {
@@ -546,6 +598,7 @@ fn t6d20_unit_can_not_cut_support_of_its_own_country() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.21
 #[test]
 fn t6d21_dislodging_does_not_cancel_a_support_cut() {
     judge! {
@@ -558,6 +611,7 @@ fn t6d21_dislodging_does_not_cancel_a_support_cut() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.22
 #[test]
 fn t6d22_impossible_fleet_move_can_not_be_supported() {
     judge! {
@@ -568,6 +622,7 @@ fn t6d22_impossible_fleet_move_can_not_be_supported() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.24
 #[test]
 fn t6d24_impossible_army_move_can_not_be_supported() {
     judge! {
@@ -579,6 +634,7 @@ fn t6d24_impossible_army_move_can_not_be_supported() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.25
 #[test]
 fn t6d25_failing_hold_support_can_be_supported() {
     judge! {
@@ -589,6 +645,7 @@ fn t6d25_failing_hold_support_can_be_supported() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.26
 #[test]
 fn t6d26_failing_move_support_can_be_supported() {
     judge! {
@@ -599,6 +656,7 @@ fn t6d26_failing_move_support_can_be_supported() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.27
 #[test]
 fn t6d27_failing_convoy_can_be_supported() {
     judge! {
@@ -610,6 +668,7 @@ fn t6d27_failing_convoy_can_be_supported() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.28
 #[test]
 #[ignore]
 fn t6d28_impossible_move_and_support() {
@@ -621,6 +680,7 @@ fn t6d28_impossible_move_and_support() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.29
 #[test]
 #[ignore]
 fn t6d29_move_to_impossible_coast_and_support() {
@@ -632,6 +692,7 @@ fn t6d29_move_to_impossible_coast_and_support() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.30
 #[test]
 #[ignore]
 fn t6d30_move_without_coast_and_support() {
@@ -646,6 +707,8 @@ fn t6d30_move_without_coast_and_support() {
 /// In this case the proposed behavior is that the fleet order should be treated as illegal and
 /// dropped entirely. It's not clear why that would be the case in computerized games, so this
 /// test will remain ignored.
+///
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.31
 #[test]
 #[ignore]
 fn t6d31_a_tricky_impossible_support() {
@@ -655,6 +718,7 @@ fn t6d31_a_tricky_impossible_support() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.32
 #[test]
 fn t6d32_a_missing_fleet() {
     judge! {
@@ -665,6 +729,7 @@ fn t6d32_a_missing_fleet() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.33
 #[test]
 fn t6d33_unwanted_support_allowed() {
     judge! {
@@ -675,6 +740,7 @@ fn t6d33_unwanted_support_allowed() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.34
 #[test]
 fn t6d34_support_targeting_own_area_not_allowed() {
     judge! {
@@ -687,6 +753,7 @@ fn t6d34_support_targeting_own_area_not_allowed() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.1
 #[test]
 fn t6e01_dislodged_unit_has_no_effect_on_attacker_area() {
     judge! {
@@ -697,6 +764,7 @@ fn t6e01_dislodged_unit_has_no_effect_on_attacker_area() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.2
 #[test]
 fn t6e02_no_self_dislodgement_in_head_to_head_battle() {
     judge! {
@@ -706,6 +774,7 @@ fn t6e02_no_self_dislodgement_in_head_to_head_battle() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.3
 #[test]
 fn t6e03_no_help_in_dislodging_own_unit() {
     judge! {
@@ -715,6 +784,7 @@ fn t6e03_no_help_in_dislodging_own_unit() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.4
 #[test]
 fn t6e04_non_dislodged_loser_has_still_effect() {
     judge! {
@@ -731,6 +801,7 @@ fn t6e04_non_dislodged_loser_has_still_effect() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.5
 #[test]
 fn t6e05_loser_dislodged_by_another_army_has_still_effect() {
     judge! {
@@ -748,6 +819,7 @@ fn t6e05_loser_dislodged_by_another_army_has_still_effect() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.6
 #[test]
 fn t6e06_not_dislodge_because_of_own_support_has_still_effect() {
     judge! {
@@ -761,6 +833,7 @@ fn t6e06_not_dislodge_because_of_own_support_has_still_effect() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.7
 #[test]
 fn t6e07_no_self_dislodgement_with_beleaguered_garrison() {
     judge! {
@@ -773,6 +846,7 @@ fn t6e07_no_self_dislodgement_with_beleaguered_garrison() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.8
 #[test]
 fn t6e08_no_self_dislodgement_with_beleaguered_garrison_and_head_to_head_battle() {
     judge! {
@@ -785,6 +859,7 @@ fn t6e08_no_self_dislodgement_with_beleaguered_garrison_and_head_to_head_battle(
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.9
 #[test]
 fn t6e09_almost_self_dislodgement_with_beleaguered_garrison() {
     judge! {
@@ -797,6 +872,7 @@ fn t6e09_almost_self_dislodgement_with_beleaguered_garrison() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.10
 #[test]
 fn t6e10_almost_circular_movement_with_no_self_dislodgement_with_beleaguered_garrison() {
     judge! {
@@ -810,6 +886,7 @@ fn t6e10_almost_circular_movement_with_no_self_dislodgement_with_beleaguered_gar
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.11
 #[test]
 fn t6e11_no_self_dislodgement_with_beleaguered_garrison_unit_swap_with_adjacent_convoying_and_two_coasts(
 ) {
@@ -824,6 +901,7 @@ fn t6e11_no_self_dislodgement_with_beleaguered_garrison_unit_swap_with_adjacent_
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.12
 #[test]
 fn t6e12_support_on_attack_on_own_unit_can_be_used_for_other_means() {
     judge! {
@@ -835,6 +913,7 @@ fn t6e12_support_on_attack_on_own_unit_can_be_used_for_other_means() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.13
 #[test]
 fn t6e13_three_way_beleaguered_garrison() {
     judge! {
@@ -848,11 +927,13 @@ fn t6e13_three_way_beleaguered_garrison() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.14
 #[test]
 fn t6e14_illegal_head_to_head_battle_can_still_defend() {
     judge! { "ENG: A lvp -> edi", "RUS: F edi -> lvp" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.15
 #[test]
 fn t6e15_the_friendly_head_to_head_battle() {
     judge! {
@@ -869,6 +950,7 @@ fn t6e15_the_friendly_head_to_head_battle() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.2
 #[test]
 fn t6f02_an_army_being_convoyed_can_bounce_as_normal() {
     judge! {
@@ -878,6 +960,7 @@ fn t6f02_an_army_being_convoyed_can_bounce_as_normal() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.3
 #[test]
 fn t6f03_an_army_being_convoyed_can_receive_support() {
     judge! {
@@ -888,6 +971,7 @@ fn t6f03_an_army_being_convoyed_can_receive_support() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.4
 #[test]
 fn t6f04_an_attacked_convoy_is_not_disrupted() {
     judge! {
@@ -897,6 +981,7 @@ fn t6f04_an_attacked_convoy_is_not_disrupted() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.5
 #[test]
 fn t6f05_a_beleaguered_convoy_is_not_disrupted() {
     judge! {
@@ -909,6 +994,7 @@ fn t6f05_a_beleaguered_convoy_is_not_disrupted() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.6
 #[test]
 fn t6f06_dislodged_convoy_does_not_cut_support() {
     judge! {
@@ -923,6 +1009,7 @@ fn t6f06_dislodged_convoy_does_not_cut_support() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.7
 #[test]
 fn t6f07_dislodged_convoy_does_not_cause_contested_area() {
     judge! {
@@ -933,6 +1020,7 @@ fn t6f07_dislodged_convoy_does_not_cause_contested_area() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.8
 #[test]
 fn t6f08_dislodged_convoy_does_not_cause_a_bounce() {
     judge! {
@@ -944,6 +1032,7 @@ fn t6f08_dislodged_convoy_does_not_cause_a_bounce() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.9
 #[test]
 fn t6f09_dislodge_of_multi_route_convoy() {
     judge! {
@@ -955,6 +1044,7 @@ fn t6f09_dislodge_of_multi_route_convoy() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.10
 #[test]
 fn t6f10_dislodge_of_multi_route_convoy_with_foreign_fleet() {
     judge! {
@@ -966,6 +1056,7 @@ fn t6f10_dislodge_of_multi_route_convoy_with_foreign_fleet() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.11
 #[test]
 fn t6f11_dislodge_of_multi_route_convoy_with_only_foreign_fleets() {
     judge! {
@@ -977,6 +1068,7 @@ fn t6f11_dislodge_of_multi_route_convoy_with_only_foreign_fleets() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.12
 #[test]
 fn t6f12_dislodged_convoying_fleet_not_on_route() {
     judge! {
@@ -988,6 +1080,7 @@ fn t6f12_dislodged_convoying_fleet_not_on_route() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.13
 #[test]
 fn t6f13_the_unwanted_alternative() {
     judge! {
@@ -1051,6 +1144,7 @@ fn t6f17_pandins_extended_paradox() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.18
 #[test]
 fn t6f18_betrayal_paradox() {
     judge! {
@@ -1063,6 +1157,7 @@ fn t6f18_betrayal_paradox() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.19
 #[test]
 fn t6f19_multi_route_convoy_disruption_paradox() {
     judge! {
@@ -1074,6 +1169,7 @@ fn t6f19_multi_route_convoy_disruption_paradox() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.20
 #[test]
 #[ignore]
 fn t6f20_unwanted_multi_route_convoy_paradox() {
@@ -1087,6 +1183,7 @@ fn t6f20_unwanted_multi_route_convoy_paradox() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.21
 #[test]
 fn t6f21_dads_army_convoy() {
     judge! {
@@ -1101,6 +1198,7 @@ fn t6f21_dads_army_convoy() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.22
 #[test]
 fn t6f22_second_order_paradox_with_two_resolutions() {
     judge! {
@@ -1115,6 +1213,7 @@ fn t6f22_second_order_paradox_with_two_resolutions() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.23
 #[test]
 fn t6f23_second_order_paradox_with_two_exclusive_convoys() {
     judge! {
@@ -1131,6 +1230,7 @@ fn t6f23_second_order_paradox_with_two_exclusive_convoys() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.24
 #[test]
 fn t6f24_second_order_paradox_with_no_resolution() {
     judge! {
@@ -1146,6 +1246,7 @@ fn t6f24_second_order_paradox_with_no_resolution() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.2
 #[test]
 fn t6g02_kidnapping_an_army() {
     judge! {
@@ -1155,6 +1256,7 @@ fn t6g02_kidnapping_an_army() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.3
 #[test]
 #[ignore]
 fn t6g03_kidnapping_with_a_disrupted_convoy() {
@@ -1167,6 +1269,7 @@ fn t6g03_kidnapping_with_a_disrupted_convoy() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.4
 #[test]
 #[ignore]
 fn t6g04_kidnapping_with_a_disrupted_convoy_and_opposite_move() {
@@ -1180,6 +1283,7 @@ fn t6g04_kidnapping_with_a_disrupted_convoy_and_opposite_move() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.5
 #[test]
 #[ignore]
 fn t6g05_swapping_with_intent() {
@@ -1191,6 +1295,7 @@ fn t6g05_swapping_with_intent() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.6
 #[test]
 #[ignore]
 fn t6g06_swapping_with_unintended_intent() {
@@ -1205,6 +1310,7 @@ fn t6g06_swapping_with_unintended_intent() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.7
 #[test]
 #[ignore]
 fn t6g07_swapping_with_illegal_intent() {
@@ -1216,6 +1322,7 @@ fn t6g07_swapping_with_illegal_intent() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.8
 #[test]
 #[ignore]
 fn t6g08_explicit_convoy_that_isnt_there() {
@@ -1226,6 +1333,7 @@ fn t6g08_explicit_convoy_that_isnt_there() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.9
 #[test]
 #[ignore]
 fn t6g09_swapped_or_dislodged() {
@@ -1237,6 +1345,7 @@ fn t6g09_swapped_or_dislodged() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.10
 #[test]
 fn t6g10_swapped_or_an_head_to_head_battle() {
     judge! {
@@ -1251,6 +1360,7 @@ fn t6g10_swapped_or_an_head_to_head_battle() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.11
 #[test]
 fn t6g11_a_convoy_to_an_adjacent_place_with_a_paradox() {
     judge! {
@@ -1262,6 +1372,7 @@ fn t6g11_a_convoy_to_an_adjacent_place_with_a_paradox() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.12
 #[test]
 fn t6g12_swapping_two_units_with_two_convoys() {
     judge! {
@@ -1275,6 +1386,7 @@ fn t6g12_swapping_two_units_with_two_convoys() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.13
 #[test]
 fn t6g13_support_cut_on_attack_on_itself_via_convoy() {
     judge! {
@@ -1285,6 +1397,7 @@ fn t6g13_support_cut_on_attack_on_itself_via_convoy() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.14
 #[test]
 fn t6g14_bounce_by_convoy_to_adjacent_place() {
     judge! {
@@ -1299,6 +1412,7 @@ fn t6g14_bounce_by_convoy_to_adjacent_place() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.15
 #[test]
 fn t6g15_bounce_and_dislodge_with_double_convoy() {
     judge! {
@@ -1311,6 +1425,7 @@ fn t6g15_bounce_and_dislodge_with_double_convoy() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.16
 #[test]
 fn t6g16_the_two_unit_in_one_area_bug_moving_by_convoy() {
     judge! {
@@ -1324,6 +1439,7 @@ fn t6g16_the_two_unit_in_one_area_bug_moving_by_convoy() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.17
 #[test]
 fn t6g17_the_two_unit_in_one_area_bug_moving_over_land() {
     judge! {
@@ -1337,6 +1453,7 @@ fn t6g17_the_two_unit_in_one_area_bug_moving_over_land() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.18
 #[test]
 fn t6g18_the_two_unit_in_one_area_bug_with_double_convoy() {
     judge! {
@@ -1351,6 +1468,7 @@ fn t6g18_the_two_unit_in_one_area_bug_with_double_convoy() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.2
 #[test]
 fn t6h02_no_supports_from_retreating_unit() {
     judge! {
@@ -1366,6 +1484,7 @@ fn t6h02_no_supports_from_retreating_unit() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.3
 #[test]
 fn t6h03_no_convoy_during_retreat() {
     judge! {
@@ -1376,6 +1495,7 @@ fn t6h03_no_convoy_during_retreat() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.4
 #[test]
 fn t6h04_no_other_moves_during_retreat() {
     judge! {
@@ -1386,6 +1506,7 @@ fn t6h04_no_other_moves_during_retreat() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.5
 #[test]
 fn t6h05_a_unit_may_not_retreat_to_the_area_from_which_it_is_attacked() {
     judge! {
@@ -1395,6 +1516,7 @@ fn t6h05_a_unit_may_not_retreat_to_the_area_from_which_it_is_attacked() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.6
 #[test]
 fn t6h06_unit_may_not_retreat_to_a_contested_area() {
     judge! {
@@ -1406,6 +1528,7 @@ fn t6h06_unit_may_not_retreat_to_a_contested_area() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.7
 #[test]
 fn t6h07_multiple_retreat_to_same_area_will_disband_units() {
     judge! {
@@ -1418,6 +1541,7 @@ fn t6h07_multiple_retreat_to_same_area_will_disband_units() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.8
 #[test]
 fn t6h08_triple_retreat_to_same_area_will_disband_units() {
     judge! {
@@ -1433,6 +1557,7 @@ fn t6h08_triple_retreat_to_same_area_will_disband_units() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.9
 #[test]
 fn t6h09_dislodged_unit_will_not_make_attackers_area_contested() {
     judge! {
@@ -1445,6 +1570,7 @@ fn t6h09_dislodged_unit_will_not_make_attackers_area_contested() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.10
 #[test]
 fn t6h10_not_retreating_to_attacker_does_not_mean_contested() {
     judge! {
@@ -1457,6 +1583,7 @@ fn t6h10_not_retreating_to_attacker_does_not_mean_contested() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.11
 #[test]
 fn t6h11_retreat_when_dislodged_by_adjacent_convoy() {
     judge! {
@@ -1469,6 +1596,7 @@ fn t6h11_retreat_when_dislodged_by_adjacent_convoy() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.12
 #[test]
 fn t6h12_retreat_when_dislodged_by_adjacent_convoy_while_trying_to_do_the_same() {
     judge! {
@@ -1485,6 +1613,7 @@ fn t6h12_retreat_when_dislodged_by_adjacent_convoy_while_trying_to_do_the_same()
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.13
 #[test]
 fn t6h13_no_retreat_with_convoy_in_main_phase() {
     judge! {
@@ -1495,6 +1624,7 @@ fn t6h13_no_retreat_with_convoy_in_main_phase() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.14
 #[test]
 fn t6h14_no_retreat_with_support_in_main_phase() {
     judge! {
@@ -1508,6 +1638,7 @@ fn t6h14_no_retreat_with_support_in_main_phase() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.15
 #[test]
 fn t6h15_no_coastal_crawl_in_retreat() {
     judge! {
@@ -1517,6 +1648,7 @@ fn t6h15_no_coastal_crawl_in_retreat() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.16
 #[test]
 fn t6h16_contested_for_both_coasts() {
     judge! {
@@ -1528,84 +1660,98 @@ fn t6h16_contested_for_both_coasts() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.I.2
 #[test]
 #[ignore]
 fn t6i02_fleets_can_not_be_build_in_land_areas() {
     judge! { "RUS: Build F mos" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.I.3
 #[test]
 #[ignore]
 fn t6i03_supply_center_must_be_empty_for_building() {
     judge! { "GER: Build A ber" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.I.4
 #[test]
 #[ignore]
 fn t6i04_both_coasts_must_be_empty_for_building() {
     judge! { "RUS: Build A St Petersburg(nc)" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.I.5
 #[test]
 #[ignore]
 fn t6i05_building_in_home_supply_center_that_is_not_owned() {
     judge! { "GER: Build A ber" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.I.6
 #[test]
 #[ignore]
 fn t6i06_building_in_owned_supply_center_that_is_not_a_home_supply_center() {
     judge! { "GER: Build A war" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.I.7
 #[test]
 #[ignore]
 fn t6i07_only_one_build_in_a_home_supply_center() {
     judge! { "RUS: Build A mos", "RUS: Build A mos" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.2
 #[test]
 #[ignore]
 fn t6j02_removing_the_same_unit_twice() {
     judge! { "FRA: Remove A par", "FRA: Remove A par" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.3
 #[test]
 #[ignore]
 fn t6j03_civil_disorder_two_armies_with_different_distance() {
     judge! { "" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.6
 #[test]
 #[ignore]
 fn t6j06_civil_disorder_two_fleets_with_equal_distance() {
     judge! { "" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.7
 #[test]
 #[ignore]
 fn t6j07_civil_disorder_two_fleets_and_army_with_equal_distance() {
     judge! { "" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.8
 #[test]
 #[ignore]
 fn t6j08_civil_disorder_a_fleet_with_shorter_distance_then_the_army() {
     judge! { "" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.9
 #[test]
 #[ignore]
 fn t6j09_civil_disorder_must_be_counted_from_both_coasts() {
     judge! { "" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.10
 #[test]
 #[ignore]
 fn t6j10_civil_disorder_counting_convoying_distance() {
     judge! { "" };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.11
 #[test]
 #[ignore]
 fn t6j11_civil_disorder_counting_distance_without_convoying_fleet() {
