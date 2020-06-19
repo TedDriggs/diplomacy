@@ -59,10 +59,10 @@ impl RegionRegistry {
     /// This function validates that:
     ///
     /// 1. `province_name` identifies a known province.
-    pub fn register<IC: Into<Option<Coast>>>(
+    pub fn register(
         &mut self,
         province_name: &str,
-        coast: IC,
+        coast: impl Into<Option<Coast>>,
         terrain: Terrain,
     ) -> Result<(), MapError> {
         let region = Region::new(self.find_province(province_name)?, coast, terrain);

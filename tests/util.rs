@@ -11,6 +11,6 @@ pub fn reg(s: &str) -> RegionKey {
     reg_coast(s, None)
 }
 
-pub fn reg_coast<IC: Into<Option<Coast>>>(s: &str, c: IC) -> RegionKey {
+pub fn reg_coast(s: &str, c: impl Into<Option<Coast>>) -> RegionKey {
     RegionKey::new(prov(s), c)
 }

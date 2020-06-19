@@ -12,7 +12,7 @@ impl Error {
     /// Creates a new error of the given `kind` for the relevant input string.
     /// `input` should be the smallest part of the string where the error was
     /// found, not the entire order.
-    pub fn new<IS: Into<String>>(kind: ErrorKind, input: IS) -> Self {
+    pub fn new(kind: ErrorKind, input: impl Into<String>) -> Self {
         Error {
             kind: kind,
             input: input.into(),

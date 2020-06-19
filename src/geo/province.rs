@@ -30,7 +30,7 @@ impl PartialEq<ProvinceKey> for Province {
 pub struct ProvinceKey(String);
 
 impl ProvinceKey {
-    pub fn new<IS: Into<String>>(short_name: IS) -> Self {
+    pub fn new(short_name: impl Into<String>) -> Self {
         ProvinceKey(short_name.into())
     }
 }

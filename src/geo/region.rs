@@ -57,9 +57,9 @@ pub struct Region(ProvinceKey, Option<Coast>, Terrain);
 
 impl Region {
     /// Creates a new region.
-    pub fn new<IP: Into<ProvinceKey>, IC: Into<Option<Coast>>>(
-        province: IP,
-        coast: IC,
+    pub fn new(
+        province: impl Into<ProvinceKey>,
+        coast: impl Into<Option<Coast>>,
         terrain: Terrain,
     ) -> Self {
         Region(province.into(), coast.into(), terrain)
@@ -109,7 +109,7 @@ pub struct RegionKey(ProvinceKey, Option<Coast>);
 
 impl RegionKey {
     /// Creates a new region.
-    pub fn new<IP: Into<ProvinceKey>, IC: Into<Option<Coast>>>(province: IP, coast: IC) -> Self {
+    pub fn new(province: impl Into<ProvinceKey>, coast: impl Into<Option<Coast>>) -> Self {
         RegionKey(province.into(), coast.into())
     }
 
