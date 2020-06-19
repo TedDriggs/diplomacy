@@ -12,10 +12,13 @@ fn order_cuts<'a, A: Adjudicate>(
     support_order: &MappedMainOrder,
     cutting_order: &MappedMainOrder,
 ) -> bool {
+    // Only moves can cut support
     if let Some(ref dst) = cutting_order.command.move_dest() {
+        // If the support order is attacking the cutting order's province, then
+        // support is not cut
         let supporting_attack_on_cutter = match support_order.command {
             MainCommand::Support(SupportedOrder::Move(_, _, ref supported_dst)) => {
-                dst.province() == supported_dst
+                cutting_order.region.province() == supported_dst.province()
             }
             _ => false,
         };
@@ -35,13 +38,9 @@ pub fn find_cutting_order<'a, A: Adjudicate>(
     resolver: &mut ResolverState<'a, A>,
     support_order: &MappedMainOrder,
 ) -> Option<&'a MappedMainOrder> {
-    for order in ctx.orders() {
-        if order_cuts(ctx, resolver, support_order, order) {
-            return Some(order);
-        }
-    }
-
-    None
+    ctx.orders()
+        .iter()
+        .find(|order| order_cuts(ctx, resolver, support_order, order))
 }
 
 /// A SUPPORT decision of a unit ordered to support results in 'cut' when:
@@ -215,12 +214,7 @@ mod test {
                 reg("gas"),
                 MainCommand::Move(spa_nc),
             ),
-            Order::new(
-                fra,
-                UnitType::Fleet,
-                reg("mar"),
-                supp_com.clone().into(),
-            ),
+            Order::new(fra, UnitType::Fleet, reg("mar"), supp_com.clone().into()),
             Order::new(
                 Nation("ita".into()),
                 UnitType::Fleet,

@@ -546,8 +546,8 @@ fn t6d14_supporting_a_foreign_unit_is_not_enough_to_prevent_dislodgement() {
 fn t6d15_defender_can_not_cut_support_for_attack_on_itself() {
     judge! {
        "RUS: F con Supports F bla -> ank",
-       "RUS: F bla -> ank": Fails,
-       "TUR: F ank -> con": Succeeds,
+       "RUS: F bla -> ank": Succeeds,
+       "TUR: F ank -> con": Fails,
     };
 }
 
