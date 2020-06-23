@@ -10,22 +10,35 @@ fn order_cuts<'a, A: Adjudicate>(
     ctx: &'a ResolverContext<'a>,
     resolver: &mut ResolverState<'a, A>,
     support_order: &MappedMainOrder,
-    cutting_order: &MappedMainOrder,
+    cutting_order: &'a MappedMainOrder,
 ) -> bool {
     // Only moves can cut support
     if let Some(ref dst) = cutting_order.command.move_dest() {
-        // If the support order is attacking the cutting order's province, then
-        // support is not cut
-        let supporting_attack_on_cutter = match support_order.command {
-            MainCommand::Support(SupportedOrder::Move(_, _, ref supported_dst)) => {
-                cutting_order.region.province() == supported_dst.province()
+        // If the cutting order is attacking somebody else, it can't cut this support
+        if dst != &support_order.region.province() {
+            return false;
+        }
+
+        // Units cannot cut support provided by their countrymen
+        if support_order.nation == cutting_order.nation {
+            return false;
+        }
+
+        // If the supported order is attacking the cutting order's province, then
+        // support is only cut if the cutting order dislodges the supporter
+        let is_supporter_immune = match support_order.command {
+            MainCommand::Support(SupportedOrder::Move(_, _, ref supported_dst))
+                if cutting_order.region.province() == supported_dst.province() =>
+            {
+                // Per http://uk.diplom.org/pouch/Zine/S2009M/Kruijswijk/DipMath_Chp5.htm
+                // we only resolve the cutting order in this precise case to minimize cycle
+                // risks.
+                !bool::from(resolver.resolve(ctx, cutting_order))
             }
             _ => false,
         };
 
-        dst == &support_order.region.province()
-            && !supporting_attack_on_cutter
-            && support_order.nation != cutting_order.nation
+        !is_supporter_immune
             && calc::path_exists(ctx, resolver, cutting_order)
     } else {
         false
