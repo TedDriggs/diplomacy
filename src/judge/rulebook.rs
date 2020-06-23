@@ -1,4 +1,5 @@
 use super::calc::{dislodger_of, max_prevent_result, path_exists};
+use super::convoy::ConvoyOutcome;
 use super::resolver::{Adjudicate, ResolverContext, ResolverState};
 use super::support::{self, SupportOutcome};
 use super::{MappedMainOrder, OrderState};
@@ -27,9 +28,24 @@ impl Rulebook {
             // necessarily mean support got applied.
             Support(..) => Rulebook::adjudicate_support(context, resolver, order).into(),
 
-            // Hold and convoy orders succeed when the unit is not dislodged.
-            Hold | Convoy(..) => dislodger_of(context, resolver, order).is_none().into(),
+            // Hold orders succeed when the unit is not dislodged.
+            Hold => Rulebook::adjudicate_hold(context, resolver, order).into(),
+
+            // Convoy orders succeed when the unit is not dislodged and the convoy doesn't create
+            // a paradox.
+            Convoy(..) => Rulebook::adjudicate_convoy(context, resolver, order).into(),
         }
+    }
+
+    /// Apply rules to determine hold outcome.
+    pub fn adjudicate_hold<'a>(
+        ctx: &'a ResolverContext<'a>,
+        rslv: &mut ResolverState<'a, Self>,
+        ord: &'a MappedMainOrder,
+    ) -> HoldOutcome<'a> {
+        dislodger_of(ctx, rslv, ord)
+            .map(HoldOutcome::Dislodged)
+            .unwrap_or(HoldOutcome::Succeeds)
     }
 
     /// Apply rules to determine move outcome.
@@ -131,6 +147,24 @@ impl Rulebook {
             }
         }
     }
+
+    pub fn adjudicate_convoy<'a>(
+        ctx: &'a ResolverContext<'a>,
+        rslv: &mut ResolverState<'a, Self>,
+        ord: &'a MappedMainOrder,
+    ) -> ConvoyOutcome<'a> {
+        if let Some(dislodger) = dislodger_of(ctx, rslv, ord) {
+            return ConvoyOutcome::Dislodged(dislodger);
+        }
+
+        if rslv.resolve(ctx, ord).into() {
+            ConvoyOutcome::NotDisrupted
+        } else {
+            // Apart from dislodging, a failed convoy order can only occur
+            // due to it being failed as part of a paradox resolution
+            ConvoyOutcome::Paradox
+        }
+    }
 }
 
 impl Adjudicate for Rulebook {
@@ -141,6 +175,24 @@ impl Adjudicate for Rulebook {
         order: &'a MappedMainOrder,
     ) -> OrderState {
         Rulebook::adjudicate(&self, context, resolver, order)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum HoldOutcome<'a> {
+    /// The unit remains in its current region
+    Succeeds,
+    /// The unit is dislodged by the specified order
+    Dislodged(&'a MappedMainOrder),
+}
+
+impl From<HoldOutcome<'_>> for OrderState {
+    fn from(other: HoldOutcome<'_>) -> Self {
+        if other == HoldOutcome::Succeeds {
+            OrderState::Succeeds
+        } else {
+            OrderState::Fails
+        }
     }
 }
 

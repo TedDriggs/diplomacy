@@ -105,7 +105,7 @@ fn t6a04_move_to_own_sector() {
 #[test]
 fn t6a05_move_to_own_sector_with_convoy() {
     judge! {
-        "ENG: F nth convoys yor -> yor": Succeeds,
+        "ENG: F nth convoys yor -> yor",
         "ENG: A yor -> yor": Fails,
         "ENG: A lvp supports A yor -> yor": Succeeds,
         "GER: F lon -> yor": Succeeds,
@@ -125,7 +125,7 @@ fn t6a06_ordering_a_unit_of_another_country() {
 fn t6a07_only_armies_can_be_convoyed() {
     judge! {
         "ENG: F lon -> bel": Fails,
-        "ENG: F nth convoys lon -> bel": Succeeds,
+        "ENG: F nth convoys lon -> bel": Fails,
     };
 }
 
@@ -968,6 +968,7 @@ fn t6f02_an_army_being_convoyed_can_bounce_as_normal() {
 #[test]
 fn t6f03_an_army_being_convoyed_can_receive_support() {
     judge! {
+        @explain
        "ENG: F eng convoys lon -> bre",
        "ENG: A lon -> bre": Succeeds,
        "ENG: F mao Supports A lon -> bre": Succeeds,
@@ -1096,55 +1097,56 @@ fn t6f13_the_unwanted_alternative() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.14
 #[test]
-#[should_panic]
 fn t6f14_simple_convoy_paradox() {
     judge! {
        "ENG: F lon Supports F wal -> eng",
-       "ENG: F wal -> eng",
-       "FRA: A bre -> lon",
-       "FRA: F eng convoys bre -> lon",
+       "ENG: F wal -> eng": Succeeds,
+       "FRA: A bre -> lon": Fails,
+       "FRA: F eng convoys bre -> lon": Fails,
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.15
 #[test]
-#[should_panic]
 fn t6f15_simple_convoy_paradox_with_additional_convoy() {
     judge! {
+        @explain
        "ENG: F lon Supports F wal -> eng",
-       "ENG: F wal -> eng",
-       "FRA: A bre -> lon",
+       "ENG: F wal -> eng": Succeeds,
+       "FRA: A bre -> lon": Fails,
        "FRA: F eng convoys bre -> lon",
        "ITA: F iri convoys naf -> wal",
        "ITA: F mao convoys naf -> wal",
-       "ITA: A naf -> wal",
+       "ITA: A naf -> wal": Succeeds,
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.16
 #[test]
-#[should_panic]
 fn t6f16_pandins_paradox() {
     judge! {
        "ENG: F lon Supports F wal -> eng",
-       "ENG: F wal -> eng",
-       "FRA: A bre -> lon",
+       "ENG: F wal -> eng": Fails,
+       "FRA: A bre -> lon": Fails,
        "FRA: F eng convoys bre -> lon",
        "GER: F nth Supports F bel -> eng",
-       "GER: F bel -> eng",
+       "GER: F bel -> eng": Fails,
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.17
 #[test]
-#[should_panic]
 fn t6f17_pandins_extended_paradox() {
     judge! {
        "ENG: F lon Supports F wal -> eng",
-       "ENG: F wal -> eng",
-       "FRA: A bre -> lon",
+       "ENG: F wal -> eng": Fails,
+       "FRA: A bre -> lon": Fails,
        "FRA: F eng convoys bre -> lon",
        "FRA: F yor Supports A bre -> lon",
        "GER: F nth Supports F bel -> eng",
-       "GER: F bel -> eng",
+       "GER: F bel -> eng": Fails,
     };
 }
 
@@ -1165,25 +1167,25 @@ fn t6f18_betrayal_paradox() {
 #[test]
 fn t6f19_multi_route_convoy_disruption_paradox() {
     judge! {
-       "FRA: A tun -> nap",
+       "FRA: A tun -> nap": Fails,
        "FRA: F tyr convoys tun -> nap",
        "FRA: F ion convoys tun -> nap",
-       "ITA: F nap Supports F Rome -> tyr",
-       "ITA: F Rome -> tyr",
+       "ITA: F nap Supports F rom -> tyr",
+       "ITA: F rom -> tyr": Fails,
     };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.20
 #[test]
-#[ignore]
 fn t6f20_unwanted_multi_route_convoy_paradox() {
     judge! {
+        @explain
        "FRA: A tun -> nap",
        "FRA: F tyr convoys tun -> nap",
        "ITA: F nap Supports F ion",
        "ITA: F ion convoys tun -> nap",
        "TUR: F aeg Supports F eas -> ion",
-       "TUR: F eas -> ion",
+       "TUR: F eas -> ion": Succeeds,
     };
 }
 
@@ -1292,10 +1294,10 @@ fn t6g04_kidnapping_with_a_disrupted_convoy_and_opposite_move() {
 #[ignore]
 fn t6g05_swapping_with_intent() {
     judge! {
-       "ITA: A Rome -> apu",
-       "ITA: F tyr convoys apu -> Rome",
-       "TUR: A apu -> Rome",
-       "TUR: F ion convoys apu -> Rome",
+       "ITA: A rom -> apu",
+       "ITA: F tyr convoys apu -> rom",
+       "TUR: A apu -> rom",
+       "TUR: F ion convoys apu -> rom",
     };
 }
 

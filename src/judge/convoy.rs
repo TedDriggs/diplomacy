@@ -1,4 +1,4 @@
-use super::{Adjudicate, MappedMainOrder, ResolverContext, ResolverState};
+use super::{Adjudicate, MappedMainOrder, OrderState, ResolverContext, ResolverState};
 use crate::geo::{Map, ProvinceKey};
 use crate::order::{Command, MainCommand};
 use crate::UnitType;
@@ -10,6 +10,26 @@ pub enum ConvoyRouteError {
 
     /// Hold, support, and convoy orders cannot be convoyed.
     CanOnlyConvoyMove,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ConvoyOutcome<'a> {
+    /// The convoying unit was dislodged by another move
+    Dislodged(&'a MappedMainOrder),
+    /// The convoy was failed to resolve a paradox
+    Paradox,
+    /// The convoy was not disrupted. This doesn't mean the move necessarily succeeded.
+    NotDisrupted,
+}
+
+impl From<ConvoyOutcome<'_>> for OrderState {
+    fn from(other: ConvoyOutcome<'_>) -> Self {
+        if other == ConvoyOutcome::NotDisrupted {
+            OrderState::Succeeds
+        } else {
+            OrderState::Fails
+        }
+    }
 }
 
 /// Checks whether `convoy` is a valid convoy that will carry `mv_ord` from

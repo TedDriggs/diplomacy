@@ -27,10 +27,7 @@ pub struct ResolverContext<'a> {
 impl<'a> ResolverContext<'a> {
     /// Creates a new resolver context for a set of orders on a map.
     pub fn new(world_map: &'a Map, orders: Vec<MappedMainOrder>) -> Self {
-        ResolverContext {
-            world_map,
-            orders,
-        }
+        ResolverContext { world_map, orders }
     }
 
     /// Get a view of the orders.
@@ -63,7 +60,16 @@ impl<'a> ResolverContext<'a> {
                 order,
                 Rulebook::adjudicate_support(self, state, order)
             ),
-            _ => print!(""),
+            MainCommand::Hold => println!(
+                "{}: {:?}",
+                order,
+                Rulebook::adjudicate_hold(self, state, order)
+            ),
+            MainCommand::Convoy(..) => println!(
+                "{}: {:?}",
+                order,
+                Rulebook::adjudicate_convoy(self, state, order)
+            ),
         }
     }
 
@@ -127,6 +133,10 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         }
     }
 
+    fn clear_state(&mut self, order: &MappedMainOrder) {
+        self.state.remove(order);
+    }
+
     fn set_state(&mut self, order: &'a MappedMainOrder, resolution: ResolutionState) {
         self.state.insert(order, resolution);
         // self.report_with_label("Updated");
@@ -135,6 +145,14 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
     /// Get the current projected outcome of an order.
     fn get(&self, order: &MappedMainOrder) -> Option<OrderState> {
         self.state.get(order).map(|rs| rs.into())
+    }
+
+    fn knows_outcome_of(&self, order: &MappedMainOrder) -> bool {
+        if let Some(ResolutionState::Known(_)) = self.state.get(order) {
+            true
+        } else {
+            false
+        }
     }
 
     /// Dump the current resolver state to the console. Used in debugging.
@@ -170,8 +188,19 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                 self.set_state(o, Known(Succeeds));
             }
         } else {
-            // can't resolve convoy paradoxes yet
-            unimplemented!()
+            for o in cycle {
+                self.dependency_chain.pop();
+                if self.knows_outcome_of(o) {
+                    continue;
+                }
+
+                if let MainCommand::Convoy(_) = o.command {
+                    // TODO this is too aggressive
+                    self.set_state(o, ResolutionState::Known(OrderState::Fails));
+                } else {
+                    self.clear_state(o);
+                }
+            }
         }
     }
 
@@ -240,9 +269,17 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                             if_fails
                         } else {
                             let tail_start = self.dependency_chain.len();
-                            self.resolve_dependency_cycle(
-                                &resolver_if_fails.dependency_chain[tail_start..],
-                            );
+                            let tail = &resolver_if_fails.dependency_chain[tail_start..];
+
+                            if tail.iter().all(|o| o.is_move()) {
+                                for o in tail {
+                                    self.set_state(o, ResolutionState::Known(OrderState::Succeeds));
+                                }
+                            } else {
+                                self.state = resolver_if_fails.state;
+                                self.resolve_dependency_cycle(tail);
+                            }
+
                             self.resolve(context, order)
                         }
                     }
