@@ -1,0 +1,67 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'diplomacy'",
+            "cargo": {
+                "args": ["test", "--no-run", "--lib", "--package=diplomacy"],
+                "filter": {
+                    "name": "diplomacy",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'datc'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=datc",
+                    "--package=diplomacy"
+                ],
+                "filter": {
+                    "name": "datc",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug specific DATC test",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=datc",
+                    "--package=diplomacy"
+                ],
+                "filter": {
+                    "name": "datc",
+                    "kind": "test"
+                }
+            },
+            "args": ["${input:test}"],
+            "cwd": "${workspaceFolder}"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "test",
+            "description": "Enter a DATC test case ID, e.g. 6d07",
+            "type": "promptString"
+        }
+    ]
+}
