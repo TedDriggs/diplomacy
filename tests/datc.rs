@@ -907,10 +907,10 @@ fn t6e11_no_self_dislodgement_with_beleaguered_garrison_unit_swap_with_adjacent_
 #[test]
 fn t6e12_support_on_attack_on_own_unit_can_be_used_for_other_means() {
     judge! {
-       "AUS: A bud -> rum",
+       "AUS: A bud -> rum": Fails,
        "AUS: A ser Supports A vie -> bud",
-       "ITA: A vie -> bud",
-       "RUS: A gal -> bud",
+       "ITA: A vie -> bud": Fails,
+       "RUS: A gal -> bud": Fails,
        "RUS: A rum Supports A gal -> bud",
     };
 }
@@ -920,11 +920,11 @@ fn t6e12_support_on_attack_on_own_unit_can_be_used_for_other_means() {
 fn t6e13_three_way_beleaguered_garrison() {
     judge! {
        "ENG: F edi Supports F yor -> nth",
-       "ENG: F yor -> nth",
-       "FRA: F bel -> nth",
+       "ENG: F yor -> nth": Fails,
+       "FRA: F bel -> nth": Fails,
        "FRA: F eng Supports F bel -> nth",
-       "GER: F nth Hold",
-       "RUS: F nwg -> nth",
+       "GER: F nth Hold": Succeeds,
+       "RUS: F nwg -> nth": Fails,
        "RUS: F nwy Supports F nwg -> nth",
     };
 }
@@ -932,7 +932,10 @@ fn t6e13_three_way_beleaguered_garrison() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.14
 #[test]
 fn t6e14_illegal_head_to_head_battle_can_still_defend() {
-    judge! { "ENG: A lvp -> edi", "RUS: F edi -> lvp" };
+    judge! {
+        "ENG: A lvp -> edi": Fails,
+        "RUS: F edi -> lvp": Fails
+    };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.E.15
@@ -940,15 +943,26 @@ fn t6e14_illegal_head_to_head_battle_can_still_defend() {
 fn t6e15_the_friendly_head_to_head_battle() {
     judge! {
        "ENG: F hol Supports A ruh -> kie",
-       "ENG: A ruh -> kie",
-       "FRA: A kie -> ber",
+       "ENG: A ruh -> kie": Fails,
+       "FRA: A kie -> ber": Fails,
        "FRA: A mun Supports A kie -> ber",
        "FRA: A sil Supports A kie -> ber",
-       "GER: A ber -> kie",
+       "GER: A ber -> kie": Fails,
        "GER: F den Supports A ber -> kie",
        "GER: F hel Supports A ber -> kie",
        "RUS: F bal Supports A pru -> ber",
-       "RUS: A pru -> ber",
+       "RUS: A pru -> ber": Fails,
+    };
+}
+
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.1
+#[test]
+fn t6f01_no_convoy_in_coastal_areas() {
+    judge! {
+        "TUR: A gre -> sev": Fails,
+        "TUR: F aeg convoys gre -> sev",
+        "TUR: F con convoys gre -> sev",
+        "TUR: F bla convoys gre -> sev",
     };
 }
 
