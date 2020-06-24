@@ -76,14 +76,7 @@ impl<'a> ResolverContext<'a> {
     /// Resolve the orders in the context, producing a map of orders to outcomes
     pub fn resolve(self) -> HashMap<MappedMainOrder, OrderState> {
         let rs = self.resolve_to_state();
-        let mut out_map = HashMap::with_capacity(self.orders.len());
-
-        for order in &self.orders {
-            let order_state = rs.get(&order).expect("All orders should be resolved");
-            out_map.insert(order.clone(), order_state);
-        }
-
-        out_map
+        rs.into()
     }
 
     pub fn find_order_to_province(&'a self, p: &ProvinceKey) -> Option<&'a MappedMainOrder> {
@@ -273,17 +266,28 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
 
                             self.resolve_dependency_cycle(tail);
                             self.resolve(context, order)
-                                }
-                            } else {
-                                self.state = resolver_if_fails.state;
-                                self.resolve_dependency_cycle(tail);
-                            }
-                }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+#[allow(clippy::implicit_hasher)]
+impl<'a, A: Adjudicate> From<ResolverState<'a, A>> for HashMap<MappedMainOrder, OrderState> {
+    fn from(state: ResolverState<'a, A>) -> Self {
+        let mut out_map = HashMap::with_capacity(state.state.len());
+
+        for (order, order_state) in state.state {
+            let order_state = match order_state {
+                ResolutionState::Known(os) | ResolutionState::Guessing(os) => os,
+            };
+
+            out_map.insert(order.clone(), order_state);
+        }
+
+        out_map
     }
 }
 

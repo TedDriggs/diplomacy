@@ -60,14 +60,12 @@ fn get_with_explanation(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderStat
     let parsed = orders.into_iter().map(ord).collect::<Vec<_>>();
     let ctx = ResolverContext::new(geo::standard_map(), parsed.clone());
 
-    {
-        let state = ctx.resolve_to_state();
-        for o in parsed {
-            ctx.explain(&mut state.clone(), &o);
-        }
+    let state = ctx.resolve_to_state();
+    for o in parsed {
+        ctx.explain(&mut state.clone(), &o);
     }
 
-    ctx.resolve()
+    state.into()
 }
 
 #[allow(dead_code)]
