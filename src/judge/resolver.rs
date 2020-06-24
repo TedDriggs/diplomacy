@@ -271,16 +271,14 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                             let tail_start = self.dependency_chain.len();
                             let tail = &resolver_if_fails.dependency_chain[tail_start..];
 
-                            if tail.iter().all(|o| o.is_move()) {
-                                for o in tail {
-                                    self.set_state(o, ResolutionState::Known(OrderState::Succeeds));
+                            self.resolve_dependency_cycle(tail);
+                            self.resolve(context, order)
                                 }
                             } else {
                                 self.state = resolver_if_fails.state;
                                 self.resolve_dependency_cycle(tail);
                             }
-
-                            self.resolve(context, order)
+                }
                         }
                     }
                 }
