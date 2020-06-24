@@ -64,7 +64,7 @@ fn route_steps<'a>(
                 let mut steps = route_steps(
                     map,
                     convoys.clone(),
-                    (&convoy.region).into(),
+                    convoy.region.province(),
                     dest,
                     next_path,
                 );
@@ -97,8 +97,8 @@ pub fn routes<'a, A: Adjudicate>(
         Ok(route_steps(
             ctx.world_map,
             convoy_steps,
-            (&mv_ord.region).into(),
-            dst.into(),
+            mv_ord.region.province(),
+            dst.province(),
             vec![],
         ))
     } else {

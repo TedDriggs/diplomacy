@@ -90,7 +90,7 @@ pub fn max_prevent_result<'a, A: Adjudicate>(
     resolver: &mut ResolverState<'a, A>,
     preventing: &MappedMainOrder,
 ) -> Option<Prevent<'a>> {
-    if let Some(dst) = preventing.move_dest() {
+    preventing.move_dest().and_then(|dst| {
         let mut best_prevent = None;
         let mut best_prevent_strength = 0;
         for order in context
@@ -108,9 +108,7 @@ pub fn max_prevent_result<'a, A: Adjudicate>(
         }
 
         best_prevent
-    } else {
-        None
-    }
+    })
 }
 
 /// Get the order that dislodges the provided order, if one exists.
@@ -124,10 +122,10 @@ pub fn dislodger_of<'a, A: Adjudicate>(
     resolver: &mut ResolverState<'a, A>,
     order: &'a MappedMainOrder,
 ) -> Option<&'a MappedMainOrder> {
-    let order_ref = context.orders();
-    if let Some(dislodger) = order_ref
+    if let Some(dislodger) = context
+        .orders()
         .iter()
-        .find(|o| o.is_move_to_province((&order.region).into()))
+        .find(|o| o.is_move_to_province(order.region.province()))
     {
         // If we found someone trying to move into `order`'s old province, we
         // check to see if `order` vacated. If so, then it couldn't have been
