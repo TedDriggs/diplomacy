@@ -42,6 +42,9 @@ impl<L: Location, C: Command<L>> Order<L, C> {
     /// Checks if two orders are moves in direct province opposition.
     /// This will return false if the start and destination are the
     /// same region.
+    ///
+    /// This function does not check for possible convoy routes that would allow location
+    /// swaps; for that, use `convoy::is_swap`.
     pub fn is_head_to_head(first: &Self, other: &Self) -> bool {
         first.move_dest() != Some(&first.region)
             && first.move_dest().map(|d| d.province()) == Some(other.region.province())

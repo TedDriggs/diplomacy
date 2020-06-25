@@ -68,13 +68,6 @@ fn get_with_explanation(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderStat
     state.into()
 }
 
-#[allow(dead_code)]
-fn report_results(map: &HashMap<MappedMainOrder, OrderState>) {
-    for (o, r) in map {
-        println!("{} {:?}", o, r)
-    }
-}
-
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.1
 #[test]
 fn t6a01_move_to_non_neighbor_fails() {
@@ -360,7 +353,6 @@ fn t6c05_a_disrupted_circular_movement_due_to_dislodged_convoy() {
 #[test]
 fn t6c06_two_armies_with_two_convoys() {
     judge! {
-       @explain
        "ENG: F nth convoys lon -> bel",
        "ENG: A lon -> bel": Succeeds,
        "FRA: F eng convoys bel -> lon",
@@ -370,14 +362,13 @@ fn t6c06_two_armies_with_two_convoys() {
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.C.7
 #[test]
-#[ignore]
 fn t6c07_disrupted_unit_swap() {
     judge! {
        "ENG: F nth convoys lon -> bel",
-       "ENG: A lon -> bel",
+       "ENG: A lon -> bel": Fails,
        "FRA: F eng convoys bel -> lon",
-       "FRA: A bel -> lon",
-       "FRA: A bur -> bel",
+       "FRA: A bel -> lon": Fails,
+       "FRA: A bur -> bel": Fails,
     };
 }
 
@@ -387,7 +378,7 @@ fn t6d01_supported_hold_can_prevent_dislodgement() {
     judge! {
        "AUS: F adr supports A tri -> ven",
        "AUS: A tri -> ven": Fails,
-       "ITA: A ven hold",
+       "ITA: A ven hold": Succeeds,
        "ITA: A tyr supports A ven",
     };
 }
@@ -398,8 +389,8 @@ fn t6d02_a_move_cuts_support_on_hold() {
     judge! {
        "AUS: F adr supports A tri -> ven",
        "AUS: A tri -> ven": Succeeds,
-       "AUS: A vie -> tyr",
-       "ITA: A ven hold",
+       "AUS: A vie -> tyr": Fails,
+       "ITA: A ven hold": Fails,
        "ITA: A tyr supports A ven",
     };
 }
@@ -445,8 +436,8 @@ fn t6d06_support_to_hold_on_convoying_unit_allowed() {
        "GER: A ber -> swe": Succeeds,
        "GER: F bal convoys ber -> swe",
        "GER: F pru Supports F bal",
-       "RUS: F liv -> bal": Fails,
-       "RUS: F bot Supports F liv -> bal",
+       "RUS: F lvn -> bal": Fails,
+       "RUS: F bot Supports F lvn -> bal",
     };
 }
 
@@ -454,11 +445,11 @@ fn t6d06_support_to_hold_on_convoying_unit_allowed() {
 #[test]
 fn t6d07_support_to_hold_on_moving_unit_not_allowed() {
     judge! {
-       "GER: F bal -> swe",
+       "GER: F bal -> swe": Fails,
        "GER: F pru Supports F bal",
-       "RUS: F liv -> bal",
-       "RUS: F bot Supports F liv -> bal",
-       "RUS: A fin -> swe",
+       "RUS: F lvn -> bal": Succeeds,
+       "RUS: F bot Supports F lvn -> bal",
+       "RUS: A fin -> swe": Fails,
     };
 }
 
@@ -481,7 +472,7 @@ fn t6d09_support_to_move_on_holding_unit_not_allowed() {
        "ITA: A ven -> tri": Succeeds,
        "ITA: A tyr supports A ven -> tri",
        "AUS: A alb supports A tri -> ser",
-       "AUS: A tri holds",
+       "AUS: A tri holds": Fails,
     };
 }
 
@@ -627,7 +618,7 @@ fn t6d24_impossible_army_move_can_not_be_supported() {
        "FRA: A mar -> lyo",
        "FRA: F spa(sc) Supports A mar -> lyo",
        "ITA: F lyo Hold",
-       "TUR: F tyr Supports F wes -> lyo",
+       "TUR: F tys Supports F wes -> lyo",
        "TUR: F wes -> lyo",
     };
 }
@@ -661,7 +652,7 @@ fn t6d27_failing_convoy_can_be_supported() {
        "ENG: F swe -> bal",
        "ENG: F den Supports F swe -> bal",
        "GER: A ber Hold",
-       "RUS: F bal convoys ber -> liv",
+       "RUS: F bal convoys ber -> lvn",
        "RUS: F pru Supports F bal",
     };
 }
@@ -749,7 +740,7 @@ fn t6d34_support_targeting_own_area_not_allowed() {
        "GER: A ber -> pru": Succeeds,
        "GER: A sil supports A ber -> pru",
        "GER: F bal supports A ber -> pru",
-       "ITA: A pru supports A lvn -> pru",
+       "ITA: A pru supports A lvn -> pru": Fails,
        "RUS: A war supports A lvn -> pru",
        "RUS: A lvn -> pru": Fails,
     };
@@ -790,16 +781,16 @@ fn t6e03_no_help_in_dislodging_own_unit() {
 #[test]
 fn t6e04_non_dislodged_loser_has_still_effect() {
     judge! {
-       "GER: F hol -> nth",
+       "GER: F hol -> nth": Fails,
        "GER: F hel Supports F hol -> nth",
        "GER: F ska Supports F hol -> nth",
-       "FRA: F nth -> hol",
+       "FRA: F nth -> hol": Fails,
        "FRA: F bel Supports F nth -> hol",
        "ENG: F edi Supports F nwg -> nth",
        "ENG: F yor Supports F nwg -> nth",
-       "ENG: F nwg -> nth",
+       "ENG: F nwg -> nth": Fails,
        "AUS: A kie Supports A ruh -> hol",
-       "AUS: A ruh -> hol",
+       "AUS: A ruh -> hol": Fails,
     };
 }
 
@@ -807,17 +798,17 @@ fn t6e04_non_dislodged_loser_has_still_effect() {
 #[test]
 fn t6e05_loser_dislodged_by_another_army_has_still_effect() {
     judge! {
-       "GER: F hol -> nth",
+       "GER: F hol -> nth": Fails,
        "GER: F hel Supports F hol -> nth",
        "GER: F ska Supports F hol -> nth",
-       "FRA: F nth -> hol",
+       "FRA: F nth -> hol": Fails,
        "FRA: F bel Supports F nth -> hol",
        "ENG: F edi Supports F nwg -> nth",
        "ENG: F yor Supports F nwg -> nth",
-       "ENG: F nwg -> nth",
+       "ENG: F nwg -> nth": Succeeds,
        "ENG: F lon Supports F nwg -> nth",
        "AUS: A kie Supports A ruh -> hol",
-       "AUS: A ruh -> hol",
+       "AUS: A ruh -> hol": Fails,
     };
 }
 
@@ -825,13 +816,13 @@ fn t6e05_loser_dislodged_by_another_army_has_still_effect() {
 #[test]
 fn t6e06_not_dislodge_because_of_own_support_has_still_effect() {
     judge! {
-       "GER: F hol -> nth",
+       "GER: F hol -> nth": Fails,
        "GER: F hel Supports F hol -> nth",
-       "FRA: F nth -> hol",
+       "FRA: F nth -> hol": Fails,
        "FRA: F bel Supports F nth -> hol",
        "FRA: F eng Supports F hol -> nth",
        "AUS: A kie Supports A ruh -> hol",
-       "AUS: A ruh -> hol",
+       "AUS: A ruh -> hol": Fails,
     };
 }
 
@@ -1179,10 +1170,10 @@ fn t6f18_betrayal_paradox() {
 fn t6f19_multi_route_convoy_disruption_paradox() {
     judge! {
        "FRA: A tun -> nap": Fails,
-       "FRA: F tyr convoys tun -> nap",
+       "FRA: F tys convoys tun -> nap",
        "FRA: F ion convoys tun -> nap",
-       "ITA: F nap Supports F rom -> tyr",
-       "ITA: F rom -> tyr": Fails,
+       "ITA: F nap Supports F rom -> tys",
+       "ITA: F rom -> tys": Fails,
     };
 }
 
@@ -1190,9 +1181,8 @@ fn t6f19_multi_route_convoy_disruption_paradox() {
 #[test]
 fn t6f20_unwanted_multi_route_convoy_paradox() {
     judge! {
-        @explain
        "FRA: A tun -> nap",
-       "FRA: F tyr convoys tun -> nap",
+       "FRA: F tys convoys tun -> nap",
        "ITA: F nap Supports F ion",
        "ITA: F ion convoys tun -> nap",
        "TUR: F aeg Supports F eas -> ion",
@@ -1267,8 +1257,8 @@ fn t6f24_second_order_paradox_with_no_resolution() {
 #[test]
 fn t6g02_kidnapping_an_army() {
     judge! {
-       "ENG: A nwy -> swe",
-       "RUS: F swe -> nwy",
+       "ENG: A nwy -> swe": Succeeds,
+       "RUS: F swe -> nwy": Succeeds,
        "GER: F ska convoys nwy -> swe",
     };
 }
@@ -1305,9 +1295,9 @@ fn t6g04_kidnapping_with_a_disrupted_convoy_and_opposite_move() {
 #[ignore]
 fn t6g05_swapping_with_intent() {
     judge! {
-       "ITA: A rom -> apu",
-       "ITA: F tyr convoys apu -> rom",
-       "TUR: A apu -> rom",
+       "ITA: A rom -> apu": Succeeds,
+       "ITA: F tys convoys apu -> rom",
+       "TUR: A apu -> rom": Succeeds,
        "TUR: F ion convoys apu -> rom",
     };
 }
@@ -1352,7 +1342,6 @@ fn t6g08_explicit_convoy_that_isnt_there() {
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.9
 #[test]
-#[ignore]
 fn t6g09_swapped_or_dislodged() {
     judge! {
        "ENG: A nwy -> swe",
@@ -1443,6 +1432,22 @@ fn t6g15_bounce_and_dislodge_with_double_convoy() {
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.16
+///
+///
+/// See decision details 5.B.6. If the 'PREVENT STRENGTH' is incorrectly implemented,
+/// due to the fact that it does not take into account that the 'PREVENT STRENGTH'
+/// is only zero when the unit is engaged in a head to head battle, then this goes
+/// wrong in this test case. The 'PREVENT STRENGTH' of Sweden would be zero, because
+/// the opposing unit in Norway successfully moves. Since, this strength would be zero,
+/// the fleet in the North Sea would move to Norway.
+///
+/// However, although the 'PREVENT STRENGTH' is zero, the army in Sweden would also
+/// move to Norway. So, the final result would contain two units that successfully
+/// moved to Norway.
+///
+/// Of course, this is incorrect. Norway will indeed successfully move to Sweden
+/// while the army in Sweden ends in Norway, because it is stronger than the fleet
+/// in the North Sea. This fleet will stay in the North Sea.
 #[test]
 fn t6g16_the_two_unit_in_one_area_bug_moving_by_convoy() {
     judge! {
@@ -1465,7 +1470,7 @@ fn t6g17_the_two_unit_in_one_area_bug_moving_over_land() {
        "ENG: F bal Supports A nwy -> swe",
        "ENG: F ska convoys nwy -> swe",
        "ENG: F nth -> nwy": Fails,
-       "RUS: A swe -> nwy": Fails,
+       "RUS: A swe -> nwy": Succeeds,
        "RUS: F nwg Supports A swe -> nwy",
     };
 }
@@ -1476,11 +1481,11 @@ fn t6g18_the_two_unit_in_one_area_bug_with_double_convoy() {
     judge! {
        "ENG: F nth convoys lon -> bel",
        "ENG: A hol Supports A lon -> bel",
-       "ENG: A yor -> lon",
-       "ENG: A lon -> bel",
+       "ENG: A yor -> lon": Fails,
+       "ENG: A lon -> bel": Succeeds,
        "ENG: A ruh Supports A lon -> bel",
        "FRA: F eng convoys bel -> lon",
-       "FRA: A bel -> lon",
+       "FRA: A bel -> lon": Succeeds,
        "FRA: A wal Supports A bel -> lon",
     };
 }
@@ -1672,8 +1677,8 @@ fn t6h16_contested_for_both_coasts() {
        "FRA: F mao -> spa(nc)",
        "FRA: F gas -> spa(nc)",
        "FRA: F wes Hold",
-       "ITA: F tun Supports F tyr -> wes",
-       "ITA: F tyr -> wes",
+       "ITA: F tun Supports F tys -> wes",
+       "ITA: F tys -> wes",
     };
 }
 

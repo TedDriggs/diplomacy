@@ -1,5 +1,5 @@
 use super::calc::{dislodger_of, max_prevent_result, path_exists};
-use super::convoy::ConvoyOutcome;
+use super::convoy::{self, ConvoyOutcome};
 use super::resolver::{Adjudicate, ResolverContext, ResolverState};
 use super::support::{self, SupportOutcome};
 use super::{MappedMainOrder, OrderState};
@@ -52,7 +52,10 @@ impl Rulebook {
                     let mut resistance = 0;
 
                     // head-to-heads and non-moves get their support
-                    if !occupier.command.is_move() || Order::is_head_to_head(occupier, ord) {
+                    if !occupier.command.is_move()
+                        || (Order::is_head_to_head(occupier, ord)
+                            && !convoy::is_swap(ctx, rslv, ord, occupier))
+                    {
                         // DEFEND and HOLD strengths include supports that may seek to thwart
                         // other orders from the same nation.
 

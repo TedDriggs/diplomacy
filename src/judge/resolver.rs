@@ -263,9 +263,9 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         // this string to give us a better way to see which order we're resolving.
         let _order = format!("{}", order);
 
-        dbg!(order);
-        dbg!(&self.state);
-        dbg!(&self.dependency_chain);
+        // dbg!(order);
+        // dbg!(&self.state);
+        // dbg!(&self.dependency_chain);
 
         match self.state.get(order) {
             Some(&Known(order_state)) => order_state,
@@ -303,11 +303,11 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                     }
                     // if the next dependency is the one we're already depending on, we're stuck.
                     else {
-                        let (resolver_if_succeeds, if_succeeds) =
+                        let (_resolver_if_succeeds, if_succeeds) =
                             self.with_guess(context, order, Succeeds);
 
-                        resolver_if_fails.report_with_label(&format!("If {} fails", order));
-                        resolver_if_succeeds.report_with_label(&format!("If {} succeeds", order));
+                        // resolver_if_fails.report_with_label(&format!("If {} fails", order));
+                        // resolver_if_succeeds.report_with_label(&format!("If {} succeeds", order));
 
                         // If there's a paradox but the outcome doesn't depend on this order,
                         // then all we've learned is the state of this one order.

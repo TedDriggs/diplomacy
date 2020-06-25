@@ -50,7 +50,12 @@ fn prevent_result<'a, A: Adjudicate>(
                 .iter()
                 .find(|o| Order::is_head_to_head(o, order))
             {
-                if resolver.resolve(context, h2h).into() {
+                // A head-to-head battle occurs when two units are attacking
+                // each other and no convoy is available to let the two pass each
+                // other.
+                if resolver.resolve(context, h2h).into()
+                    && !convoy::is_swap(&context, resolver, h2h, order)
+                {
                     return Some(Prevent::LostHeadToHead);
                 }
             }
@@ -98,7 +103,13 @@ pub fn max_prevent_result<'a, A: Adjudicate>(
             .iter()
             .filter(|ord| ord != &preventing && ord.is_move_to_province(dst.into()))
         {
-            if let Some(prev) = prevent_result(context, resolver, order) {
+            if Order::is_head_to_head(order, preventing) && resolver.resolve(context, order).into()
+            {
+                if best_prevent == None {
+                    best_prevent = Some(Prevent::LostHeadToHead);
+                }
+                continue;
+            } else if let Some(prev) = prevent_result(context, resolver, order) {
                 let nxt_str = prev.strength();
                 if nxt_str >= best_prevent_strength {
                     best_prevent_strength = nxt_str;
@@ -142,4 +153,58 @@ pub fn dislodger_of<'a, A: Adjudicate>(
     // If we couldn't find any orders that attempted to move into the province
     // `order` occupied, then there can't be any dislodgers.
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{max_prevent_result, Prevent};
+    use crate::judge::{MappedMainOrder, ResolverContext, ResolverState, Rulebook};
+
+    #[test]
+    fn t6e01_prevent_strengths() {
+        let orders = vec![
+            "GER: A ber -> pru",
+            "GER: F kie -> ber",
+            "GER: A sil supports A ber -> pru",
+            "RUS: A pru -> ber",
+        ]
+        .into_iter()
+        .map(|ord| ord.parse::<MappedMainOrder>().unwrap())
+        .collect::<Vec<_>>();
+
+        let context = ResolverContext::new(crate::geo::standard_map(), orders.clone());
+        let mut state = ResolverState::with_adjudicator(Rulebook);
+
+        assert_eq!(
+            max_prevent_result(&context, &mut state, &orders[1]),
+            Some(Prevent::LostHeadToHead)
+        );
+    }
+
+    #[test]
+    fn t6g16_prevent_strengths() {
+        let orders = vec![
+            "ENG: A nwy -> swe",                // 0
+            "ENG: A den Supports A nwy -> swe", // 1
+            "ENG: F bal Supports A nwy -> swe", // 2
+            "ENG: F nth -> nwy",                // 3
+            "RUS: A swe -> nwy via Convoy",     // 4
+            "RUS: F ska convoys swe -> nwy",    // 5
+            "RUS: F nwg Supports A swe -> nwy", // 6
+        ]
+        .into_iter()
+        .map(|ord| ord.parse::<MappedMainOrder>().unwrap())
+        .collect::<Vec<_>>();
+
+        let context = ResolverContext::new(crate::geo::standard_map(), orders.clone());
+        let mut state = ResolverState::with_adjudicator(Rulebook);
+        let nth_prevent = max_prevent_result(&context, &mut state, &orders[3]);
+        let swe_prevent = max_prevent_result(&context, &mut state, &orders[4]);
+
+        assert_eq!(
+            nth_prevent,
+            Some(Prevent::Prevents(&orders[4], vec![&orders[6]]))
+        );
+        assert_eq!(swe_prevent, Some(Prevent::Prevents(&orders[3], vec![])));
+    }
 }
