@@ -53,8 +53,9 @@
                     "kind": "test"
                 }
             },
-            "args": ["${input:test}"],
-            "cwd": "${workspaceFolder}"
+            "args": ["--nocapture", "${input:test}"],
+            "cwd": "${workspaceFolder}",
+            "terminal": "integrated"
         }
     ],
     "inputs": [
