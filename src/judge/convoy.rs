@@ -14,6 +14,8 @@ pub enum ConvoyRouteError {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ConvoyOutcome<'a> {
+    /// The convoy order is invalid because the convoying unit is not at sea.
+    NotAtSea,
     /// The convoying unit was dislodged by another move
     Dislodged(&'a MappedMainOrder),
     /// The convoy was failed to resolve a paradox
@@ -44,7 +46,7 @@ fn is_convoy_for(convoy: &MappedMainOrder, mv_ord: &MappedMainOrder) -> bool {
 /// Find all routes from `origin` to `dest` given a set of valid convoys.
 fn route_steps<'a>(
     map: &Map,
-    convoys: Vec<&'a MappedMainOrder>,
+    convoys: &[&'a MappedMainOrder],
     origin: &ProvinceKey,
     dest: &ProvinceKey,
     working_path: Vec<&'a MappedMainOrder>,
@@ -56,18 +58,13 @@ fn route_steps<'a>(
         vec![working_path]
     } else {
         let mut paths = vec![];
-        for convoy in &convoys {
+        for convoy in convoys {
             // move to adjacent, and don't allow backtracking/cycles
             if !working_path.contains(&convoy) && adjacent_regions.contains(&&convoy.region) {
                 let mut next_path = working_path.clone();
                 next_path.push(&convoy);
-                let mut steps = route_steps(
-                    map,
-                    convoys.clone(),
-                    convoy.region.province(),
-                    dest,
-                    next_path,
-                );
+                let mut steps =
+                    route_steps(map, convoys, convoy.region.province(), dest, next_path);
                 if !steps.is_empty() {
                     paths.append(&mut steps);
                 }
@@ -87,6 +84,10 @@ pub fn routes<'a, A: Adjudicate>(
     if mv_ord.unit_type == UnitType::Fleet {
         Err(ConvoyRouteError::CanOnlyConvoyArmy)
     } else if let Some(dst) = mv_ord.move_dest() {
+        // Get the convoy orders that can ferry the provided move order and are
+        // successful. Per http://uk.diplom.org/pouch/Zine/S2009M/Kruijswijk/DipMath_Chp6.htm
+        // we resolve all convoy orders eagerly to avoid wild recursion during the depth-first
+        // search.
         let mut convoy_steps = vec![];
         for order in ctx.orders() {
             if is_convoy_for(order, mv_ord) && state.resolve(ctx, order).into() {
@@ -96,7 +97,7 @@ pub fn routes<'a, A: Adjudicate>(
 
         Ok(route_steps(
             ctx.world_map,
-            convoy_steps,
+            &convoy_steps,
             mv_ord.region.province(),
             dst.province(),
             vec![],
@@ -149,7 +150,7 @@ mod test {
 
         let routes = super::route_steps(
             geo::standard_map(),
-            convoys.iter().collect(),
+            &convoys.iter().collect::<Vec<_>>(),
             &ProvinceKey::new("lon"),
             &ProvinceKey::new("swe"),
             vec![],

@@ -1,7 +1,7 @@
 use super::{MappedMainOrder, OrderState, Rulebook};
 use crate::geo::{Map, ProvinceKey, RegionKey};
 use crate::order::{Command, MainCommand};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 /// A clonable container for a rulebook which can be used to adjudicate a turn.
 pub trait Adjudicate: Clone {
@@ -37,7 +37,20 @@ impl<'a> ResolverContext<'a> {
 
     pub fn resolve_to_state(&self) -> ResolverState<super::rulebook::Rulebook> {
         let mut rs = ResolverState::with_adjudicator(super::rulebook::Rulebook);
-        for order in self.orders() {
+
+        // XXX Paradoxes can trigger infinite loops if we're not careful, so we
+        // try to resolve convoys first so that cycle detection will make progress
+        // towards a global resolution.
+        let mut orders = self.orders().iter().collect::<Vec<_>>();
+        orders.sort_unstable_by_key(|r| {
+            if let MainCommand::Convoy(..) = r.command {
+                1
+            } else {
+                2
+            }
+        });
+
+        for order in orders {
             rs.resolve(&self, order);
         }
 
@@ -103,15 +116,32 @@ impl<'a> From<&'a ResolutionState> for OrderState {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 enum ResolutionState {
     Guessing(OrderState),
     Known(OrderState),
 }
 
+impl std::fmt::Debug for ResolutionState {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "{}({:?})",
+            match self {
+                ResolutionState::Guessing(..) => "Guessing",
+                ResolutionState::Known(..) => "Known",
+            },
+            OrderState::from(self)
+        )
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResolverState<'a, A: Adjudicate> {
     state: HashMap<&'a MappedMainOrder, ResolutionState>,
+    /// Orders which form part of a paradox. These should only be convoy orders, and will
+    /// be treated as hold orders to advance resolution.
+    paradoxical_orders: HashSet<&'a MappedMainOrder>,
     dependency_chain: Vec<&'a MappedMainOrder>,
     adjudicator: A,
 }
@@ -122,6 +152,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         ResolverState {
             state: HashMap::new(),
             dependency_chain: vec![],
+            paradoxical_orders: HashSet::new(),
             adjudicator,
         }
     }
@@ -170,13 +201,34 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         );
     }
 
+    pub(crate) fn order_in_paradox(&self, order: &'a MappedMainOrder) -> bool {
+        self.paradoxical_orders.contains(order)
+    }
+
+    /// Create a clone of the resolver state, add a guess at the success or failure
+    /// of the given order, then adjudicate the order with the amended resolver.
+    ///
+    /// This returns the entire guesser because in some cases the calling resolver needs
+    /// the dependency chain and the entire state generated during the post-guess adjudication.
+    fn with_guess(
+        &self,
+        context: &'a ResolverContext<'a>,
+        order: &'a MappedMainOrder,
+        guess: OrderState,
+    ) -> (Self, OrderState) {
+        let mut guesser = self.clone();
+        guesser.set_state(order, ResolutionState::Guessing(guess));
+        let result = self.adjudicator.adjudicate(context, &mut guesser, order);
+        (guesser, result)
+    }
+
     /// When a dependency cycle is detected, attempt to resolve all orders in the cycle.
     fn resolve_dependency_cycle(&mut self, cycle: &[&'a MappedMainOrder]) {
         use self::ResolutionState::*;
         use super::OrderState::*;
 
         // if every order in the cycle is a move, then this is a circular move
-        if cycle.iter().all(|o| o.command.is_move()) {
+        if cycle.iter().all(|o| o.is_move()) {
             for o in cycle {
                 self.set_state(o, Known(Succeeds));
             }
@@ -188,7 +240,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                 }
 
                 if let MainCommand::Convoy(_) = o.command {
-                    // TODO this is too aggressive
+                    self.paradoxical_orders.insert(o);
                     self.set_state(o, ResolutionState::Known(OrderState::Fails));
                 } else {
                     self.clear_state(o);
@@ -207,6 +259,14 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         use self::ResolutionState::*;
         use super::OrderState::*;
 
+        // The Rust debugger doesn't use fmt::Debug when showing values, so we create
+        // this string to give us a better way to see which order we're resolving.
+        let _order = format!("{}", order);
+
+        dbg!(order);
+        dbg!(&self.state);
+        dbg!(&self.dependency_chain);
+
         match self.state.get(order) {
             Some(&Known(order_state)) => order_state,
             Some(&Guessing(order_state)) => {
@@ -219,13 +279,8 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
             }
             None => {
                 // checkpoint the resolver and tell it to assume the order fails.
-                let mut resolver_if_fails = self.clone();
-                resolver_if_fails.set_state(order, Guessing(Fails));
-
                 // get the order state based on that assumption.
-                let if_fails = self
-                    .adjudicator
-                    .adjudicate(context, &mut resolver_if_fails, order);
+                let (resolver_if_fails, if_fails) = self.with_guess(context, order, Fails);
 
                 // If we found no new dependencies then this is a valid resolution!
                 // We now snap to the resolver state from the assumption so that we can
@@ -241,16 +296,15 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                     // then we cautiously proceed. We update state to match what we've learned
                     // from the hypothetical and proceed with our guesses.
                     if next_dep != order {
-                        resolver_if_fails.set_state(order, Guessing(if_fails));
                         self.state = resolver_if_fails.state;
+                        self.set_state(order, Guessing(if_fails));
                         self.dependency_chain.push(next_dep);
                         if_fails
                     }
                     // if the next dependency is the one we're already depending on, we're stuck.
                     else {
-                        let mut resolver_if_succeeds = self.clone();
-                        resolver_if_succeeds.set_state(order, Guessing(Succeeds));
-                        let if_succeeds = resolver_if_succeeds.resolve(context, order);
+                        let (resolver_if_succeeds, if_succeeds) =
+                            self.with_guess(context, order, Succeeds);
 
                         resolver_if_fails.report_with_label(&format!("If {} fails", order));
                         resolver_if_succeeds.report_with_label(&format!("If {} succeeds", order));

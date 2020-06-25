@@ -3,40 +3,16 @@ use super::convoy::ConvoyOutcome;
 use super::resolver::{Adjudicate, ResolverContext, ResolverState};
 use super::support::{self, SupportOutcome};
 use super::{MappedMainOrder, OrderState};
+use crate::geo::Terrain;
 use crate::judge::strength::{Prevent, Strength};
 use crate::order::{Command, Order};
+use crate::ShortName;
 
 /// The standard Diplomacy rules.
 #[derive(Debug, Clone, Default)]
 pub struct Rulebook;
 
 impl Rulebook {
-    /// Determine the outcome of an order from a context, using the provided
-    /// `resolver` to handle guesses and dependency resolutions.
-    fn adjudicate<'a>(
-        &self,
-        context: &'a ResolverContext<'a>,
-        resolver: &mut ResolverState<'a, Self>,
-        order: &'a MappedMainOrder,
-    ) -> OrderState {
-        use crate::order::MainCommand::*;
-        match order.command {
-            // A move order succeeds when the unit successfully transitions to the target.
-            Move(..) => Rulebook::adjudicate_move(context, resolver, order).into(),
-
-            // A support order "succeeds" if the support is not cut. This doesn't
-            // necessarily mean support got applied.
-            Support(..) => Rulebook::adjudicate_support(context, resolver, order).into(),
-
-            // Hold orders succeed when the unit is not dislodged.
-            Hold => Rulebook::adjudicate_hold(context, resolver, order).into(),
-
-            // Convoy orders succeed when the unit is not dislodged and the convoy doesn't create
-            // a paradox.
-            Convoy(..) => Rulebook::adjudicate_convoy(context, resolver, order).into(),
-        }
-    }
-
     /// Apply rules to determine hold outcome.
     pub fn adjudicate_hold<'a>(
         ctx: &'a ResolverContext<'a>,
@@ -153,16 +129,30 @@ impl Rulebook {
         rslv: &mut ResolverState<'a, Self>,
         ord: &'a MappedMainOrder,
     ) -> ConvoyOutcome<'a> {
+        // Test case 6.F.1: Fleets cannot convoy in coastal areas
+        //
+        // Note: We explicitly check that "coast" is none because explicit-coast
+        // regions are marked as being 'sea' to prevent armies from occupying them,
+        // but are not valid locations for convoys to operate.
+        let is_at_sea = ord.region.coast().is_none()
+            && ctx
+                .world_map
+                .find_region(&ord.region.short_name())
+                .map(|r| r.terrain() == Terrain::Sea)
+                .unwrap_or(false);
+
+        if !is_at_sea {
+            return ConvoyOutcome::NotAtSea;
+        }
+
         if let Some(dislodger) = dislodger_of(ctx, rslv, ord) {
             return ConvoyOutcome::Dislodged(dislodger);
         }
 
-        if rslv.resolve(ctx, ord).into() {
-            ConvoyOutcome::NotDisrupted
-        } else {
-            // Apart from dislodging, a failed convoy order can only occur
-            // due to it being failed as part of a paradox resolution
+        if rslv.order_in_paradox(ord) {
             ConvoyOutcome::Paradox
+        } else {
+            ConvoyOutcome::NotDisrupted
         }
     }
 }
@@ -174,7 +164,22 @@ impl Adjudicate for Rulebook {
         resolver: &mut ResolverState<'a, Self>,
         order: &'a MappedMainOrder,
     ) -> OrderState {
-        Rulebook::adjudicate(&self, context, resolver, order)
+        use crate::order::MainCommand::*;
+        match order.command {
+            // A move order succeeds when the unit successfully transitions to the target.
+            Move(..) => Rulebook::adjudicate_move(context, resolver, order).into(),
+
+            // A support order "succeeds" if the support is not cut. This doesn't
+            // necessarily mean support got applied.
+            Support(..) => Rulebook::adjudicate_support(context, resolver, order).into(),
+
+            // Hold orders succeed when the unit is not dislodged.
+            Hold => Rulebook::adjudicate_hold(context, resolver, order).into(),
+
+            // Convoy orders succeed when the unit is not dislodged and the convoy doesn't create
+            // a paradox.
+            Convoy(..) => Rulebook::adjudicate_convoy(context, resolver, order).into(),
+        }
     }
 }
 

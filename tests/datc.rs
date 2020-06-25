@@ -123,7 +123,7 @@ fn t6a06_ordering_a_unit_of_another_country() {
 fn t6a07_only_armies_can_be_convoyed() {
     judge! {
         "ENG: F lon -> bel": Fails,
-        "ENG: F nth convoys lon -> bel": Fails,
+        "ENG: F nth convoys lon -> bel",
     };
 }
 
@@ -971,8 +971,8 @@ fn t6f01_no_convoy_in_coastal_areas() {
 fn t6f02_an_army_being_convoyed_can_bounce_as_normal() {
     judge! {
        "ENG: F eng convoys lon -> bre",
-       "ENG: A lon -> bre",
-       "FRA: A par -> bre",
+       "ENG: A lon -> bre": Fails,
+       "FRA: A par -> bre": Fails,
     };
 }
 
@@ -980,7 +980,6 @@ fn t6f02_an_army_being_convoyed_can_bounce_as_normal() {
 #[test]
 fn t6f03_an_army_being_convoyed_can_receive_support() {
     judge! {
-        @explain
        "ENG: F eng convoys lon -> bre",
        "ENG: A lon -> bre": Succeeds,
        "ENG: F mao Supports A lon -> bre": Succeeds,
@@ -1003,10 +1002,10 @@ fn t6f04_an_attacked_convoy_is_not_disrupted() {
 fn t6f05_a_beleaguered_convoy_is_not_disrupted() {
     judge! {
        "ENG: F nth convoys lon -> hol",
-       "ENG: A lon -> hol",
-       "FRA: F eng -> nth",
+       "ENG: A lon -> hol": Succeeds,
+       "FRA: F eng -> nth": Fails,
        "FRA: F bel Supports F eng -> nth",
-       "GER: F ska -> nth",
+       "GER: F ska -> nth": Fails,
        "GER: F den Supports F ska -> nth",
     };
 }
@@ -1090,10 +1089,10 @@ fn t6f11_dislodge_of_multi_route_convoy_with_only_foreign_fleets() {
 fn t6f12_dislodged_convoying_fleet_not_on_route() {
     judge! {
        "ENG: F eng convoys lon -> bel",
-       "ENG: A lon -> bel",
-       "ENG: F iri convoys lon -> bel",
+       "ENG: A lon -> bel": Succeeds,
+       "ENG: F iri convoys lon -> bel": Fails,
        "FRA: F nao Supports F mao -> iri",
-       "FRA: F mao -> iri",
+       "FRA: F mao -> iri": Succeeds,
     };
 }
 
@@ -1113,10 +1112,10 @@ fn t6f13_the_unwanted_alternative() {
 #[test]
 fn t6f14_simple_convoy_paradox() {
     judge! {
-       "ENG: F lon Supports F wal -> eng",
-       "ENG: F wal -> eng": Succeeds,
-       "FRA: A bre -> lon": Fails,
-       "FRA: F eng convoys bre -> lon": Fails,
+        "ENG: F lon Supports F wal -> eng",
+        "ENG: F wal -> eng": Succeeds,
+        "FRA: A bre -> lon": Fails,
+        "FRA: F eng convoys bre -> lon": Fails,
     };
 }
 
@@ -1447,11 +1446,11 @@ fn t6g15_bounce_and_dislodge_with_double_convoy() {
 #[test]
 fn t6g16_the_two_unit_in_one_area_bug_moving_by_convoy() {
     judge! {
-       "ENG: A nwy -> swe",
+       "ENG: A nwy -> swe": Succeeds,
        "ENG: A den Supports A nwy -> swe",
        "ENG: F bal Supports A nwy -> swe",
-       "ENG: F nth -> nwy",
-       "RUS: A swe -> nwy via Convoy",
+       "ENG: F nth -> nwy": Fails,
+       "RUS: A swe -> nwy via Convoy": Succeeds,
        "RUS: F ska convoys swe -> nwy",
        "RUS: F nwg Supports A swe -> nwy",
     };
