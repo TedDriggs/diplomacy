@@ -13,9 +13,9 @@ fn order_cuts<'a, A: Adjudicate>(
     cutting_order: &'a MappedMainOrder,
 ) -> bool {
     // Only moves can cut support
-    if let Some(ref dst) = cutting_order.command.move_dest() {
+    if let Some(dst) = cutting_order.command.move_dest() {
         // If the cutting order is attacking somebody else, it can't cut this support
-        if dst != &support_order.region.province() {
+        if dst != support_order.region.province() {
             return false;
         }
 
@@ -163,7 +163,7 @@ pub enum SupportOutcome<'a> {
 
 impl<'a> SupportOutcome<'a> {
     pub fn is_successful(&self) -> bool {
-        self == &SupportOutcome::NotDisrupted
+        *self == SupportOutcome::NotDisrupted
     }
 }
 
