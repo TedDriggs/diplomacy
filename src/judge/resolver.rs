@@ -163,7 +163,6 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
 
     fn set_state(&mut self, order: &'a MappedMainOrder, resolution: ResolutionState) {
         self.state.insert(order, resolution);
-        // self.report_with_label("Updated");
     }
 
     /// Get the current projected outcome of an order.
@@ -177,28 +176,6 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         } else {
             false
         }
-    }
-
-    /// Dump the current resolver state to the console. Used in debugging.
-    pub fn report_with_label(&self, label: &str) {
-        println!("=== STATE @ {} ===", label);
-
-        self.report_dependencies();
-
-        for (order, state) in &self.state {
-            println!("  {} {:?}", order, state);
-        }
-    }
-
-    fn report_dependencies(&self) {
-        println!(
-            "Deps: [{}]",
-            self.dependency_chain
-                .iter()
-                .map(|o| format!("{}", o))
-                .collect::<Vec<_>>()
-                .join("; ")
-        );
     }
 
     pub(crate) fn order_in_paradox(&self, order: &'a MappedMainOrder) -> bool {
@@ -305,9 +282,6 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                     else {
                         let (_resolver_if_succeeds, if_succeeds) =
                             self.with_guess(context, order, Succeeds);
-
-                        // resolver_if_fails.report_with_label(&format!("If {} fails", order));
-                        // resolver_if_succeeds.report_with_label(&format!("If {} succeeds", order));
 
                         // If there's a paradox but the outcome doesn't depend on this order,
                         // then all we've learned is the state of this one order.
