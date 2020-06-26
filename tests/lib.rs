@@ -15,9 +15,9 @@ use crate::util::*;
 #[test]
 fn dipmath_figure9() {
     let map = geo::standard_map();
-    let eng = Nation("eng".into());
-    let ger = Nation("ger".into());
-    let rus = Nation("rus".into());
+    let eng = Nation::from("eng");
+    let ger = Nation::from("ger");
+    let rus = Nation::from("rus");
 
     let orders = vec![
         Order::new(
@@ -59,9 +59,9 @@ fn dipmath_figure9() {
 
 #[test]
 fn dipmath_figure6() {
-    let aus = Nation("aus".into());
-    let ger = Nation("ger".into());
-    let rus = Nation("rus".into());
+    let aus = Nation::from("aus");
+    let ger = Nation::from("ger");
+    let rus = Nation::from("rus");
 
     let orders = vec![
         Order::new(
@@ -114,9 +114,9 @@ fn dipmath_figure6() {
 fn dipmath_figure16() {
     use diplomacy::UnitType::*;
 
-    let tur = Nation("tur".into());
-    let aus = Nation("aus".into());
-    let ita = Nation("ita".into());
+    let tur = Nation::from("tur");
+    let aus = Nation::from("aus");
+    let ita = Nation::from("ita");
 
     let orders = vec![
         Order::new(

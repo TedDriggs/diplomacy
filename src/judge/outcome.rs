@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::convert::From;
 use std::fmt;
 
 use super::{MappedMainOrder, OrderState, ResolverContext, ResolverState};

@@ -137,12 +137,11 @@ mod test {
     use crate::geo::{self, ProvinceKey, RegionKey};
     use crate::judge::MappedMainOrder;
     use crate::order::{ConvoyedMove, Order};
-    use crate::Nation;
     use crate::UnitType;
 
     fn convoy(l: &str, f: &str, t: &str) -> MappedMainOrder {
         Order::new(
-            Nation("eng".into()),
+            "eng".into(),
             UnitType::Fleet,
             RegionKey::new(String::from(l), None),
             ConvoyedMove::new(

@@ -3,7 +3,6 @@ use crate::parser::{Error, ErrorKind};
 use crate::ShortName;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use std::convert::From;
 use std::fmt;
 use std::str::FromStr;
 

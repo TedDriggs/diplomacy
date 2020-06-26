@@ -66,7 +66,7 @@ fn nation_from_word(s: &str) -> Option<Nation> {
     if s == "" {
         None
     } else {
-        Some(Nation(s.into()))
+        Some(s.into())
     }
 }
 

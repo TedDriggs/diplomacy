@@ -1,5 +1,4 @@
 use crate::geo::RegionKey;
-use std::convert::From;
 
 /// Struct representing the success or failure of an order.
 /// The meaning of success and failure is contextually-dependent,

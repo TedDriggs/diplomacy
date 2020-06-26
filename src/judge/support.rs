@@ -189,7 +189,7 @@ mod test {
 
     #[test]
     fn is_support_successful() {
-        let ger = Nation("ger".into());
+        let ger = Nation::from("ger");
         let supp_com = SupportedOrder::Move(UnitType::Fleet, reg("nth"), reg("nwy"));
         let orders = vec![
             Order::new(
@@ -217,7 +217,7 @@ mod test {
 
     #[test]
     fn support_t6b04_support_to_unreachable_coast_allowed() {
-        let fra = Nation("fra".into());
+        let fra = Nation::from("fra");
         let spa_nc = RegionKey::from_str("spa(nc)").unwrap();
         let supp_com = SupportedOrder::Move(UnitType::Fleet, reg("gas"), spa_nc.clone());
         let orders = vec![
@@ -229,7 +229,7 @@ mod test {
             ),
             Order::new(fra, UnitType::Fleet, reg("mar"), supp_com.clone().into()),
             Order::new(
-                Nation("ita".into()),
+                "ita".into(),
                 UnitType::Fleet,
                 reg("wes"),
                 MainCommand::Move(reg("spa(sc)")),

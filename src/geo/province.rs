@@ -1,9 +1,7 @@
-use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
-use std::convert::From;
-
 use crate::Nation;
 use crate::ShortName;
+use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
 /// A controllable area of the environment.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

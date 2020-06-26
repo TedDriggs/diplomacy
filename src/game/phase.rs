@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 use std::cmp::{Ordering, PartialOrd};
-use std::convert::From;
 use std::fmt;
 use std::str::FromStr;
 

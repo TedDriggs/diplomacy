@@ -6,12 +6,9 @@
 //! 1. Call `RegionRegistry::finish()` and add all borders to that function's return.
 //! 1. Call `BorderRegistry::finish()` and use the resulting map.
 
-use std::collections::HashMap;
-use std::convert::From;
-
 use super::{Border, Coast, Map, Province, ProvinceKey, Region, Terrain};
-
 use crate::ShortName;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub enum MapError {

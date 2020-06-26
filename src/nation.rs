@@ -1,12 +1,11 @@
 use crate::ShortName;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use std::convert::From;
 use std::fmt;
 
 /// An actor in the game. Nations can own units and issue orders.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Nation(pub String);
+pub struct Nation(String);
 
 impl ShortName for Nation {
     fn short_name(&self) -> Cow<'_, str> {
