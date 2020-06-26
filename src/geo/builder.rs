@@ -133,7 +133,7 @@ impl BorderRegistry {
     }
 
     /// Get a view of the contents in a format that `Map` can use.
-    pub fn contents(
+    pub(in crate::geo) fn contents(
         self,
     ) -> (
         HashMap<String, Province>,

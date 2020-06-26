@@ -51,7 +51,7 @@ fn route_steps<'a>(
     dest: &ProvinceKey,
     working_path: Vec<&'a MappedMainOrder>,
 ) -> Vec<Vec<&'a MappedMainOrder>> {
-    let adjacent_regions = map.find_bordering(origin, None);
+    let adjacent_regions = map.find_bordering(origin);
     // if we've got a convoy going and there is one hop to the destination,
     // we've found a valid solution.
     if !working_path.is_empty() && adjacent_regions.iter().any(|&r| r == dest) {

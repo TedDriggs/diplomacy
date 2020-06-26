@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{Border, Province, ProvinceKey, Region, RegionKey, Terrain};
+use super::{Border, Province, ProvinceKey, Region, RegionKey};
 use crate::geo::builder::BorderRegistry;
 
 /// A collection of provinces, their constituent regions, and the interconnecting borders.
@@ -12,16 +12,6 @@ pub struct Map {
 }
 
 impl Map {
-    /// Create an instance by consuming a builder.
-    pub fn from(builder: BorderRegistry) -> Self {
-        let (prov, reg, bord) = builder.contents();
-        Map {
-            provinces: prov,
-            regions: reg,
-            borders: bord,
-        }
-    }
-
     /// Find a region by its canonical short name.
     pub fn find_region<'a>(&'a self, short_name: &str) -> Option<&'a Region> {
         self.regions.get(short_name)
@@ -29,20 +19,14 @@ impl Map {
 
     /// Get all borders with a region.
     pub fn borders_containing<'a, L: PartialEq<RegionKey>>(&'a self, r: &L) -> Vec<&Border> {
-        self.borders.iter().filter(|&b| b.contains(r)).collect()
+        self.borders.iter().filter(|b| b.contains(r)).collect()
     }
 
     /// Gets the set of regions which connect to the specified region. If `terrain`
     /// is provided, only borders matching that terrain will be provided.
-    pub fn find_bordering<'a>(
-        &'a self,
-        region: &impl PartialEq<RegionKey>,
-        terrain: impl Into<Option<Terrain>>,
-    ) -> Vec<&RegionKey> {
-        let ter = terrain.into();
+    pub fn find_bordering<'a>(&'a self, region: &impl PartialEq<RegionKey>) -> Vec<&RegionKey> {
         self.borders_containing(region)
             .iter()
-            .filter(|b| ter.map(|t| t == b.terrain()).unwrap_or(true))
             .filter_map(|b| b.dest_from(region))
             .collect()
     }
@@ -56,5 +40,16 @@ impl Map {
     /// Used for support and convoy cases.
     pub fn find_borders_between<'a>(&'a self, r1: &RegionKey, p2: &ProvinceKey) -> Vec<&Border> {
         self.borders.iter().filter(|b| b.connects(r1, p2)).collect()
+    }
+}
+
+impl From<BorderRegistry> for Map {
+    fn from(other: BorderRegistry) -> Self {
+        let (provinces, regions, borders) = other.contents();
+        Self {
+            provinces,
+            regions,
+            borders,
+        }
     }
 }
