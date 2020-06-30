@@ -53,7 +53,6 @@ fn province_from_line(s: &str) -> Result<Province, ()> {
     if words.len() == 3 {
         Ok(Province {
             short_name: String::from(words[0]),
-            full_name: String::from(words[1]),
             supply_center: supply_center_from_word(words[2]),
         })
     } else {
