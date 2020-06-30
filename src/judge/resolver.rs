@@ -243,6 +243,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         // dbg!(order);
         // dbg!(&self.state);
         // dbg!(&self.dependency_chain);
+        // eprintln!("");
 
         match self.state.get(order) {
             Some(&Known(order_state)) => order_state,
