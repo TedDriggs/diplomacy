@@ -13,6 +13,6 @@ pub mod builder;
 pub use self::border::Border;
 pub use self::location::Location;
 pub use self::map::Map;
-pub use self::province::{Province, ProvinceKey};
+pub use self::province::{Province, ProvinceKey, SupplyCenter};
 pub use self::region::{Coast, Region, RegionKey, Terrain};
 pub use self::standard::standard_map;

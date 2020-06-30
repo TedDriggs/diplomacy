@@ -12,6 +12,12 @@ pub struct Map {
 }
 
 impl Map {
+    /// Iterate through the provinces in the map. Each province will be returned exactly once,
+    /// but order is unspecified.
+    pub fn provinces(&self) -> impl Iterator<Item=&Province> {
+        self.provinces.values()
+    }
+
     /// Find a region by its canonical short name.
     pub fn find_region<'a>(&'a self, short_name: &str) -> Option<&'a Region> {
         self.regions.get(short_name)
