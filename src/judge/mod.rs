@@ -1,5 +1,6 @@
 //! Contains the logic needed to adjudicate a turn.
 
+pub mod build;
 mod calc;
 mod convoy;
 mod outcome;
@@ -17,10 +18,11 @@ pub use self::state_type::{OccupationOutcome, OrderState};
 pub use self::resolver::{Adjudicate, ResolverContext, ResolverState};
 pub use self::rulebook::Rulebook;
 use crate::geo::{Border, Map, RegionKey, Terrain};
-use crate::order::{MainCommand, Order};
+use crate::order::{BuildOrder, MainCommand, Order};
 use crate::UnitType;
 
 pub type MappedMainOrder = Order<RegionKey, MainCommand<RegionKey>>;
+pub type MappedBuildOrder = BuildOrder<RegionKey>;
 
 /// Adjudicate a set of orders
 pub fn adjudicate<O: IntoIterator<Item = MappedMainOrder>>(

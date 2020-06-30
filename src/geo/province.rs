@@ -3,12 +3,32 @@ use crate::ShortName;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
+/// The supply-center nature of a province. This information is used in the build phase
+/// to determine how many units a nation can sustain and where new units can be built.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum SupplyCenter {
+    /// The province does not grant a build to whoever controls it.
+    None,
+    /// The province grants a build to its controller, but cannot be used as a build target.
+    Neutral,
+    /// The province grants a build to its controller, and can be used as a build target by the
+    /// specified nation.
+    Home(Nation)
+}
+
 /// A controllable area of the environment.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Province {
     pub full_name: String,
     pub short_name: String,
-    pub supply_center_for: Option<Nation>,
+    pub supply_center: SupplyCenter,
+}
+
+impl Province {
+    /// Get if the province is a supply center for whoever controls it.
+    pub fn is_supply_center(&self) -> bool {
+        self.supply_center != SupplyCenter::None
+    }
 }
 
 impl ShortName for Province {

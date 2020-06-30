@@ -1,6 +1,5 @@
 use crate::geo::builder::ProvinceRegistry;
-use crate::geo::{Coast, Map, Province, Terrain};
-use crate::Nation;
+use crate::geo::{Coast, Map, Province, SupplyCenter, Terrain};
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -55,18 +54,18 @@ fn province_from_line(s: &str) -> Result<Province, ()> {
         Ok(Province {
             short_name: String::from(words[0]),
             full_name: String::from(words[1]),
-            supply_center_for: nation_from_word(words[2]),
+            supply_center: supply_center_from_word(words[2]),
         })
     } else {
         Err(())
     }
 }
 
-fn nation_from_word(s: &str) -> Option<Nation> {
-    if s == "" {
-        None
-    } else {
-        Some(s.into())
+fn supply_center_from_word(s: &str) -> SupplyCenter {
+    match s {
+        "" => SupplyCenter::None,
+        "neutral" => SupplyCenter::Neutral,
+        nat => SupplyCenter::Home(nat.into()),
     }
 }
 
