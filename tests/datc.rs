@@ -1198,8 +1198,8 @@ fn t6f21_dads_army_convoy() {
        "RUS: F nwg convoys nwy -> cly",
        "RUS: A nwy -> cly",
        "FRA: F iri Supports F mao -> nao",
-       "FRA: F mao -> nao",
-       "ENG: A lvp -> cly via Convoy",
+       "FRA: F mao -> nao": Succeeds,
+       "ENG: A lvp -> cly via Convoy": Fails,
        "ENG: F nao convoys lvp -> cly",
        "ENG: F cly Supports F nao",
     };
@@ -1209,14 +1209,14 @@ fn t6f21_dads_army_convoy() {
 #[test]
 fn t6f22_second_order_paradox_with_two_resolutions() {
     judge! {
-       "ENG: F edi -> nth",
+       "ENG: F edi -> nth": Succeeds,
        "ENG: F lon Supports F edi -> nth",
-       "FRA: A bre -> lon",
-       "FRA: F eng convoys bre -> lon",
+       "FRA: A bre -> lon": Fails,
+       "FRA: F eng convoys bre -> lon": Fails,
        "GER: F bel Supports F pic -> eng",
-       "GER: F pic -> eng",
-       "RUS: A nwy -> bel",
-       "RUS: F nth convoys nwy -> bel",
+       "GER: F pic -> eng": Succeeds,
+       "RUS: A nwy -> bel": Fails,
+       "RUS: F nth convoys nwy -> bel": Fails,
     };
 }
 
@@ -1224,15 +1224,15 @@ fn t6f22_second_order_paradox_with_two_resolutions() {
 #[test]
 fn t6f23_second_order_paradox_with_two_exclusive_convoys() {
     judge! {
-       "ENG: F edi -> nth",
+       "ENG: F edi -> nth": Fails,
        "ENG: F yor Supports F edi -> nth",
-       "FRA: A bre -> lon",
+       "FRA: A bre -> lon": Fails,
        "FRA: F eng convoys bre -> lon",
        "GER: F bel Supports F eng",
        "GER: F lon Supports F nth",
-       "ITA: F mao -> eng",
+       "ITA: F mao -> eng": Fails,
        "ITA: F iri Supports F mao -> eng",
-       "RUS: A nwy -> bel",
+       "RUS: A nwy -> bel": Fails,
        "RUS: F nth convoys nwy -> bel",
     };
 }
@@ -1245,11 +1245,11 @@ fn t6f24_second_order_paradox_with_no_resolution() {
        "ENG: F lon Supports F edi -> nth",
        "ENG: F iri -> eng",
        "ENG: F mao Supports F iri -> eng",
-       "FRA: A bre -> lon",
+       "FRA: A bre -> lon": Fails,
        "FRA: F eng convoys bre -> lon",
        "FRA: F bel Supports F eng",
-       "RUS: A nwy -> bel",
-       "RUS: F nth convoys nwy -> bel",
+       "RUS: A nwy -> bel": Fails,
+       "RUS: F nth convoys nwy -> bel": Fails,
     };
 }
 
