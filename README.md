@@ -1,5 +1,7 @@
 # diplomacy
 
+[![Build Status](https://travis-ci.org/TedDriggs/diplomacy.svg?branch=master)](https://travis-ci.org/TedDriggs/diplomacy)
+
 **This is a work in progress.**
 
 The `diplomacy` crate provides a [DATC-compliant](http://web.inter.nl.net/users/L.B.Kruijswijk/) adjudicator for the game Diplomacy.
