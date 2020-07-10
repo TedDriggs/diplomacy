@@ -15,13 +15,13 @@ pub enum MainCommand<L> {
     /// The unit is to remain in place and do nothing else.
     Hold,
 
-    /// The unit is to attempt to move from its current location to `Location`.
+    /// The unit is to attempt to move from its current location to another location.
     Move(MoveCommand<L>),
 
     /// The unit is to remain in place and support another order.
     Support(SupportedOrder<L>),
 
-    /// The fleet is to attempt to help move an army to a specified locatio.
+    /// The unit is to remain in place and attempt to help move an army to a specified location.
     Convoy(ConvoyedMove<L>),
 }
 
