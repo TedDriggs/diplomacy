@@ -104,7 +104,7 @@ impl Rulebook {
                             if is_head_to_head {
                                 return AttackOutcome::LostHeadToHead;
                             } else {
-                                return AttackOutcome::Defended;
+                                return AttackOutcome::OccupierDefended;
                             }
                         }
                     }
@@ -223,7 +223,7 @@ pub enum AttackOutcome<'a> {
     LostHeadToHead,
     /// The intended victim of the attack fended off the attacker, possibly with support from
     /// other units.
-    Defended,
+    OccupierDefended,
     Succeeds,
 }
 
@@ -232,9 +232,8 @@ impl<'a> From<AttackOutcome<'a>> for OrderState {
         use self::AttackOutcome::*;
         match ao {
             Succeeds => OrderState::Succeeds,
-            NoPath | MoveToSelf | FriendlyFire | Prevented(..) | LostHeadToHead | Defended => {
-                OrderState::Fails
-            }
+            NoPath | MoveToSelf | FriendlyFire | Prevented(..) | LostHeadToHead
+            | OccupierDefended => OrderState::Fails,
         }
     }
 }
