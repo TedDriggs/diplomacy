@@ -1,11 +1,11 @@
-use super::calc::{dislodger_of, max_prevent_result, path_exists};
-use super::convoy::{self, ConvoyOutcome};
+use super::calc::{dislodger_of, is_head_to_head, max_prevent_result, path_exists};
+use super::convoy::ConvoyOutcome;
 use super::resolver::{Adjudicate, ResolverContext, ResolverState};
 use super::support::{self, SupportOutcome};
 use super::{MappedMainOrder, OrderState};
 use crate::geo::Terrain;
 use crate::judge::strength::{Prevent, Strength};
-use crate::order::{Command, Order};
+use crate::order::Command;
 use crate::ShortName;
 
 /// The standard Diplomacy rules.
@@ -49,13 +49,11 @@ impl Rulebook {
                 if let Some(occupier) =
                     ctx.find_order_to_province(ord.command.move_dest().unwrap().into())
                 {
-                    let mut resistance = 0;
+                    // A head-to-head battle occurs when two units have mirrored move orders and
+                    // no convoy is available to help one of the units move around the other.
+                    let is_head_to_head = is_head_to_head(ctx, rslv, ord, occupier);
 
-                    // head-to-heads and non-moves get their support
-                    if !occupier.command.is_move()
-                        || (Order::is_head_to_head(occupier, ord)
-                            && !convoy::is_swap(ctx, rslv, ord, occupier))
-                    {
+                    let resistance = if !occupier.command.is_move() || is_head_to_head {
                         // DEFEND and HOLD strengths include supports that may seek to thwart
                         // other orders from the same nation.
 
@@ -78,12 +76,15 @@ impl Rulebook {
                         // DEFEND STRENGTH contains all supports and is therefore two. Still this DEFEND STRENGTH
                         // is insufficient in the head to head battle, since the French army in Burgundy has an
                         // ATTACK STRENGTH of three.
-                        resistance = 1 + support::find_for(ctx, rslv, occupier).len();
+                        1 + support::find_for(ctx, rslv, occupier).len()
                     }
                     // failed exits resist with strength 1 (the unit trapped in the province)
                     else if rslv.resolve(ctx, occupier) == OrderState::Fails {
-                        resistance = 1;
-                    }
+                        1
+                    // successful exits mount no resistance
+                    } else {
+                        0
+                    };
 
                     // A unit can not dislodge a unit of the same player.
                     // Head-to-head, failed exit, and hold cases all collapse in friendly fire.
@@ -100,7 +101,11 @@ impl Rulebook {
                         atk_strength = 1 + atk_supports.len();
 
                         if atk_strength <= resistance {
-                            return AttackOutcome::LostHeadToHead;
+                            if is_head_to_head {
+                                return AttackOutcome::LostHeadToHead;
+                            } else {
+                                return AttackOutcome::Defended;
+                            }
                         }
                     }
                 }
@@ -210,7 +215,15 @@ pub enum AttackOutcome<'a> {
     NoPath,
     FriendlyFire,
     Prevented(Prevent<'a>),
+    /// The intended victim of the attack instead dislodged the attacker and did not use a convoy.
+    ///
+    /// A unit that loses a head-to-head battle is dislodged, cannot retreat to the province from
+    /// which it was attacked, and has no strength to prevent other units from occupying that
+    /// province.
     LostHeadToHead,
+    /// The intended victim of the attack fended off the attacker, possibly with support from
+    /// other units.
+    Defended,
     Succeeds,
 }
 
@@ -219,7 +232,7 @@ impl<'a> From<AttackOutcome<'a>> for OrderState {
         use self::AttackOutcome::*;
         match ao {
             Succeeds => OrderState::Succeeds,
-            NoPath | MoveToSelf | FriendlyFire | Prevented(..) | LostHeadToHead => {
+            NoPath | MoveToSelf | FriendlyFire | Prevented(..) | LostHeadToHead | Defended => {
                 OrderState::Fails
             }
         }

@@ -58,6 +58,23 @@ pub fn direct_path_exists<'a>(
     false
 }
 
+/// Two orders form a head-to-head battle when they are mirrored moves and no convoy exists to
+/// ferry one of the armies around the other one.
+pub fn is_head_to_head<'a, A: Adjudicate>(
+    context: &'a ResolverContext<'a>,
+    resolver: &mut ResolverState<'a, A>,
+    order1: &MappedMainOrder,
+    order2: &MappedMainOrder,
+) -> bool {
+    // First check if the two orders are mirrored moves
+    (order1.move_dest() != Some(&order1.region)
+        && order1.move_dest().map(|d| d.province()) == Some(order2.region.province())
+        && order2.move_dest().map(|d| d.province()) == Some(order1.region.province()))
+    // Then check to see if a convoy route enables the two to avoid head-to-head battle
+        && !convoy::route_exists(context, resolver, order1)
+        && !convoy::route_exists(context, resolver, order2)
+}
+
 fn prevent_result<'a, A: Adjudicate>(
     context: &'a ResolverContext<'a>,
     resolver: &mut ResolverState<'a, A>,
@@ -71,14 +88,9 @@ fn prevent_result<'a, A: Adjudicate>(
             if let Some(h2h) = context
                 .orders()
                 .iter()
-                .find(|o| Order::is_head_to_head(o, order))
+                .find(|o| is_head_to_head(context, resolver, o, order))
             {
-                // A head-to-head battle occurs when two units are attacking
-                // each other and no convoy is available to let the two pass each
-                // other.
-                if resolver.resolve(context, h2h).into()
-                    && !convoy::is_swap(&context, resolver, h2h, order)
-                {
+                if resolver.resolve(context, h2h).into() {
                     return Some(Prevent::LostHeadToHead);
                 }
             }
@@ -99,18 +111,12 @@ pub fn prevent_results<'a, A: Adjudicate>(
     resolver: &mut ResolverState<'a, A>,
     province: &ProvinceKey,
 ) -> Vec<Prevent<'a>> {
-    let mut prevents = vec![];
-    for order in context
+    context
         .orders()
         .iter()
         .filter(|ord| ord.is_move_to_province(province))
-    {
-        if let Some(prev) = prevent_result(context, resolver, order) {
-            prevents.push(prev);
-        }
-    }
-
-    prevents
+        .filter_map(|ord| prevent_result(context, resolver, ord))
+        .collect()
 }
 
 pub fn max_prevent_result<'a, A: Adjudicate>(
@@ -126,7 +132,8 @@ pub fn max_prevent_result<'a, A: Adjudicate>(
             .iter()
             .filter(|ord| ord != &preventing && ord.is_move_to_province(dst.into()))
         {
-            if Order::is_head_to_head(order, preventing) && resolver.resolve(context, order).into()
+            if is_head_to_head(context, resolver, order, preventing)
+                && resolver.resolve(context, order).into()
             {
                 if best_prevent == None {
                     best_prevent = Some(Prevent::LostHeadToHead);

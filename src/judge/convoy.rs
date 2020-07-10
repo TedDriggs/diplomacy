@@ -1,6 +1,6 @@
 use super::{Adjudicate, MappedMainOrder, OrderState, ResolverContext, ResolverState};
 use crate::geo::{Map, ProvinceKey};
-use crate::order::{Command, MainCommand, Order};
+use crate::order::{Command, MainCommand};
 use crate::UnitType;
 
 /// Failure cases for convoy route lookup.
@@ -116,20 +116,6 @@ pub fn route_exists<'a, A: Adjudicate>(
     routes(ctx, state, mv_ord)
         .map(|r| !r.is_empty())
         .unwrap_or(false)
-}
-
-/// Mirrored move orders create a head-to-head conflict unless one or both units can
-/// take a convoy to their destination. This function checks that two orders would have
-/// been a head-to-head conflict, then returns `true` if a convoy route can lead to one
-/// of the units going around.
-pub fn is_swap<'a, A: Adjudicate>(
-    ctx: &'a ResolverContext<'a>,
-    state: &mut ResolverState<'a, A>,
-    ord1: &MappedMainOrder,
-    ord2: &MappedMainOrder,
-) -> bool {
-    Order::is_head_to_head(ord1, ord2)
-        && (route_exists(ctx, state, ord1) || route_exists(ctx, state, ord2))
 }
 
 #[cfg(test)]
