@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use diplomacy::geo;
 use diplomacy::judge::OrderState::{Fails, Succeeds};
-use diplomacy::judge::{self, MappedMainOrder, OrderState, ResolverContext};
+use diplomacy::judge::{MappedMainOrder, OrderState, ResolverContext};
 
 macro_rules! assert_state {
     ($results:ident, $order:tt, $expectation:ident) => {
@@ -31,12 +31,6 @@ macro_rules! judge {
             results
         }
     };
-    (@explain $($rule:tt $(: $outcome:ident)?),+) => {
-        judge!(@using get_with_explanation => $($rule $(: $outcome)*),*)
-    };
-    (@explain $($rule:tt $(: $outcome:ident)?,)+) => {
-        judge!(@using get_with_explanation => $($rule $(: $outcome)*),*)
-    };
     ($($rule:tt $(: $outcome:ident)?),+) => {
         judge!(@using get_results => $($rule $(: $outcome)*),*)
     };
@@ -51,12 +45,6 @@ fn ord(s: &str) -> MappedMainOrder {
 }
 
 fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
-    let parsed = orders.into_iter().map(ord);
-
-    judge::adjudicate(geo::standard_map(), parsed)
-}
-
-fn get_with_explanation(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
     let parsed = orders.into_iter().map(ord).collect::<Vec<_>>();
     let ctx = ResolverContext::new(geo::standard_map(), parsed.clone());
 
@@ -1114,7 +1102,6 @@ fn t6f14_simple_convoy_paradox() {
 #[test]
 fn t6f15_simple_convoy_paradox_with_additional_convoy() {
     judge! {
-        @explain
        "ENG: F lon Supports F wal -> eng",
        "ENG: F wal -> eng": Succeeds,
        "FRA: A bre -> lon": Fails,
