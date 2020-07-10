@@ -6,7 +6,7 @@ mod util;
 
 use diplomacy::geo;
 use diplomacy::judge::{adjudicate, OrderState};
-use diplomacy::order::{ConvoyedMove, MainCommand, Order, SupportedOrder};
+use diplomacy::order::{ConvoyedMove, MainCommand, MoveCommand, Order, SupportedOrder};
 
 use diplomacy::{Nation, UnitType};
 
@@ -24,19 +24,19 @@ fn dipmath_figure9() {
             eng,
             UnitType::Fleet,
             reg("nwg"),
-            MainCommand::Move(reg("nth")),
+            MoveCommand::new(reg("nth")).into(),
         ),
         Order::new(
             ger.clone(),
             UnitType::Fleet,
             reg("nth"),
-            MainCommand::Move(reg("nwy")),
+            MoveCommand::new(reg("nwy")).into(),
         ),
         Order::new(
             rus,
             UnitType::Fleet,
             reg("nwy"),
-            MainCommand::Move(reg("nwg")),
+            MoveCommand::new(reg("nwg")).into(),
         ),
         Order::new(
             ger,
@@ -68,7 +68,7 @@ fn dipmath_figure6() {
             ger.clone(),
             UnitType::Army,
             reg("ber"),
-            MainCommand::Move(reg("sil")),
+            MoveCommand::new(reg("sil")).into(),
         ),
         Order::new(
             ger.clone(),
@@ -80,13 +80,13 @@ fn dipmath_figure6() {
             rus,
             UnitType::Army,
             reg("war"),
-            MainCommand::Move(reg("sil")),
+            MoveCommand::new(reg("sil")).into(),
         ),
         Order::new(
             aus,
             UnitType::Army,
             reg("boh"),
-            MainCommand::Move(reg("sil")),
+            MoveCommand::new(reg("sil")).into(),
         ),
     ];
 
@@ -123,7 +123,7 @@ fn dipmath_figure16() {
             tur.clone(),
             Fleet,
             reg("aeg"),
-            MainCommand::Move(reg("ion")),
+            MoveCommand::new(reg("ion")).into(),
         ),
         Order::new(
             tur,
@@ -137,7 +137,12 @@ fn dipmath_figure16() {
             reg("alb"),
             SupportedOrder::Move(UnitType::Fleet, reg("aeg"), reg("ion")).into(),
         ),
-        Order::new(ita.clone(), Army, reg("tun"), MainCommand::Move(reg("gre"))),
+        Order::new(
+            ita.clone(),
+            Army,
+            reg("tun"),
+            MoveCommand::new(reg("gre")).into(),
+        ),
         Order::new(
             ita.clone(),
             Fleet,

@@ -43,6 +43,9 @@ pub enum ErrorKind {
     InvalidUnitType,
     UnknownCommand,
     BadCoast,
+    /// The order was recognized as a move, but the destination could not be parsed.
+    /// Move commands must use the one-word destination code and may include "via convoy".
+    MalformedMove,
     MalformedRegion,
     MalformedSupport,
     MalformedConvoy,
@@ -57,6 +60,7 @@ impl fmt::Display for ErrorKind {
             ErrorKind::MalformedRegion => write!(f, "Malformed region key"),
             ErrorKind::MalformedSupport => write!(f, "Malformed support command"),
             ErrorKind::MalformedConvoy => write!(f, "Malformed convoy command"),
+            ErrorKind::MalformedMove => write!(f, "Malformed move command"),
         }
     }
 }

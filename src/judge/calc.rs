@@ -2,31 +2,35 @@ use super::strength::{Prevent, Strength};
 use super::{convoy, support};
 use super::{Adjudicate, MappedMainOrder, ResolverContext, ResolverState};
 use crate::geo::{ProvinceKey, RegionKey};
-use crate::order::{Command, Order};
+use crate::order::{Command, MainCommand, Order};
 use crate::ShortName;
 
 /// Returns true if `order` is a move AND between the source and dest, either:
 ///
-/// 1. A border exists OR
+/// 1. A border exists and the order permits direct travel OR
 /// 1. A non-disrupted convoy route exists.
 pub fn path_exists<'a, A: Adjudicate>(
     context: &'a ResolverContext<'a>,
     resolver: &mut ResolverState<'a, A>,
     order: &MappedMainOrder,
 ) -> bool {
-    if let Some(dst) = order.move_dest() {
+    if let MainCommand::Move(cmd) = &order.command {
+        let dst = cmd.dest();
         if let Some(reg) = context.world_map.find_region(&dst.short_name()) {
             if order.unit_type.can_occupy(reg.terrain()) {
-                let border_exists = context
-                    .world_map
-                    .find_border_between(&order.region, dst)
-                    .map(|b| b.is_passable_by(order.unit_type))
-                    .unwrap_or(false);
+                // If the move order allows direct travel, look for a border that would support
+                // direct movement.
+                let can_travel_directly = !cmd.mandates_convoy()
+                    && context
+                        .world_map
+                        .find_border_between(&order.region, dst)
+                        .map(|b| b.is_passable_by(order.unit_type))
+                        .unwrap_or(false);
 
                 // NOTE: As-written, this short-circuits convoy assessment when
-                // there is a border. Don't change that behavior, as it may impact
-                // how resolution works.
-                return border_exists || convoy::route_exists(context, resolver, order);
+                // there is an acceptable direct route. Don't change that behavior, as
+                // it may impact how resolution works.
+                return can_travel_directly || convoy::route_exists(context, resolver, order);
             }
         }
     }

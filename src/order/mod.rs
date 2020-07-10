@@ -9,7 +9,7 @@ use std::fmt;
 
 mod command;
 pub use self::command::{
-    BuildCommand, Command, ConvoyedMove, MainCommand, RetreatCommand, SupportedOrder,
+    BuildCommand, Command, ConvoyedMove, MainCommand, MoveCommand, RetreatCommand, SupportedOrder,
 };
 
 /// An order is issued by a nation and gives a command to a unit in a region.

@@ -16,7 +16,7 @@ pub enum MainCommand<L> {
     Hold,
 
     /// The unit is to attempt to move from its current location to `Location`.
-    Move(L),
+    Move(MoveCommand<L>),
 
     /// The unit is to remain in place and support another order.
     Support(SupportedOrder<L>),
@@ -28,7 +28,7 @@ pub enum MainCommand<L> {
 impl<L: Location> Command<L> for MainCommand<L> {
     fn move_dest(&self) -> Option<&L> {
         match *self {
-            MainCommand::Move(ref dst) => Some(dst),
+            MainCommand::Move(ref cmd) => cmd.move_dest(),
             _ => None,
         }
     }
@@ -46,9 +46,85 @@ impl<L: Location> fmt::Display for MainCommand<L> {
         use self::MainCommand::*;
         match self {
             Hold => write!(f, "holds"),
-            Move(ref dest) => write!(f, "-> {}", dest.short_name()),
+            Move(ref cmd) => write!(f, "-> {}", cmd),
             Support(ref order) => write!(f, "supports {}", order),
             Convoy(ref mv) => write!(f, "convoys {}", mv),
+        }
+    }
+}
+
+/// A move command with a destination and an optional convoy specification.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct MoveCommand<L> {
+    dest: L,
+    /// Whether the order required, forbade, or didn't specify convoy usage.
+    ///
+    /// Right now, the adjudicator doesn't handle the forbid case, so there's no way to construct
+    /// such a command.
+    use_convoy: Option<bool>,
+}
+
+impl<L> MoveCommand<L> {
+    /// Create a new move command without providing a convoy preference.
+    pub fn new(dest: L) -> Self {
+        Self {
+            dest,
+            use_convoy: None,
+        }
+    }
+
+    /// Create a new move command which mandates that a convoy be used.
+    pub fn with_mandatory_convoy(dest: L) -> Self {
+        Self {
+            dest,
+            use_convoy: Some(true),
+        }
+    }
+
+    /// Get the move command's destination region.
+    pub fn dest(&self) -> &L {
+        &self.dest
+    }
+
+    /// The order explicitly mandates the use of a convoy. If `true`, direct paths
+    /// to the destination should not be considered when choosing a path.
+    ///
+    /// This can be `false` in two cases: The command didn't specify a convoy preference, or the command
+    /// explicitly forbade a convoy. Different rulebooks have different opinions on how to interpret the
+    /// absence of "via convoy" so the `MoveCommand` struct avoids forming an opinion on that case.
+    pub fn mandates_convoy(&self) -> bool {
+        self.use_convoy == Some(true)
+    }
+
+    /// The order explicitly mentions convoys, either mandating or forbidding their use.
+    pub fn mentions_convoy(&self) -> bool {
+        self.use_convoy.is_some()
+    }
+}
+
+impl<L: Location> From<MoveCommand<L>> for MainCommand<L> {
+    fn from(cmd: MoveCommand<L>) -> Self {
+        MainCommand::Move(cmd)
+    }
+}
+
+impl<L: Location> Command<L> for MoveCommand<L> {
+    fn is_move(&self) -> bool {
+        true
+    }
+
+    fn move_dest(&self) -> Option<&L> {
+        Some(&self.dest)
+    }
+}
+
+impl<L: Location> fmt::Display for MoveCommand<L> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.dest.short_name().fmt(f)?;
+        match self.use_convoy {
+            Some(true) => write!(f, " via convoy"),
+            Some(false) => write!(f, " no convoy"),
+            None => Ok(()),
         }
     }
 }
@@ -104,8 +180,8 @@ impl<L: Location> PartialEq<Order<L, MainCommand<L>>> for SupportedOrder<L> {
                 !other.command.is_move() && loc == &other.region && ut == &other.unit_type
             }
             SupportedOrder::Move(ref ut, ref fr, ref to) => {
-                if let MainCommand::Move(ref dst) = other.command {
-                    ut == &other.unit_type && fr == &other.region && to == dst
+                if let MainCommand::Move(ref cmd) = other.command {
+                    ut == &other.unit_type && fr == &other.region && to == cmd.dest()
                 } else {
                     false
                 }
@@ -143,7 +219,7 @@ impl<L: Location> PartialEq<MainOrder<L>> for ConvoyedMove<L> {
     fn eq(&self, rhs: &MainOrder<L>) -> bool {
         if rhs.unit_type == UnitType::Army {
             match &rhs.command {
-                MainCommand::Move(ref dst) => self.from() == &rhs.region && self.to() == dst,
+                MainCommand::Move(cmd) => self.from() == &rhs.region && self.to() == cmd.dest(),
                 _ => false,
             }
         } else {

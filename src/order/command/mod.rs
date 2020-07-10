@@ -7,7 +7,7 @@ mod main_phase;
 mod retreat_phase;
 
 pub use self::build_phase::BuildCommand;
-pub use self::main_phase::{ConvoyedMove, MainCommand, SupportedOrder};
+pub use self::main_phase::{ConvoyedMove, MainCommand, MoveCommand, SupportedOrder};
 pub use self::retreat_phase::RetreatCommand;
 
 /// A command issued to a unit or location which uses a single concrete location type of `L`.

@@ -18,7 +18,8 @@ use std::str::FromStr;
 
 use crate::geo::Location;
 use crate::order::{
-    BuildCommand, Command, ConvoyedMove, MainCommand, Order, RetreatCommand, SupportedOrder,
+    BuildCommand, Command, ConvoyedMove, MainCommand, MoveCommand, Order, RetreatCommand,
+    SupportedOrder,
 };
 use crate::Nation;
 
@@ -65,10 +66,26 @@ impl<L: Location + FromStr<Err = Error>> FromWords for MainCommand<L> {
     fn from_words(words: &[&str]) -> ParseResult<Self> {
         match &(words[0].to_lowercase())[..] {
             "holds" | "hold" => Ok(MainCommand::Hold),
-            "->" => Ok(MainCommand::Move(words[1].parse()?)),
+            "->" => Ok(MoveCommand::from_words(&words[1..])?.into()),
             "supports" => Ok(SupportedOrder::from_words(&words[1..])?.into()),
             "convoys" => Ok(ConvoyedMove::from_words(&words[1..])?.into()),
             cmd => Err(Error::new(ErrorKind::UnknownCommand, cmd)),
+        }
+    }
+}
+
+impl<L: Location + FromStr<Err = Error>> FromWords for MoveCommand<L> {
+    type Err = Error;
+
+    fn from_words(w: &[&str]) -> ParseResult<Self> {
+        const CONVOY_CASINGS: [&str; 2] = ["convoy", "Convoy"];
+
+        match w.len() {
+            1 => Ok(MoveCommand::new(w[0].parse()?)),
+            3 if w[1] == "via" && CONVOY_CASINGS.contains(&w[2]) => {
+                Ok(MoveCommand::with_mandatory_convoy(w[0].parse()?))
+            }
+            _ => Err(Error::new(ErrorKind::MalformedMove, w.join(" "))),
         }
     }
 }
@@ -145,5 +162,21 @@ mod test {
     fn army_move() {
         let m_order: OrderParseResult = "ENG: A Lon -> Bel".parse();
         println!("{}", m_order.unwrap());
+    }
+
+    #[test]
+    fn army_move_via_convoy() {
+        let m_order: OrderParseResult = "ENG: A Lon -> Bel via convoy".parse();
+        let order = m_order.unwrap();
+        assert_eq!(
+            order.command.move_dest(),
+            Some(&RegionKey::new("Bel", None))
+        );
+
+        let alt_casing: OrderParseResult = "ENG: A Lon -> Bel via Convoy".parse();
+        assert_eq!(alt_casing.unwrap(), order);
+
+        let no_pref: OrderParseResult = "ENG: A Lon -> Bel".parse();
+        assert_ne!(no_pref.unwrap(), order);
     }
 }

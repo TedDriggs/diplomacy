@@ -113,8 +113,8 @@ pub fn is_supporting_self(support_order: &MappedMainOrder) -> bool {
 /// it is the **currently occupied** province.
 fn needed_at(supported: &MappedMainOrder) -> &ProvinceKey {
     use crate::order::MainCommand::*;
-    match supported.command {
-        Move(ref dest) => dest.province(),
+    match &supported.command {
+        Move(cmd) => cmd.dest().province(),
         Hold | Support(..) | Convoy(..) => supported.region.province(),
     }
 }
@@ -204,7 +204,7 @@ mod test {
     use super::super::{ResolverContext, ResolverState};
     use super::*;
     use crate::geo::{standard_map, RegionKey};
-    use crate::order::{MainCommand, Order, SupportedOrder};
+    use crate::order::{MainCommand, MoveCommand, Order, SupportedOrder};
     use crate::Nation;
     use crate::UnitType;
     use std::str::FromStr;
@@ -228,7 +228,7 @@ mod test {
                 ger,
                 UnitType::Fleet,
                 reg("nth"),
-                MainCommand::Move(reg("nwy")),
+                MoveCommand::new(reg("nwy")).into(),
             ),
         ];
 
@@ -251,14 +251,14 @@ mod test {
                 fra.clone(),
                 UnitType::Fleet,
                 reg("gas"),
-                MainCommand::Move(spa_nc),
+                MoveCommand::new(spa_nc).into(),
             ),
             Order::new(fra, UnitType::Fleet, reg("mar"), supp_com.clone().into()),
             Order::new(
                 "ita".into(),
                 UnitType::Fleet,
                 reg("wes"),
-                MainCommand::Move(reg("spa(sc)")),
+                MoveCommand::new(reg("spa(sc)")).into(),
             ),
         ];
 
