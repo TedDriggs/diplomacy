@@ -221,40 +221,40 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
             None => {
                 // checkpoint the resolver and tell it to assume the order fails.
                 // get the order state based on that assumption.
-                let (resolver_if_fails, if_fails) = self.with_guess(context, order, Fails);
+                let (first_resolver, first_result) = self.with_guess(context, order, Fails);
 
                 // If we found no new dependencies then this is a valid resolution!
                 // We now snap to the resolver state from the assumption so that we can
                 // reuse it in future calculations.
-                if resolver_if_fails.dependency_chain.len() == self.dependency_chain.len() {
-                    self.state = resolver_if_fails.state;
-                    self.set_state(order, Known(if_fails));
-                    if_fails
+                if first_resolver.dependency_chain.len() == self.dependency_chain.len() {
+                    self.state = first_resolver.state;
+                    self.set_state(order, Known(first_result));
+                    first_result
                 } else {
-                    let next_dep = resolver_if_fails.dependency_chain[self.dependency_chain.len()];
+                    let next_dep = first_resolver.dependency_chain[self.dependency_chain.len()];
 
                     // if we depend on some new guess but we haven't hit a cycle,
                     // then we cautiously proceed. We update state to match what we've learned
                     // from the hypothetical and proceed with our guesses.
                     if next_dep != order {
-                        self.state = resolver_if_fails.state;
-                        self.set_state(order, Guessing(if_fails));
+                        self.state = first_resolver.state;
+                        self.set_state(order, Guessing(first_result));
                         self.dependency_chain.push(next_dep);
-                        if_fails
+                        first_result
                     }
                     // if the next dependency is the one we're already depending on, we're stuck.
                     else {
-                        let (_resolver_if_succeeds, if_succeeds) =
+                        let (_second_resolver, second_result) =
                             self.with_guess(context, order, Succeeds);
 
                         // If there's a paradox but the outcome doesn't depend on this order,
                         // then all we've learned is the state of this one order.
-                        if if_fails == if_succeeds {
-                            self.set_state(order, Known(if_fails));
-                            if_fails
+                        if first_result == second_result {
+                            self.set_state(order, Known(first_result));
+                            first_result
                         } else {
                             let tail_start = self.dependency_chain.len();
-                            let tail = &resolver_if_fails.dependency_chain[tail_start..];
+                            let tail = &first_resolver.dependency_chain[tail_start..];
 
                             self.resolve_dependency_cycle(tail);
                             self.resolve(context, order)
