@@ -1,11 +1,8 @@
 //! The model for an order issued to a unit.
 
-use crate::geo::Location;
-use crate::Nation;
-use crate::ShortName;
-use crate::UnitType;
+use crate::{geo::Location, Nation, ShortName, Unit, UnitPosition, UnitType};
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use std::{borrow::Cow, fmt};
 
 mod command;
 pub use self::command::{
@@ -73,6 +70,18 @@ impl<L: Location, C: Command<L>> fmt::Display for Order<L, C> {
 impl<L: Location, C: Command<L>> fmt::Debug for Order<L, C> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.write_short(f)
+    }
+}
+
+impl<'a, L: Location, C: Command<L>> From<&'a Order<L, C>> for Unit<'a> {
+    fn from(order: &'a Order<L, C>) -> Self {
+        Unit::new(Cow::Borrowed(&order.nation), order.unit_type)
+    }
+}
+
+impl<'a, L: Location, C: Command<L>> From<&'a Order<L, C>> for UnitPosition<'a, &'a L> {
+    fn from(order: &'a Order<L, C>) -> Self {
+        UnitPosition::new(Unit::from(order), &order.region)
     }
 }
 

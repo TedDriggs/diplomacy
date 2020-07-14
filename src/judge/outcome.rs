@@ -58,6 +58,7 @@ pub struct Outcome<'a, A: Adjudicate> {
     context: &'a ResolverContext<'a>,
     resolver: ResolverState<'a, A>,
     orders: HashMap<&'a MappedMainOrder, OrderOutcome<'a>>,
+    dislodged: HashMap<&'a MappedMainOrder, &'a MappedMainOrder>,
 }
 
 impl<'a, A: Adjudicate> Outcome<'a, A> {
@@ -77,10 +78,22 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
             })
             .collect();
 
+        let dislodged = {
+            let mut dislodged = HashMap::new();
+            for order in context.orders() {
+                if let Some(dl_ord) = dislodger_of(&context, &mut state, order) {
+                    dislodged.insert(order, dl_ord);
+                }
+            }
+
+            dislodged
+        };
+
         Self {
             context,
             resolver,
             orders,
+            dislodged,
         }
     }
 
@@ -99,15 +112,8 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
     }
 
     /// Gets a map of orders whose recipients were dislodged to the order which dislodged them.
-    pub fn dislodged(&self) -> HashMap<&MappedMainOrder, &MappedMainOrder> {
-        let mut dislodged = HashMap::new();
-        for order in self.context.orders() {
-            if let Some(dl_ord) = dislodger_of(&self.context, &mut self.resolver.clone(), order) {
-                dislodged.insert(order, dl_ord);
-            }
-        }
-
-        dislodged
+    pub fn dislodged(&self) -> &HashMap<&MappedMainOrder, &MappedMainOrder> {
+        &self.dislodged
     }
 
     pub fn get(&'a self, order: &'a MappedMainOrder) -> Option<&'a OrderOutcome<'a>> {
