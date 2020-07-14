@@ -1,60 +1,12 @@
 #![cfg(test)]
 #![allow(unused_variables, clippy::let_and_return)]
 
-use std::collections::HashMap;
+#[path = "./util.rs"]
+mod util;
 
-use diplomacy::geo;
 use diplomacy::judge::OrderState::{Fails, Succeeds};
-use diplomacy::judge::{MappedMainOrder, OrderState, ResolverContext, Rulebook};
-
-macro_rules! assert_state {
-    ($results:ident, $order:tt, $expectation:ident) => {
-        assert_eq!(
-            $expectation,
-            *$results
-                .get(&ord($order))
-                .expect("Order should be in results"),
-            $order
-        );
-    };
-}
-
-/// Adjudicate a set of orders and - if specified - assert that order's success or failure.
-macro_rules! judge {
-    (@using $resolver:path => $($rule:tt $(: $outcome:ident)?),+) => {
-        {
-            let results = $resolver(vec![$($rule),*]);
-            $(
-                $(assert_state!(results, $rule, $outcome);)*
-            )*
-
-            results
-        }
-    };
-    ($($rule:tt $(: $outcome:ident)?),+) => {
-        judge!(@using get_results => $($rule $(: $outcome)*),*)
-    };
-    ($($rule:tt $(: $outcome:ident)?,)+) => {
-        judge!(@using get_results => $($rule $(: $outcome)*),*)
-    };
-}
-
-fn ord(s: &str) -> MappedMainOrder {
-    s.parse()
-        .unwrap_or_else(|_| panic!(format!("'{}' should be a valid order", s)))
-}
-
-fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
-    let parsed = orders.into_iter().map(ord).collect::<Vec<_>>();
-    let ctx = ResolverContext::new(geo::standard_map(), parsed.clone());
-
-    let out = ctx.resolve_using(Rulebook);
-    for o in parsed {
-        println!("{:?}: {:?}", o, out.get(&o).unwrap());
-    }
-
-    out.into()
-}
+use diplomacy::judge::{ResolverContext, Rulebook};
+use util::*;
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.1
 #[test]
@@ -1507,12 +1459,23 @@ fn t6h03_no_convoy_during_retreat() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.4
 #[test]
 fn t6h04_no_other_moves_during_retreat() {
-    judge! {
-       "ENG: F nth Hold",
-       "ENG: A hol Hold",
+    let (context, expected): (ResolverContext, _) = context_and_expectation! {
+       "ENG: F nth Hold": Succeeds,
+       "ENG: A hol Hold": Fails,
        "GER: F kie Supports A ruh -> hol",
-       "GER: A ruh -> hol",
+       "GER: A ruh -> hol": Succeeds,
     };
+
+    let outcome = context.resolve_using(Rulebook);
+
+    let dislodged = outcome.dislodged();
+    assert_eq!(1, dislodged.len());
+
+    let dislodged_unit = context.find_order_to_province(&prov("hol")).unwrap();
+    let retreat_destinations = outcome.get_retreat_destinations();
+    let hol_rds = retreat_destinations.get(dislodged_unit).unwrap();
+    assert!(dislodged.contains_key(dislodged_unit));
+    assert!(hol_rds.contains(&reg("bel")));
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.5

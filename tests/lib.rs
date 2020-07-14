@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 extern crate diplomacy;
-mod datc;
+
 mod util;
 
 use diplomacy::geo;
