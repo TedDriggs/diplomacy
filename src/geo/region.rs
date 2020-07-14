@@ -7,7 +7,7 @@ use std::fmt;
 use std::str::FromStr;
 
 /// Differentiates regions within a province.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Coast {
     North,
     East,
@@ -103,7 +103,7 @@ impl Location for Region {
 }
 
 /// An identifier that references a region.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct RegionKey(ProvinceKey, Option<Coast>);
 
 impl RegionKey {

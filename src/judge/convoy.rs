@@ -24,13 +24,19 @@ pub enum ConvoyOutcome<'a> {
     NotDisrupted,
 }
 
-impl From<ConvoyOutcome<'_>> for OrderState {
-    fn from(other: ConvoyOutcome<'_>) -> Self {
-        if other == ConvoyOutcome::NotDisrupted {
+impl From<&'_ ConvoyOutcome<'_>> for OrderState {
+    fn from(other: &ConvoyOutcome<'_>) -> Self {
+        if other == &ConvoyOutcome::NotDisrupted {
             OrderState::Succeeds
         } else {
             OrderState::Fails
         }
+    }
+}
+
+impl From<ConvoyOutcome<'_>> for OrderState {
+    fn from(other: ConvoyOutcome<'_>) -> Self {
+        (&other).into()
     }
 }
 

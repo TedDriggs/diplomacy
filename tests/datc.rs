@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use diplomacy::geo;
 use diplomacy::judge::OrderState::{Fails, Succeeds};
-use diplomacy::judge::{MappedMainOrder, OrderState, ResolverContext};
+use diplomacy::judge::{MappedMainOrder, OrderState, ResolverContext, Rulebook};
 
 macro_rules! assert_state {
     ($results:ident, $order:tt, $expectation:ident) => {
@@ -48,12 +48,12 @@ fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
     let parsed = orders.into_iter().map(ord).collect::<Vec<_>>();
     let ctx = ResolverContext::new(geo::standard_map(), parsed.clone());
 
-    let state = ctx.resolve_to_state();
+    let out = ctx.resolve_using(Rulebook);
     for o in parsed {
-        ctx.explain(&mut state.clone(), &o);
+        println!("{:?}: {:?}", o, out.get(&o).unwrap());
     }
 
-    state.into()
+    out.into()
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.1

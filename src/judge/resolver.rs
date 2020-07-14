@@ -1,18 +1,7 @@
-use super::{MappedMainOrder, OrderState, Rulebook};
+use super::{Adjudicate, MappedMainOrder, OrderState, Outcome, Rulebook};
 use crate::geo::{Map, ProvinceKey, RegionKey};
 use crate::order::{Command, MainCommand};
 use std::collections::{HashMap, HashSet};
-
-/// A clonable container for a rulebook which can be used to adjudicate a turn.
-pub trait Adjudicate: Clone {
-    /// Determine the success of an order.
-    fn adjudicate<'a>(
-        &self,
-        context: &'a ResolverContext<'a>,
-        resolver: &mut ResolverState<'a, Self>,
-        order: &'a MappedMainOrder,
-    ) -> OrderState;
-}
 
 /// The immutable inputs for a resolution equation.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -30,13 +19,18 @@ impl<'a> ResolverContext<'a> {
         ResolverContext { world_map, orders }
     }
 
-    /// Get a view of the orders.
+    /// Get a view of the orders in the order they were submitted.
     pub fn orders(&self) -> &[MappedMainOrder] {
         &self.orders
     }
 
-    pub fn resolve_to_state(&self) -> ResolverState<super::rulebook::Rulebook> {
-        let mut rs = ResolverState::with_adjudicator(super::rulebook::Rulebook);
+    /// Resolve the context using the provided adjudicator.
+    ///
+    /// The adjudicator is responsible for rule questions, while the resolver is responsible for
+    /// tracking whether orders are successful. The two are interdependent, calling back and forth
+    /// as they work towards a solution.
+    pub fn resolve_using<A: Adjudicate>(&'a self, rules: A) -> Outcome<'a, A> {
+        let mut rs = ResolverState::with_adjudicator(rules);
 
         // XXX Paradoxes can trigger infinite loops if we're not careful, so we
         // try to resolve convoys first so that cycle detection will make progress
@@ -54,42 +48,12 @@ impl<'a> ResolverContext<'a> {
             rs.resolve(&self, order);
         }
 
-        rs
-    }
-
-    pub fn explain(
-        &'a self,
-        state: &'a mut ResolverState<'a, Rulebook>,
-        order: &'a MappedMainOrder,
-    ) {
-        match order.command {
-            MainCommand::Move(..) => println!(
-                "{}: {:?}",
-                order,
-                Rulebook::adjudicate_move(self, state, order)
-            ),
-            MainCommand::Support(..) => println!(
-                "{}: {:?}",
-                order,
-                Rulebook::adjudicate_support(self, state, order)
-            ),
-            MainCommand::Hold => println!(
-                "{}: {:?}",
-                order,
-                Rulebook::adjudicate_hold(self, state, order)
-            ),
-            MainCommand::Convoy(..) => println!(
-                "{}: {:?}",
-                order,
-                Rulebook::adjudicate_convoy(self, state, order)
-            ),
-        }
+        Outcome::new(self, rs)
     }
 
     /// Resolve the orders in the context, producing a map of orders to outcomes
     pub fn resolve(self) -> HashMap<MappedMainOrder, OrderState> {
-        let rs = self.resolve_to_state();
-        rs.into()
+        self.resolve_using(Rulebook).into()
     }
 
     pub fn find_order_to_province(&'a self, p: &ProvinceKey) -> Option<&'a MappedMainOrder> {
@@ -157,17 +121,16 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         }
     }
 
+    pub fn adjudicator(&self) -> &A {
+        &self.adjudicator
+    }
+
     fn clear_state(&mut self, order: &MappedMainOrder) {
         self.state.remove(order);
     }
 
     fn set_state(&mut self, order: &'a MappedMainOrder, resolution: ResolutionState) {
         self.state.insert(order, resolution);
-    }
-
-    /// Get the current projected outcome of an order.
-    fn get(&self, order: &MappedMainOrder) -> Option<OrderState> {
-        self.state.get(order).map(|rs| rs.into())
     }
 
     fn knows_outcome_of(&self, order: &MappedMainOrder) -> bool {
@@ -318,11 +281,4 @@ impl<'a, A: Adjudicate> From<ResolverState<'a, A>> for HashMap<MappedMainOrder, 
 
         out_map
     }
-}
-
-pub fn get_state<'a, A: Adjudicate>(
-    r: &ResolverState<'a, A>,
-    order: &MappedMainOrder,
-) -> Option<OrderState> {
-    r.get(order)
 }

@@ -13,7 +13,7 @@ pub enum SupplyCenter {
     Neutral,
     /// The province grants a build to its controller, and can be used as a build target by the
     /// specified nation.
-    Home(Nation)
+    Home(Nation),
 }
 
 /// A controllable area of the environment.
@@ -43,7 +43,7 @@ impl PartialEq<ProvinceKey> for Province {
 }
 
 /// An identifier that can be resolved to a province
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct ProvinceKey(String);
 
 impl ProvinceKey {

@@ -193,9 +193,19 @@ impl<'a> SupportOutcome<'a> {
     }
 }
 
+impl From<&'_ SupportOutcome<'_>> for OrderState {
+    fn from(so: &SupportOutcome) -> Self {
+        if so == &SupportOutcome::NotDisrupted {
+            OrderState::Succeeds
+        } else {
+            OrderState::Fails
+        }
+    }
+}
+
 impl<'a> From<SupportOutcome<'a>> for OrderState {
     fn from(so: SupportOutcome<'a>) -> Self {
-        so.is_successful().into()
+        (&so).into()
     }
 }
 

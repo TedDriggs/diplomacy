@@ -1,8 +1,8 @@
 use super::calc::{dislodger_of, is_head_to_head, max_prevent_result, path_exists};
 use super::convoy::ConvoyOutcome;
-use super::resolver::{Adjudicate, ResolverContext, ResolverState};
+use super::resolver::{ResolverContext, ResolverState};
 use super::support::{self, SupportOutcome};
-use super::{MappedMainOrder, OrderState};
+use super::{Adjudicate, MappedMainOrder, OrderOutcome, OrderState};
 use crate::geo::Terrain;
 use crate::judge::strength::{Prevent, Strength};
 use crate::order::Command;
@@ -172,6 +172,15 @@ impl Adjudicate for Rulebook {
         resolver: &mut ResolverState<'a, Self>,
         order: &'a MappedMainOrder,
     ) -> OrderState {
+        self.explain(context, resolver, order).into()
+    }
+
+    fn explain<'a>(
+        &self,
+        context: &'a ResolverContext<'a>,
+        resolver: &mut ResolverState<'a, Self>,
+        order: &'a MappedMainOrder,
+    ) -> OrderOutcome<'a> {
         use crate::order::MainCommand::*;
         match order.command {
             // A move order succeeds when the unit successfully transitions to the target.
@@ -199,13 +208,19 @@ pub enum HoldOutcome<'a> {
     Dislodged(&'a MappedMainOrder),
 }
 
-impl From<HoldOutcome<'_>> for OrderState {
-    fn from(other: HoldOutcome<'_>) -> Self {
-        if other == HoldOutcome::Succeeds {
+impl From<&'_ HoldOutcome<'_>> for OrderState {
+    fn from(other: &HoldOutcome<'_>) -> Self {
+        if other == &HoldOutcome::Succeeds {
             OrderState::Succeeds
         } else {
             OrderState::Fails
         }
+    }
+}
+
+impl From<HoldOutcome<'_>> for OrderState {
+    fn from(other: HoldOutcome<'_>) -> Self {
+        (&other).into()
     }
 }
 
@@ -227,14 +242,19 @@ pub enum AttackOutcome<'a> {
     Succeeds,
 }
 
-impl<'a> From<AttackOutcome<'a>> for OrderState {
-    fn from(ao: AttackOutcome) -> Self {
-        use self::AttackOutcome::*;
-        match ao {
-            Succeeds => OrderState::Succeeds,
-            NoPath | MoveToSelf | FriendlyFire | Prevented(..) | LostHeadToHead
-            | OccupierDefended => OrderState::Fails,
+impl From<&'_ AttackOutcome<'_>> for OrderState {
+    fn from(ao: &AttackOutcome) -> Self {
+        if ao == &AttackOutcome::Succeeds {
+            OrderState::Succeeds
+        } else {
+            OrderState::Fails
         }
+    }
+}
+
+impl From<AttackOutcome<'_>> for OrderState {
+    fn from(ao: AttackOutcome) -> Self {
+        (&ao).into()
     }
 }
 

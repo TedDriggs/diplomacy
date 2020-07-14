@@ -12,10 +12,15 @@ pub mod support;
 
 use std::collections::HashMap;
 
-pub use self::outcome::Outcome;
+pub use self::outcome::{OrderOutcome, Outcome};
 pub use self::state_type::{OccupationOutcome, OrderState};
 
-pub use self::resolver::{Adjudicate, ResolverContext, ResolverState};
+pub use self::convoy::ConvoyOutcome;
+pub use self::rulebook::AttackOutcome;
+pub use self::rulebook::HoldOutcome;
+pub use self::support::SupportOutcome;
+
+pub use self::resolver::{ResolverContext, ResolverState};
 pub use self::rulebook::Rulebook;
 use crate::geo::{Border, Map, RegionKey, Terrain};
 use crate::order::{BuildOrder, MainCommand, Order};
@@ -23,6 +28,24 @@ use crate::UnitType;
 
 pub type MappedMainOrder = Order<RegionKey, MainCommand<RegionKey>>;
 pub type MappedBuildOrder = BuildOrder<RegionKey>;
+
+/// A clonable container for a rulebook which can be used to adjudicate a turn.
+pub trait Adjudicate: Clone {
+    /// Determine the success of an order.
+    fn adjudicate<'a>(
+        &self,
+        context: &'a ResolverContext<'a>,
+        resolver: &mut ResolverState<'a, Self>,
+        order: &'a MappedMainOrder,
+    ) -> OrderState;
+
+    fn explain<'a>(
+        &self,
+        context: &'a ResolverContext<'a>,
+        resolver: &mut ResolverState<'a, Self>,
+        order: &'a MappedMainOrder,
+    ) -> OrderOutcome<'a>;
+}
 
 /// Adjudicate a set of orders
 pub fn adjudicate<O: IntoIterator<Item = MappedMainOrder>>(
