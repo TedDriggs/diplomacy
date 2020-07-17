@@ -1,16 +1,15 @@
 use super::{
-    calc::dislodger_of, calc::prevent_results, convoy, Adjudicate, AttackOutcome, ConvoyOutcome,
-    HoldOutcome, MappedMainOrder, OrderState, ResolverContext, ResolverState, SupportOutcome,
+    retreat, Adjudicate, AttackOutcome, ConvoyOutcome, HoldOutcome, MappedMainOrder, OrderState,
+    ResolverContext, ResolverState, SupportOutcome,
 };
-use crate::geo::{Border, RegionKey};
 use crate::order::Command;
 use from_variants::FromVariants;
-use std::collections::{BTreeSet, HashMap};
+use std::collections::HashMap;
 use std::fmt;
 
 /// The outcome of a specific order. The variant of the outcome will match the issued order
 /// type.
-#[derive(FromVariants)]
+#[derive(FromVariants, PartialEq, Eq)]
 pub enum OrderOutcome<'a> {
     Hold(HoldOutcome<'a>),
     Move(AttackOutcome<'a>),
@@ -54,11 +53,10 @@ impl PartialEq<OrderState> for OrderOutcome<'_> {
 
 /// Contains information about the outcome of a turn, used for reporting back
 /// to players and for setting up the next turn.
-pub struct Outcome<'a, A: Adjudicate> {
-    context: &'a ResolverContext<'a>,
-    resolver: ResolverState<'a, A>,
-    orders: HashMap<&'a MappedMainOrder, OrderOutcome<'a>>,
-    dislodged: HashMap<&'a MappedMainOrder, &'a MappedMainOrder>,
+pub struct Outcome<'a, A> {
+    pub(in crate::judge) context: &'a ResolverContext<'a>,
+    pub(in crate::judge) resolver: ResolverState<'a, A>,
+    pub(in crate::judge) orders: HashMap<&'a MappedMainOrder, OrderOutcome<'a>>,
 }
 
 impl<'a, A: Adjudicate> Outcome<'a, A> {
@@ -78,93 +76,31 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
             })
             .collect();
 
-        let dislodged = {
-            let mut dislodged = HashMap::new();
-            for order in context.orders() {
-                if let Some(dl_ord) = dislodger_of(&context, &mut state, order) {
-                    dislodged.insert(order, dl_ord);
-                }
-            }
-
-            dislodged
-        };
-
         Self {
             context,
             resolver,
             orders,
-            dislodged,
         }
     }
 
+    /// Get successful move orders from the phase.
     pub fn moved(&self) -> Vec<&MappedMainOrder> {
-        self.context
-            .orders()
+        self.orders
             .iter()
-            .filter(|o| {
-                o.is_move()
-                    && self
-                        .get(o)
-                        .map(|outcome| outcome == &OrderState::Succeeds)
-                        .unwrap_or(false)
+            .filter(|(o, outcome)| {
+                o.is_move() && **outcome == OrderOutcome::Move(AttackOutcome::Succeeds)
             })
+            .map(|(order, _)| *order)
             .collect()
-    }
-
-    /// Gets a map of orders whose recipients were dislodged to the order which dislodged them.
-    pub fn dislodged(&self) -> &HashMap<&MappedMainOrder, &MappedMainOrder> {
-        &self.dislodged
     }
 
     pub fn get(&'a self, order: &'a MappedMainOrder) -> Option<&'a OrderOutcome<'a>> {
         self.orders.get(order)
     }
 
-    pub fn get_retreat_destinations(&self) -> HashMap<&MappedMainOrder, BTreeSet<&RegionKey>> {
-        let world = self.context.world_map;
-        let mut state = self.resolver.clone();
-        self.dislodged()
-            .iter()
-            .map(|(dislodged, dislodger)| {
-                (
-                    *dislodged,
-                    world
-                        .borders_containing(&dislodged.region)
-                        .into_iter()
-                        .filter(|b| {
-                            self.is_valid_retreat_route(&mut state, dislodged, dislodger, b)
-                        })
-                        .filter_map(|b| b.dest_from(&dislodged.region))
-                        .collect::<BTreeSet<_>>(),
-                )
-            })
-            .collect()
-    }
-
-    fn is_valid_retreat_route(
-        &self,
-        state: &mut ResolverState<'a, impl Adjudicate>,
-        retreater: &MappedMainOrder,
-        dislodger: &MappedMainOrder,
-        border: &Border,
-    ) -> bool {
-        if !border.is_passable_by(retreater.unit_type) {
-            return false;
-        }
-
-        let dest = if let Some(dst) = border.dest_from(&retreater.region) {
-            dst
-        } else {
-            return false;
-        };
-
-        if dest.province() == dislodger.region.province()
-            && !convoy::route_exists(&self.context, state, dislodger)
-        {
-            return false;
-        }
-
-        prevent_results(&self.context, state, dest.province()).is_empty()
+    /// Calculate retreat phase starting data based on this main-phase outcome.
+    pub fn to_retreat_start(&'a self) -> retreat::Start<'a> {
+        retreat::Start::new(self)
     }
 }
 
@@ -190,11 +126,6 @@ impl<'a, A: Adjudicate> fmt::Display for Outcome<'a, A> {
         writeln!(f, "MOVED")?;
         for ord in self.moved() {
             writeln!(f, "  {}", ord)?;
-        }
-
-        writeln!(f, "DISLODGED")?;
-        for (dislodged, dislodger) in self.dislodged() {
-            writeln!(f, "  {} | {}", dislodged, dislodger)?;
         }
 
         Ok(())

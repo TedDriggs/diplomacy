@@ -12,7 +12,7 @@ pub enum ConvoyRouteError {
     CanOnlyConvoyMove,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConvoyOutcome<'a> {
     /// The convoy order is invalid because the convoying unit is not at sea.
     NotAtSea,

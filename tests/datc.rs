@@ -5,7 +5,7 @@
 mod util;
 
 use diplomacy::judge::OrderState::{Fails, Succeeds};
-use diplomacy::judge::{ResolverContext, Rulebook};
+use diplomacy::judge::{retreat, Rulebook};
 use util::*;
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.1
@@ -1459,7 +1459,7 @@ fn t6h03_no_convoy_during_retreat() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.4
 #[test]
 fn t6h04_no_other_moves_during_retreat() {
-    let (context, expected): (ResolverContext, _) = context_and_expectation! {
+    let (context, expected) = context_and_expectation! {
        "ENG: F nth Hold": Succeeds,
        "ENG: A hol Hold": Fails,
        "GER: F kie Supports A ruh -> hol",
@@ -1467,15 +1467,36 @@ fn t6h04_no_other_moves_during_retreat() {
     };
 
     let outcome = context.resolve_using(Rulebook);
+    let retreat_start = outcome.to_retreat_start();
 
-    let dislodged = outcome.dislodged();
+    let dislodged = retreat_start.dislodged();
     assert_eq!(1, dislodged.len());
 
     let dislodged_unit = context.find_order_to_province(&prov("hol")).unwrap();
-    let retreat_destinations = outcome.get_retreat_destinations();
-    let hol_rds = retreat_destinations.get(dislodged_unit).unwrap();
+    let retreat_destinations = retreat_start.retreat_destinations();
+    let hol_rds = retreat_start
+        .retreat_destinations()
+        .get(&dislodged_unit.unit_position())
+        .unwrap();
     assert!(dislodged.contains_key(dislodged_unit));
-    assert!(hol_rds.contains(&reg("bel")));
+    assert!(hol_rds.available().get(&reg("bel")).is_some());
+
+    let rcontext = retreat::Context::new(
+        &retreat_start,
+        vec!["ENG: A hol -> bel", "ENG: F nth -> nwg"]
+            .into_iter()
+            .map(retreat_ord),
+    );
+
+    let r_outcome = rcontext.resolve();
+    assert_eq!(
+        r_outcome.get(&retreat_ord("ENG: F nth -> nwg")),
+        Some(&retreat::OrderOutcome::InvalidRecipient)
+    );
+    assert_eq!(
+        r_outcome.get(&retreat_ord("ENG: A hol -> bel")),
+        Some(&retreat::OrderOutcome::Moves)
+    );
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.5

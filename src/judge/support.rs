@@ -42,7 +42,7 @@ fn order_cuts<'a, A: Adjudicate>(
             return false;
         }
 
-        if calc::direct_path_exists(ctx, cutting_order) {
+        if calc::direct_path_exists(ctx.world_map, cutting_order) {
             return true;
         }
 

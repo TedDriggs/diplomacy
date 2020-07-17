@@ -5,6 +5,7 @@ mod calc;
 mod convoy;
 mod outcome;
 mod resolver;
+pub mod retreat;
 mod rulebook;
 mod state_type;
 mod strength;
@@ -23,11 +24,12 @@ pub use self::support::SupportOutcome;
 pub use self::resolver::{ResolverContext, ResolverState};
 pub use self::rulebook::Rulebook;
 use crate::geo::{Border, Map, RegionKey, Terrain};
-use crate::order::{BuildOrder, MainCommand, Order};
+use crate::order::{BuildOrder, MainCommand, Order, RetreatOrder};
 use crate::UnitType;
 
 pub type MappedMainOrder = Order<RegionKey, MainCommand<RegionKey>>;
 pub type MappedBuildOrder = BuildOrder<RegionKey>;
+pub type MappedRetreatOrder = RetreatOrder<RegionKey>;
 
 /// A clonable container for a rulebook which can be used to adjudicate a turn.
 pub trait Adjudicate: Clone {

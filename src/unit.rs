@@ -1,7 +1,9 @@
 use crate::parser::{Error, ErrorKind};
-use crate::{geo::ProvinceKey, geo::RegionKey, Command, Nation, Order, ShortName};
+use crate::{geo::Location, geo::RegionKey, Command, Nation, Order, ShortName};
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
+use std::borrow::{Borrow, Cow};
+use std::collections::HashMap;
+use std::hash::{BuildHasher, Hash};
 use std::str::FromStr;
 
 /// The type of a military unit. Armies are convoyable land-based units; fleets
@@ -66,7 +68,7 @@ impl<'a> Unit<'a> {
 }
 
 /// A unit's instantaneous position in a region.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct UnitPosition<'a, L = &'a RegionKey> {
     pub unit: Unit<'a>,
     /// The unit's current location.
@@ -85,18 +87,18 @@ impl<'a, L> UnitPosition<'a, L> {
 }
 
 /// Knowledge of unit positions at a point in time.
-pub trait UnitPositions {
+pub trait UnitPositions<L: Location> {
     /// The current unit positions. The order is unspecified, but every unit should be
     /// returned exactly once.
-    fn unit_positions(&self) -> Vec<UnitPosition<'_>>;
+    fn unit_positions(&self) -> Vec<UnitPosition<'_, &L>>;
 
     /// Get the unit currently occupying a province.
     ///
     /// This function returns the region of the occupier as well.
-    fn find_province_occupier(&self, province: &ProvinceKey) -> Option<UnitPosition<'_>>;
+    fn find_province_occupier(&self, province: &L::Province) -> Option<UnitPosition<'_, &L>>;
 
     /// Get the unit currently occupying a specific region.
-    fn find_region_occupier(&self, region: &RegionKey) -> Option<Unit<'_>>;
+    fn find_region_occupier(&self, region: &L) -> Option<Unit<'_>>;
 }
 
 /// Infer unit positions from a collection of orders. This assumes orders are trustworthy
@@ -105,21 +107,47 @@ pub trait UnitPositions {
 /// 1. There is an order for every unit.
 /// 2. Orders are only issued to units that exist.
 /// 3. There is at most one order per province.
-impl<C: Command<RegionKey>> UnitPositions for Vec<Order<RegionKey, C>> {
-    fn unit_positions(&self) -> Vec<UnitPosition<'_>> {
+impl<L: Location, C: Command<L>> UnitPositions<L> for Vec<Order<L, C>> {
+    fn unit_positions(&self) -> Vec<UnitPosition<'_, &L>> {
         self.iter().map(UnitPosition::from).collect()
     }
 
-    fn find_province_occupier(&self, province: &ProvinceKey) -> Option<UnitPosition<'_>> {
+    fn find_province_occupier(&self, province: &L::Province) -> Option<UnitPosition<'_, &L>> {
         self.iter()
             .find(|ord| ord.region.province() == province)
             .map(UnitPosition::from)
     }
 
-    fn find_region_occupier(&self, region: &RegionKey) -> Option<Unit<'_>> {
+    fn find_region_occupier(&self, region: &L) -> Option<Unit<'_>> {
         self.iter()
             .find(|ord| ord.region == *region)
             .map(Unit::from)
+    }
+}
+
+impl<L, K, H> UnitPositions<L> for HashMap<K, UnitPosition<'_, &L>, H>
+where
+    L: Location + Eq,
+    L::Province: Eq + Hash,
+    K: Borrow<L::Province> + Eq + Hash,
+    H: BuildHasher,
+{
+    fn unit_positions(&self) -> Vec<UnitPosition<'_, &L>> {
+        self.values().cloned().collect()
+    }
+
+    fn find_province_occupier(&self, province: &L::Province) -> Option<UnitPosition<'_, &L>> {
+        self.get(&province).cloned()
+    }
+
+    fn find_region_occupier(&self, region: &L) -> Option<Unit<'_>> {
+        self.get(region.province()).and_then(|up| {
+            if up.region == region {
+                Some(up.unit.clone())
+            } else {
+                None
+            }
+        })
     }
 }
 

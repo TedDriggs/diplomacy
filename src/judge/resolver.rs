@@ -101,7 +101,7 @@ impl std::fmt::Debug for ResolutionState {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ResolverState<'a, A: Adjudicate> {
+pub struct ResolverState<'a, A> {
     state: HashMap<&'a MappedMainOrder, ResolutionState>,
     /// Orders which form part of a paradox. These should only be convoy orders, and will
     /// be treated as hold orders to advance resolution.

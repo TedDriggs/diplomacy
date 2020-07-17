@@ -36,6 +36,10 @@ impl<L: Location, C: Command<L>> Order<L, C> {
         }
     }
 
+    pub fn unit_position(&self) -> UnitPosition<'_, &L> {
+        UnitPosition::from(self)
+    }
+
     /// Write the canonical form of the order to the formatter.
     ///
     /// For readability, this is used by both the Debug and Display traits.
