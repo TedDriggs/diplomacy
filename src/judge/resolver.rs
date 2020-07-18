@@ -51,9 +51,9 @@ impl<'a> ResolverContext<'a> {
         Outcome::new(self, rs)
     }
 
-    /// Resolve the orders in the context, producing a map of orders to outcomes
-    pub fn resolve(self) -> HashMap<MappedMainOrder, OrderState> {
-        self.resolve_using(Rulebook).into()
+    /// Resolve the orders in the context using the standard rulebook
+    pub fn resolve(&'a self) -> Outcome<'a, Rulebook> {
+        self.resolve_using(Rulebook)
     }
 
     pub fn find_order_to_province(&'a self, p: &ProvinceKey) -> Option<&'a MappedMainOrder> {
@@ -68,7 +68,7 @@ impl<'a> ResolverContext<'a> {
 #[allow(clippy::implicit_hasher)]
 impl<'a> From<ResolverContext<'a>> for HashMap<MappedMainOrder, OrderState> {
     fn from(rc: ResolverContext<'a>) -> Self {
-        rc.resolve()
+        rc.resolve().into()
     }
 }
 

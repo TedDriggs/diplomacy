@@ -1,7 +1,7 @@
 use crate::geo::{Border, ProvinceKey, RegionKey};
 use crate::judge::{
-    calc::dislodger_of, calc::prevent_results, convoy, Adjudicate, MappedMainOrder, OrderState,
-    Outcome, ResolverContext, ResolverState,
+    calc::dislodger_of, calc::prevent_results, convoy, retreat, Adjudicate, MappedMainOrder,
+    OrderState, Outcome, ResolverContext, ResolverState, Prevent,
 };
 use crate::{order::Command, Unit, UnitPosition, UnitPositions};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -34,22 +34,23 @@ impl<'a> Start<'a> {
         let interim_positions = non_dislodged_positions(outcome, &dislodged);
         let retreat_destinations = dislodged
             .iter()
-            .map(|(dislodged, dislodger)| {
+            .map(|(dislodged_order, dislodger)| {
                 (
-                    dislodged.unit_position(),
+                    dislodged_order.unit_position(),
                     outcome
                         .context
                         .world_map
-                        .borders_containing(&dislodged.region)
+                        .borders_containing(&dislodged_order.region)
                         .into_iter()
                         .filter_map(|border| {
                             Some((
-                                border.dest_from(&dislodged.region)?,
+                                border.dest_from(&dislodged_order.region)?,
                                 is_valid_retreat_route(
                                     &outcome.context,
                                     &mut state,
                                     &interim_positions,
-                                    dislodged,
+                                    &dislodged,
+                                    dislodged_order,
                                     dislodger,
                                     border,
                                 ),
@@ -89,6 +90,7 @@ fn is_valid_retreat_route<'a, A: Adjudicate>(
     main_phase: &'a ResolverContext<'a>,
     state: &mut ResolverState<'a, A>,
     non_dislodged_positions: &impl UnitPositions<RegionKey>,
+    dislodged: &HashMap<&MappedMainOrder, &MappedMainOrder>,
     retreater: &MappedMainOrder,
     dislodger: &MappedMainOrder,
     border: &Border,
@@ -119,12 +121,20 @@ fn is_valid_retreat_route<'a, A: Adjudicate>(
         return DestStatus::Occupied;
     }
 
+    // Dislodged units' do not contest areas during the retreat phase
+    let applicable_prevents = prevent_results(main_phase, state, dest.province()).into_iter().any(|prevent| {
+        match prevent {
+            Prevent::Prevents(ord, _) => !dislodged.contains_key(ord),
+            _ => false
+        }
+    });
+
     // A unit cannot retreat to a position that was contested in the main phase, even
     // if the province is vacant due to a stalemate
-    if prevent_results(main_phase, state, dest.province()).is_empty() {
-        DestStatus::Available
+    if applicable_prevents {
+        DestStatus::Contested
     } else {
-        DestStatus::Prevented
+        DestStatus::Available
     }
 }
 
@@ -193,7 +203,13 @@ pub enum DestStatus {
     Occupied,
     /// The region is vacant, but during the main phase the province was the site of a stalemate.
     /// Units cannot retreat into stalemate territory.
-    Prevented,
+    Contested,
+}
+
+impl PartialEq<retreat::OrderOutcome<'_>> for DestStatus {
+    fn eq(&self, other: &retreat::OrderOutcome) -> bool {
+        other == self
+    }
 }
 
 /// The state of the world between the main phase and retreat phases of a season, ignoring

@@ -5,7 +5,6 @@
 mod util;
 
 use diplomacy::judge::OrderState::{Fails, Succeeds};
-use diplomacy::judge::{retreat, Rulebook};
 use util::*;
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.1
@@ -1459,6 +1458,8 @@ fn t6h03_no_convoy_during_retreat() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.4
 #[test]
 fn t6h04_no_other_moves_during_retreat() {
+    use diplomacy::judge::retreat::OrderOutcome::*;
+
     let (context, expected) = context_and_expectation! {
        "ENG: F nth Hold": Succeeds,
        "ENG: A hol Hold": Fails,
@@ -1466,71 +1467,75 @@ fn t6h04_no_other_moves_during_retreat() {
        "GER: A ruh -> hol": Succeeds,
     };
 
-    let outcome = context.resolve_using(Rulebook);
-    let retreat_start = outcome.to_retreat_start();
+    let outcome = resolve_main!(context, expected);
 
-    let dislodged = retreat_start.dislodged();
-    assert_eq!(1, dislodged.len());
-
-    let dislodged_unit = context.find_order_to_province(&prov("hol")).unwrap();
-    let retreat_destinations = retreat_start.retreat_destinations();
-    let hol_rds = retreat_start
-        .retreat_destinations()
-        .get(&dislodged_unit.unit_position())
-        .unwrap();
-    assert!(dislodged.contains_key(dislodged_unit));
-    assert!(hol_rds.available().get(&reg("bel")).is_some());
-
-    let rcontext = retreat::Context::new(
-        &retreat_start,
-        vec!["ENG: A hol -> bel", "ENG: F nth -> nwg"]
-            .into_iter()
-            .map(retreat_ord),
-    );
-
-    let r_outcome = rcontext.resolve();
-    assert_eq!(
-        r_outcome.get(&retreat_ord("ENG: F nth -> nwg")),
-        Some(&retreat::OrderOutcome::InvalidRecipient)
-    );
-    assert_eq!(
-        r_outcome.get(&retreat_ord("ENG: A hol -> bel")),
-        Some(&retreat::OrderOutcome::Moves)
-    );
+    judge_retreat! {
+        outcome,
+        "ENG: F nth -> nwg": InvalidRecipient,
+        "ENG: A hol -> bel": Moves,
+    };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.5
 #[test]
 fn t6h05_a_unit_may_not_retreat_to_the_area_from_which_it_is_attacked() {
-    judge! {
+    use diplomacy::judge::retreat::DestStatus::*;
+
+    let (context, _) = context_and_expectation! {
        "RUS: F con Supports F bla -> ank",
-       "RUS: F bla -> ank",
-       "TUR: F ank Hold",
+       "RUS: F bla -> ank": Succeeds,
+       "TUR: F ank Hold": Fails,
+    };
+
+    let outcome = context.resolve();
+
+    judge_retreat! {
+        outcome,
+        "TUR: F ank -> bla": BlockedByDislodger,
     };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.6
 #[test]
 fn t6h06_unit_may_not_retreat_to_a_contested_area() {
-    judge! {
+    use diplomacy::judge::retreat::DestStatus::*;
+
+    let (context, _) = context_and_expectation! {
        "AUS: A bud Supports A tri -> vie",
-       "AUS: A tri -> vie",
-       "GER: A mun -> Bohemia",
-       "GER: A sil -> Bohemia",
-       "ITA: A vie Hold",
+       "AUS: A tri -> vie": Succeeds,
+       "GER: A mun -> boh": Fails,
+       "GER: A sil -> boh": Fails,
+       "ITA: A vie Hold": Fails,
+    };
+
+    let outcome = context.resolve();
+
+    judge_retreat! {
+        outcome,
+        "ITA: A vie -> boh": Contested,
     };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.7
 #[test]
 fn t6h07_multiple_retreat_to_same_area_will_disband_units() {
-    judge! {
+    use diplomacy::judge::retreat::OrderOutcome::*;
+
+    let (context, _) = context_and_expectation! {
        "AUS: A bud Supports A tri -> vie",
-       "AUS: A tri -> vie",
-       "GER: A mun Supports A sil -> Bohemia",
-       "GER: A sil -> Bohemia",
-       "ITA: A vie Hold",
-       "ITA: A Bohemia Hold",
+       "AUS: A tri -> vie": Succeeds,
+       "GER: A mun Supports A sil -> boh",
+       "GER: A sil -> boh": Succeeds,
+       "ITA: A vie Hold": Fails,
+       "ITA: A boh Hold": Fails,
+    };
+
+    let outcome = context.resolve();
+
+    judge_retreat! {
+        outcome,
+        "ITA: A vie -> tyr": Prevented(&retreat_ord("ITA: A boh -> tyr")),
+        "ITA: A boh -> tyr": Prevented(&retreat_ord("ITA: A vie -> tyr")),
     };
 }
 
@@ -1553,26 +1558,46 @@ fn t6h08_triple_retreat_to_same_area_will_disband_units() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.9
 #[test]
 fn t6h09_dislodged_unit_will_not_make_attackers_area_contested() {
-    judge! {
-       "ENG: F hel -> kie",
+    use diplomacy::judge::retreat::OrderOutcome::*;
+
+    let (context, expected) = context_and_expectation! {
+       "ENG: F hel -> kie": Succeeds,
        "ENG: F den Supports F hel -> kie",
-       "GER: A ber -> pru",
-       "GER: F kie Hold",
+       "GER: A ber -> pru": Succeeds,
+       "GER: F kie Hold": Fails,
        "GER: A sil Supports A ber -> pru",
-       "RUS: A pru -> ber",
+       "RUS: A pru -> ber": Fails,
+    };
+
+    let outcome = resolve_main!(context, expected);
+
+    judge_retreat! {
+        outcome,
+        "GER: F kie -> ber": Moves,
     };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.10
 #[test]
 fn t6h10_not_retreating_to_attacker_does_not_mean_contested() {
-    judge! {
-       "ENG: A kie Hold",
-       "GER: A ber -> kie",
+    use diplomacy::judge::retreat::DestStatus::*;
+    use diplomacy::judge::retreat::OrderOutcome::*;
+
+    let (context, expected) = context_and_expectation! {
+       "ENG: A kie Hold": Fails,
+       "GER: A ber -> kie": Succeeds,
        "GER: A mun Supports A ber -> kie",
-       "GER: A pru Hold",
-       "RUS: A war -> pru",
+       "GER: A pru Hold": Fails,
+       "RUS: A war -> pru": Succeeds,
        "RUS: A sil Supports A war -> pru",
+    };
+
+    let outcome = resolve_main!(context, expected);
+
+    judge_retreat! {
+        outcome,
+        "ENG: A kie -> ber": BlockedByDislodger,
+        "GER: A pru -> ber": Moves,
     };
 }
 

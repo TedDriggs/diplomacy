@@ -20,6 +20,7 @@ pub use self::convoy::ConvoyOutcome;
 pub use self::rulebook::AttackOutcome;
 pub use self::rulebook::HoldOutcome;
 pub use self::support::SupportOutcome;
+pub(self) use self::strength::Prevent;
 
 pub use self::resolver::{ResolverContext, ResolverState};
 pub use self::rulebook::Rulebook;
@@ -55,7 +56,7 @@ pub fn adjudicate<O: IntoIterator<Item = MappedMainOrder>>(
     orders: O,
 ) -> HashMap<MappedMainOrder, OrderState> {
     let ctx = ResolverContext::new(map, orders.into_iter().collect());
-    ctx.resolve()
+    ctx.resolve().into()
 }
 
 impl Border {

@@ -93,3 +93,16 @@ impl OrderOutcome<'_> {
         *self != OrderOutcome::Moves && *self != OrderOutcome::InvalidRecipient
     }
 }
+
+/// Most `DestStatus` values block a retreat-phase move order from succeeding or exerting
+/// influence on the move destination. These values can appear in the `InvalidDestination`
+/// variant of `OrderOutcome`. Note that `DestStatus::Available` will never equal an order outcome.
+impl PartialEq<DestStatus> for OrderOutcome<'_> {
+    fn eq(&self, other: &DestStatus) -> bool {
+        if let OrderOutcome::InvalidDestination(status) = self {
+            *other != DestStatus::Available && status == other
+        } else {
+            false
+        }
+    }
+}
