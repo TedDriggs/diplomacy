@@ -5,6 +5,7 @@
 mod util;
 
 use diplomacy::judge::OrderState::{Fails, Succeeds};
+use diplomacy::judge::retreat::DestStatus;
 use util::*;
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.1
@@ -1230,7 +1231,6 @@ fn t6g04_kidnapping_with_a_disrupted_convoy_and_opposite_move() {
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.5
 #[test]
-#[ignore]
 fn t6g05_swapping_with_intent() {
     judge! {
        "ITA: A rom -> apu": Succeeds,
@@ -1242,12 +1242,11 @@ fn t6g05_swapping_with_intent() {
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.6
 #[test]
-#[ignore]
 fn t6g06_swapping_with_unintended_intent() {
     judge! {
-       "ENG: A lvp -> edi",
+       "ENG: A lvp -> edi": Succeeds,
        "ENG: F eng convoys lvp -> edi",
-       "GER: A edi -> lvp",
+       "GER: A edi -> lvp": Succeeds,
        "FRA: F iri Hold",
        "FRA: F nth Hold",
        "RUS: F nwg convoys lvp -> edi",
@@ -1256,25 +1255,32 @@ fn t6g06_swapping_with_unintended_intent() {
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.7
+///
+/// The current implementation diverges from the DATC preference.
+/// The DATC says that the illegality of the English convoy order should be detected before
+/// resolution, counting as an illegal order. This adjudicator instead prefers that the English
+/// convoy still count as convoy intent.
 #[test]
-#[ignore]
 fn t6g07_swapping_with_illegal_intent() {
     judge! {
        "ENG: F ska convoys swe -> nwy",
-       "ENG: F nwy -> swe",
-       "RUS: A swe -> nwy",
+       "ENG: F nwy -> swe": Succeeds,
+       "RUS: A swe -> nwy": Succeeds,
        "RUS: F bot convoys swe -> nwy",
     };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.8
+///
+/// For this case, this adjudicator believes that "via Convoy" should be binding:
+/// If the unit asked for a non-existent convoy, it should not move.
+/// This diverges from the DATC opinion that this should be dropped if no such convoy exists.
 #[test]
-#[ignore]
 fn t6g08_explicit_convoy_that_isnt_there() {
     judge! {
-       "FRA: A bel -> hol via Convoy",
-       "ENG: F nth -> hel",
-       "ENG: A hol -> kie",
+       "FRA: A bel -> hol via Convoy": Fails,
+       "ENG: F nth -> hel": Succeeds,
+       "ENG: A hol -> kie": Succeeds,
     };
 }
 
@@ -1282,10 +1288,10 @@ fn t6g08_explicit_convoy_that_isnt_there() {
 #[test]
 fn t6g09_swapped_or_dislodged() {
     judge! {
-       "ENG: A nwy -> swe",
+       "ENG: A nwy -> swe": Succeeds,
        "ENG: F ska convoys nwy -> swe",
        "ENG: F fin Supports A nwy -> swe",
-       "RUS: A swe -> nwy",
+       "RUS: A swe -> nwy": Succeeds,
     };
 }
 
@@ -1293,13 +1299,13 @@ fn t6g09_swapped_or_dislodged() {
 #[test]
 fn t6g10_swapped_or_an_head_to_head_battle() {
     judge! {
-       "ENG: A nwy -> swe via Convoy",
+       "ENG: A nwy -> swe via Convoy": Succeeds,
        "ENG: F den Supports A nwy -> swe",
        "ENG: F fin Supports A nwy -> swe",
        "GER: F ska convoys nwy -> swe",
-       "RUS: A swe -> nth",
-       "RUS: F bar supports A swe -> nth",
-       "FRA: F nwg -> nwy",
+       "RUS: A swe -> nwy": Fails,
+       "RUS: F bar supports A swe -> nwy",
+       "FRA: F nwg -> nwy": Fails,
        "FRA: F nth Supports F nwg -> nwy",
     };
 }
@@ -1320,10 +1326,10 @@ fn t6g11_a_convoy_to_an_adjacent_place_with_a_paradox() {
 #[test]
 fn t6g12_swapping_two_units_with_two_convoys() {
     judge! {
-       "ENG: A lvp -> edi via Convoy",
+       "ENG: A lvp -> edi via Convoy": Succeeds,
        "ENG: F nao convoys lvp -> edi",
        "ENG: F nwg convoys lvp -> edi",
-       "GER: A edi -> lvp via Convoy",
+       "GER: A edi -> lvp via Convoy": Succeeds,
        "GER: F nth convoys edi -> lvp",
        "GER: F eng convoys edi -> lvp",
        "GER: F iri convoys edi -> lvp",
@@ -1335,9 +1341,9 @@ fn t6g12_swapping_two_units_with_two_convoys() {
 fn t6g13_support_cut_on_attack_on_itself_via_convoy() {
     judge! {
        "AUS: F adr convoys tri -> ven",
-       "AUS: A tri -> ven via Convoy",
+       "AUS: A tri -> ven via Convoy": Fails,
        "ITA: A ven Supports F alb -> tri",
-       "ITA: F alb -> tri",
+       "ITA: F alb -> tri": Succeeds,
     };
 }
 
@@ -1479,28 +1485,24 @@ fn t6h04_no_other_moves_during_retreat() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.5
 #[test]
 fn t6h05_a_unit_may_not_retreat_to_the_area_from_which_it_is_attacked() {
-    use diplomacy::judge::retreat::DestStatus::*;
-
-    let (context, _) = context_and_expectation! {
+    let (context, expected) = context_and_expectation! {
        "RUS: F con Supports F bla -> ank",
        "RUS: F bla -> ank": Succeeds,
        "TUR: F ank Hold": Fails,
     };
 
-    let outcome = context.resolve();
+    let outcome = resolve_main!(context, expected);
 
     judge_retreat! {
         outcome,
-        "TUR: F ank -> bla": BlockedByDislodger,
+        "TUR: F ank -> bla": DestStatus::BlockedByDislodger,
     };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.6
 #[test]
 fn t6h06_unit_may_not_retreat_to_a_contested_area() {
-    use diplomacy::judge::retreat::DestStatus::*;
-
-    let (context, _) = context_and_expectation! {
+    let (context, expected) = context_and_expectation! {
        "AUS: A bud Supports A tri -> vie",
        "AUS: A tri -> vie": Succeeds,
        "GER: A mun -> boh": Fails,
@@ -1508,11 +1510,11 @@ fn t6h06_unit_may_not_retreat_to_a_contested_area() {
        "ITA: A vie Hold": Fails,
     };
 
-    let outcome = context.resolve();
+    let outcome = resolve_main!(context, expected);
 
     judge_retreat! {
         outcome,
-        "ITA: A vie -> boh": Contested,
+        "ITA: A vie -> boh": DestStatus::Contested,
     };
 }
 
@@ -1521,7 +1523,7 @@ fn t6h06_unit_may_not_retreat_to_a_contested_area() {
 fn t6h07_multiple_retreat_to_same_area_will_disband_units() {
     use diplomacy::judge::retreat::OrderOutcome::*;
 
-    let (context, _) = context_and_expectation! {
+    let (context, expected) = context_and_expectation! {
        "AUS: A bud Supports A tri -> vie",
        "AUS: A tri -> vie": Succeeds,
        "GER: A mun Supports A sil -> boh",
@@ -1530,7 +1532,7 @@ fn t6h07_multiple_retreat_to_same_area_will_disband_units() {
        "ITA: A boh Hold": Fails,
     };
 
-    let outcome = context.resolve();
+    let outcome = resolve_main!(context, expected);
 
     judge_retreat! {
         outcome,
@@ -1542,17 +1544,29 @@ fn t6h07_multiple_retreat_to_same_area_will_disband_units() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.8
 #[test]
 fn t6h08_triple_retreat_to_same_area_will_disband_units() {
-    judge! {
-       "ENG: A lvp -> edi",
+    use diplomacy::judge::retreat::OrderOutcome::*;
+
+    let (context, expected) = context_and_expectation! {
+       "ENG: A lvp -> edi": Succeeds,
        "ENG: F yor Supports A lvp -> edi",
-       "ENG: F nwy Hold",
+       "ENG: F nwy Hold": Fails,
        "GER: A kie Supports A ruh -> hol",
-       "GER: A ruh -> hol",
-       "RUS: F edi Hold",
+       "GER: A ruh -> hol": Succeeds,
+       "RUS: F edi Hold": Fails,
        "RUS: A swe Supports A fin -> nwy",
-       "RUS: A fin -> nwy",
-       "RUS: F hol Hold",
+       "RUS: A fin -> nwy": Succeeds,
+       "RUS: F hol Hold": Fails,
     };
+
+    let outcome = resolve_main!(context, expected);
+
+    // If this test fails because of the preventing order, that's okay.
+    judge_retreat! {
+        outcome,
+        "ENG: F nwy -> nth": Prevented(&retreat_ord("RUS: F edi -> nth")),
+        "RUS: F edi -> nth": Prevented(&retreat_ord("RUS: F hol -> nth")),
+        "RUS: F hol -> nth": Prevented(&retreat_ord("RUS: F edi -> nth")),
+    }
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.9
@@ -1580,7 +1594,6 @@ fn t6h09_dislodged_unit_will_not_make_attackers_area_contested() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.10
 #[test]
 fn t6h10_not_retreating_to_attacker_does_not_mean_contested() {
-    use diplomacy::judge::retreat::DestStatus::*;
     use diplomacy::judge::retreat::OrderOutcome::*;
 
     let (context, expected) = context_and_expectation! {
@@ -1596,7 +1609,7 @@ fn t6h10_not_retreating_to_attacker_does_not_mean_contested() {
 
     judge_retreat! {
         outcome,
-        "ENG: A kie -> ber": BlockedByDislodger,
+        "ENG: A kie -> ber": DestStatus::BlockedByDislodger,
         "GER: A pru -> ber": Moves,
     };
 }
@@ -1604,13 +1617,22 @@ fn t6h10_not_retreating_to_attacker_does_not_mean_contested() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.11
 #[test]
 fn t6h11_retreat_when_dislodged_by_adjacent_convoy() {
-    judge! {
-       "FRA: A gas -> mar via Convoy",
+    use diplomacy::judge::retreat::OrderOutcome::*;
+
+    let (context, expected) = context_and_expectation! {
+       "FRA: A gas -> mar via Convoy": Succeeds,
        "FRA: A bur Supports A gas -> mar",
        "FRA: F mao convoys gas -> mar",
        "FRA: F wes convoys gas -> mar",
        "FRA: F lyo convoys gas -> mar",
-       "ITA: A mar Hold",
+       "ITA: A mar Hold": Fails,
+    };
+
+    let outcome = resolve_main!(context, expected);
+
+    judge_retreat! {
+        outcome,
+        "ITA: A mar -> gas": Moves
     };
 }
 
@@ -1634,47 +1656,78 @@ fn t6h12_retreat_when_dislodged_by_adjacent_convoy_while_trying_to_do_the_same()
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.13
 #[test]
 fn t6h13_no_retreat_with_convoy_in_main_phase() {
-    judge! {
-       "ENG: A pic Hold",
+    let (context, expected) = context_and_expectation! {
+       "ENG: A pic Hold": Fails,
        "ENG: F eng convoys pic -> lon",
-       "FRA: A par -> pic",
+       "FRA: A par -> pic": Succeeds,
        "FRA: A bre Supports A par -> pic",
+    };
+
+    let outcome = resolve_main!(context, expected);
+
+    judge_retreat! {
+        outcome,
+        "ENG: A pic -> lon": DestStatus::Unreachable,
     };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.14
 #[test]
 fn t6h14_no_retreat_with_support_in_main_phase() {
-    judge! {
-       "ENG: A pic Hold",
+    use diplomacy::judge::retreat::OrderOutcome::*;
+
+    let (context, expected) = context_and_expectation! {
+       "ENG: A pic Hold": Fails,
        "ENG: F eng Supports A pic -> bel",
-       "FRA: A par -> pic",
+       "FRA: A par -> pic": Succeeds,
        "FRA: A bre Supports A par -> pic",
-       "FRA: A bur Hold",
+       "FRA: A bur Hold": Fails,
        "GER: A mun Supports A mar -> bur",
-       "GER: A mar -> bur",
+       "GER: A mar -> bur": Succeeds,
+    };
+
+    let outcome = resolve_main!(context, expected);
+
+    judge_retreat! {
+        outcome,
+        "ENG: A pic -> bel": Prevented(&retreat_ord("FRA: A bur -> bel")),
+        "FRA: A bur -> bel": Prevented(&retreat_ord("ENG: A pic -> bel")),
     };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.15
 #[test]
 fn t6h15_no_coastal_crawl_in_retreat() {
-    judge! {
-       "ENG: F por Hold",
-       "FRA: F spa(sc) -> por",
+    let (context, expected) = context_and_expectation! {
+       "ENG: F por Hold": Fails,
+       "FRA: F spa(sc) -> por": Succeeds,
        "FRA: F mao Supports F spa(sc) -> por",
+    };
+
+    let outcome = resolve_main!(context, expected);
+
+    judge_retreat! {
+        outcome,
+        "ENG: F por -> spa(nc)": DestStatus::BlockedByDislodger,
     };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.16
 #[test]
 fn t6h16_contested_for_both_coasts() {
-    judge! {
-       "FRA: F mao -> spa(nc)",
-       "FRA: F gas -> spa(nc)",
-       "FRA: F wes Hold",
+    let (context, expected) = context_and_expectation! {
+       "FRA: F mao -> spa(nc)": Fails,
+       "FRA: F gas -> spa(nc)": Fails,
+       "FRA: F wes Hold": Fails,
        "ITA: F tun Supports F tys -> wes",
-       "ITA: F tys -> wes",
+       "ITA: F tys -> wes": Succeeds,
+    };
+
+    let outcome = resolve_main!(context, expected);
+
+    judge_retreat! {
+        outcome,
+        "FRA: F wes -> spa(sc)": DestStatus::Contested,
     };
 }
 

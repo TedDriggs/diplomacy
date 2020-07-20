@@ -17,6 +17,7 @@ ank,arm,coast
 ank,bla,sea
 ank,con,coast
 ank,smy,land
+apu,ion,sea
 apu,nap,coast
 apu,rom,land
 apu,ven,coast
@@ -138,6 +139,7 @@ lvn,mos,land
 lvn,pru,coast
 lvn,stp,land
 lvn,stp(sc),sea
+lvp,nao,sea
 lvp,wal,coast
 lvp,yor,land
 lyo,mar,sea
@@ -153,6 +155,7 @@ mao,nao,sea
 mao,por,sea
 mao,spa(nc),sea
 mao,naf,sea
+mao,wes,sea
 mos,sev,land
 mos,stp,land
 mos,ukr,land
@@ -172,6 +175,10 @@ nth,yor,sea
 nwg,nwy,sea
 nwy,ska,sea
 nwy,swe,coast
+par,pic,land
+por,spa,land
+por,spa(nc),sea
+por,spa(sc),sea
 pru,sil,land
 pru,war,land
 rom,tus,coast
@@ -190,7 +197,9 @@ tri,tyr,land
 tri,ven,coast
 tri,vie,land
 tun,tys,sea
+tun,wes,sea
 tus,ven,land
 tyr,ven,land
 tyr,vie,land
+tys,wes,sea
 wal,yor,land
