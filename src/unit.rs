@@ -101,6 +101,26 @@ pub trait UnitPositions<L: Location> {
     fn find_region_occupier(&self, region: &L) -> Option<Unit<'_>>;
 }
 
+impl<'a, L: Location> UnitPositions<L> for Vec<UnitPosition<'a, L>> {
+    fn unit_positions(&self) -> Vec<UnitPosition<'_, &L>> {
+        self.iter()
+            .map(|pos| UnitPosition::new(pos.unit.clone(), &pos.region))
+            .collect()
+    }
+
+    fn find_province_occupier(&self, province: &L::Province) -> Option<UnitPosition<'_, &L>> {
+        self.iter()
+            .find(|pos| pos.region.province() == province)
+            .map(|pos| UnitPosition::new(pos.unit.clone(), &pos.region))
+    }
+
+    fn find_region_occupier(&self, region: &L) -> Option<Unit<'_>> {
+        self.iter()
+            .find(|pos| pos.region == *region)
+            .map(|pos| pos.unit.clone())
+    }
+}
+
 /// Infer unit positions from a collection of orders. This assumes orders are trustworthy
 /// and complete:
 ///
