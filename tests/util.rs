@@ -20,7 +20,10 @@ pub fn reg_coast(s: &str, c: impl Into<Option<Coast>>) -> RegionKey {
 
 #[macro_export]
 macro_rules! context_and_expectation {
-    (@inner $($rule:tt $(: $outcome:ident)?),+) => {
+    ($($rule:tt $(: $outcome:ident)?),+) => {
+        context_and_expectation!(@inner $($rule $(: $outcome)?,)*)
+    };
+    ($($rule:tt $(: $outcome:ident)?,)+) => {
         {
             use ::diplomacy::judge::{MappedMainOrder, OrderState, ResolverContext};
             let orders = vec![$($rule),*].into_iter().map(ord).collect::<Vec<_>>();
@@ -29,12 +32,6 @@ macro_rules! context_and_expectation {
                 .collect();
             (ResolverContext::new(::diplomacy::geo::standard_map(), orders), expectations)
         }
-    };
-    ($($rule:tt $(: $outcome:ident)?),+) => {
-        context_and_expectation!(@inner $($rule $(: $outcome)*),*)
-    };
-    ($($rule:tt $(: $outcome:ident)?,)+) => {
-        context_and_expectation!(@inner $($rule $(: $outcome)*),*)
     };
 }
 
@@ -106,18 +103,7 @@ macro_rules! judge {
 #[macro_export]
 macro_rules! judge_retreat {
     ($main_phase:expr, $($rule:tt $(: $expected:expr)?),+) => {
-        let results = $main_phase.to_retreat_start();
-        let retreat_context = ::diplomacy::judge::retreat::Context::new(&results, vec![$($rule),*].into_iter().map(retreat_ord));
-        let outcome = retreat_context.resolve();
-        $(
-            $(
-                assert_eq!(
-                    $expected,
-                    *outcome.get(&retreat_ord($rule)).expect("Order should be in results"),
-                    $rule
-                );
-            )*
-        )*
+        judge_retreat!($main_phase, $($rule $(: $expected)?,)+)
     };
     ($main_phase:expr, $($rule:tt $(: $expected:expr)?,)+) => {
         let results = $main_phase.to_retreat_start();
