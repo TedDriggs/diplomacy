@@ -108,7 +108,7 @@ fn prevent_result<'a, A: Adjudicate>(
     }
 }
 
-#[allow(dead_code)]
+/// Get all prevents for a province, with their supporters.
 pub fn prevent_results<'a, A: Adjudicate>(
     context: &'a ResolverContext<'a>,
     resolver: &mut ResolverState<'a, A>,

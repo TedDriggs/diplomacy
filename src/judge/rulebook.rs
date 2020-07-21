@@ -14,7 +14,7 @@ pub struct Rulebook;
 
 impl Rulebook {
     /// Apply rules to determine hold outcome.
-    pub fn adjudicate_hold<'a>(
+    fn adjudicate_hold<'a>(
         ctx: &'a ResolverContext<'a>,
         rslv: &mut ResolverState<'a, Self>,
         ord: &'a MappedMainOrder,
@@ -25,7 +25,7 @@ impl Rulebook {
     }
 
     /// Apply rules to determine move outcome.
-    pub fn adjudicate_move<'a>(
+    fn adjudicate_move<'a>(
         ctx: &'a ResolverContext<'a>,
         rslv: &mut ResolverState<'a, Self>,
         ord: &'a MappedMainOrder,
@@ -117,7 +117,7 @@ impl Rulebook {
         }
     }
 
-    pub fn adjudicate_support<'a>(
+    fn adjudicate_support<'a>(
         ctx: &'a ResolverContext<'a>,
         rslv: &mut ResolverState<'a, Self>,
         ord: &'a MappedMainOrder,
@@ -132,7 +132,7 @@ impl Rulebook {
         }
     }
 
-    pub fn adjudicate_convoy<'a>(
+    fn adjudicate_convoy<'a>(
         ctx: &'a ResolverContext<'a>,
         rslv: &mut ResolverState<'a, Self>,
         ord: &'a MappedMainOrder,

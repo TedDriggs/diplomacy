@@ -14,13 +14,13 @@ pub mod support;
 use std::collections::HashMap;
 
 pub use self::outcome::{OrderOutcome, Outcome};
-pub use self::state_type::{OccupationOutcome, OrderState};
+pub use self::state_type::OrderState;
 
 pub use self::convoy::ConvoyOutcome;
 pub use self::rulebook::AttackOutcome;
 pub use self::rulebook::HoldOutcome;
-pub use self::support::SupportOutcome;
 pub(self) use self::strength::Prevent;
+pub use self::support::SupportOutcome;
 
 pub use self::resolver::{ResolverContext, ResolverState};
 pub use self::rulebook::Rulebook;

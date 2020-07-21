@@ -1,5 +1,3 @@
-use crate::geo::RegionKey;
-
 /// Struct representing the success or failure of an order.
 /// The meaning of success and failure is contextually-dependent,
 /// and should be derived from the outcome map of a resolution cycle.
@@ -29,11 +27,4 @@ impl From<OrderState> for bool {
             OrderState::Fails => false,
         }
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum OccupationOutcome {
-    Holds,
-    Moves,
-    DislodgedBy(RegionKey),
 }

@@ -94,14 +94,3 @@ pub type MainOrder<L> = Order<L, MainCommand<L>>;
 pub type RetreatOrder<L> = Order<L, RetreatCommand<L>>;
 
 pub type BuildOrder<L> = Order<L, BuildCommand>;
-
-#[cfg(test)]
-#[allow(dead_code)]
-mod test {
-    use super::{MainCommand, Order};
-    use crate::geo::RegionKey;
-
-    fn ord(s: &str) -> Order<RegionKey, MainCommand<RegionKey>> {
-        s.parse().expect("Should be valid")
-    }
-}
