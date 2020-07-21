@@ -1315,8 +1315,8 @@ fn t6g10_swapped_or_an_head_to_head_battle() {
 fn t6g11_a_convoy_to_an_adjacent_place_with_a_paradox() {
     judge! {
        "ENG: F nwy Supports F nth -> ska",
-       "ENG: F nth -> ska",
-       "RUS: A swe -> nwy",
+       "ENG: F nth -> ska": Succeeds,
+       "RUS: A swe -> nwy": Fails,
        "RUS: F ska convoys swe -> nwy",
        "RUS: F bar Supports A swe -> nwy",
     };
@@ -1351,13 +1351,13 @@ fn t6g13_support_cut_on_attack_on_itself_via_convoy() {
 #[test]
 fn t6g14_bounce_by_convoy_to_adjacent_place() {
     judge! {
-       "ENG: A nwy -> swe",
+       "ENG: A nwy -> swe": Succeeds,
        "ENG: F den Supports A nwy -> swe",
        "ENG: F fin Supports A nwy -> swe",
-       "FRA: F nwg -> nwy",
+       "FRA: F nwg -> nwy": Fails,
        "FRA: F nth Supports F nwg -> nwy",
        "GER: F ska convoys swe -> nwy",
-       "RUS: A swe -> nwy via Convoy",
+       "RUS: A swe -> nwy via Convoy": Fails,
        "RUS: F bar Supports A swe -> nwy",
     };
 }
