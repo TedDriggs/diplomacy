@@ -1,7 +1,7 @@
 use crate::geo::{Border, ProvinceKey, RegionKey};
 use crate::judge::{
     calc::dislodger_of, calc::prevent_results, convoy, retreat, Adjudicate, MappedMainOrder,
-    OrderState, Outcome, ResolverContext, ResolverState, Prevent,
+    OrderState, Outcome, Prevent, ResolverContext, ResolverState,
 };
 use crate::{order::Command, Unit, UnitPosition, UnitPositions};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -13,6 +13,8 @@ pub struct Start<'a> {
     /// A map of dislodged orders to the orders that dislodged them.
     dislodged: HashMap<&'a MappedMainOrder, &'a MappedMainOrder>,
     retreat_destinations: HashMap<UnitPosition<'a>, Destinations<'a>>,
+    /// The positions of non-dislodged units at the start of the retreat phase
+    pub(in crate::judge::retreat) unit_positions: HashMap<&'a ProvinceKey, UnitPosition<'a>>,
 }
 
 impl<'a> Start<'a> {
@@ -64,6 +66,7 @@ impl<'a> Start<'a> {
         Start {
             dislodged,
             retreat_destinations,
+            unit_positions: interim_positions,
         }
     }
 
@@ -122,12 +125,12 @@ fn is_valid_retreat_route<'a, A: Adjudicate>(
     }
 
     // Dislodged units' do not contest areas during the retreat phase
-    let applicable_prevents = prevent_results(main_phase, state, dest.province()).into_iter().any(|prevent| {
-        match prevent {
+    let applicable_prevents = prevent_results(main_phase, state, dest.province())
+        .into_iter()
+        .any(|prevent| match prevent {
             Prevent::Prevents(ord, _) => !dislodged.contains_key(ord),
-            _ => false
-        }
-    });
+            _ => false,
+        });
 
     // A unit cannot retreat to a position that was contested in the main phase, even
     // if the province is vacant due to a stalemate

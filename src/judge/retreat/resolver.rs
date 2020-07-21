@@ -1,6 +1,7 @@
 use super::{DestStatus, Start};
 use crate::judge::MappedRetreatOrder;
-use crate::order::RetreatCommand;
+use crate::order::{Command, RetreatCommand};
+use crate::{geo::ProvinceKey, geo::RegionKey, Unit, UnitPosition, UnitPositions};
 use std::collections::HashMap;
 
 /// The immutable parts of retreat phase adjudication.
@@ -18,7 +19,7 @@ impl<'a> Context<'a> {
     }
 
     /// Adjudicate a retreat phase and determine which units move or are disbanded.
-    pub fn resolve(&'a self) -> Outcome<'a> {
+    pub fn resolve(&self) -> Outcome {
         let mut outcomes = HashMap::new();
         let mut destinations = HashMap::new();
 
@@ -54,18 +55,59 @@ impl<'a> Context<'a> {
             }
         }
 
-        Outcome { by_order: outcomes }
+        Outcome::new(outcomes, self.start.unit_positions.clone())
     }
 }
 
-/// The result of a retreat phase adjudication.
+/// The result of a retreat phase adjudication, and unit positions after the retreat phase
+/// and its preceding main phase.
 pub struct Outcome<'a> {
     by_order: HashMap<&'a MappedRetreatOrder, OrderOutcome<'a>>,
+    unit_positions: HashMap<&'a ProvinceKey, UnitPosition<'a>>,
 }
 
 impl<'a> Outcome<'a> {
+    fn new(
+        by_order: HashMap<&'a MappedRetreatOrder, OrderOutcome<'a>>,
+        retreat_start_positions: HashMap<&'a ProvinceKey, UnitPosition<'a>>,
+    ) -> Self {
+        let mut unit_positions = retreat_start_positions;
+        for (order, outcome) in &by_order {
+            if let Some(dest) = order.move_dest() {
+                if let OrderOutcome::Moves = outcome {
+                    unit_positions
+                        .insert(dest.province(), UnitPosition::new((*order).into(), dest));
+                }
+            }
+        }
+
+        Self {
+            by_order,
+            unit_positions,
+        }
+    }
+
     pub fn get(&'a self, order: &MappedRetreatOrder) -> Option<&'a OrderOutcome<'a>> {
         self.by_order.get(order)
+    }
+
+    /// Iterate over the outcomes for each retreat order.
+    pub fn order_outcomes(&self) -> impl Iterator<Item = (&MappedRetreatOrder, &OrderOutcome)> {
+        self.by_order.iter().map(|(k, v)| (*k, v))
+    }
+}
+
+impl UnitPositions<RegionKey> for Outcome<'_> {
+    fn unit_positions(&self) -> Vec<UnitPosition> {
+        self.unit_positions.unit_positions()
+    }
+
+    fn find_province_occupier(&self, province: &ProvinceKey) -> Option<UnitPosition> {
+        self.unit_positions.find_province_occupier(province)
+    }
+
+    fn find_region_occupier(&self, region: &RegionKey) -> Option<Unit> {
+        self.unit_positions.find_region_occupier(region)
     }
 }
 
