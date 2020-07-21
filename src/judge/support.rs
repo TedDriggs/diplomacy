@@ -3,7 +3,7 @@
 
 use super::{calc, convoy};
 use super::{Adjudicate, MappedMainOrder, OrderState, ResolverContext, ResolverState};
-use crate::geo::{Map, ProvinceKey};
+use crate::geo::Map;
 use crate::order::{Command, MainCommand, SupportedOrder};
 
 fn order_cuts<'a, A: Adjudicate>(
@@ -108,29 +108,26 @@ pub fn is_supporting_self(support_order: &MappedMainOrder) -> bool {
     }
 }
 
-/// Returns the province which support needs to reach to benefit `supported`.
-/// For move orders, this is the **destination** province. For all other orders,
-/// it is the **currently occupied** province.
-fn needed_at(supported: &MappedMainOrder) -> &ProvinceKey {
-    use crate::order::MainCommand::*;
-    match &supported.command {
-        Move(cmd) => cmd.dest().province(),
-        Hold | Support(..) | Convoy(..) => supported.region.province(),
-    }
-}
-
 /// Determines if a support order can reach the province where it is needed.
 /// This requires a border from the unit's current region to the province
 /// where support is needed.
-fn can_reach<'a>(
-    world_map: &'a Map,
-    supported: &'a MappedMainOrder,
-    support_order: &'a MappedMainOrder,
-) -> bool {
-    world_map
-        .find_borders_between(&support_order.region, needed_at(supported))
-        .iter()
-        .any(|b| b.is_passable_by(support_order.unit_type))
+pub fn can_reach(world_map: &Map, support_order: &MappedMainOrder) -> bool {
+    if let MainCommand::Support(supported) = &support_order.command {
+        // The province which the supporter must be able to reach to help.
+        // For move orders, this is the **destination** province. For all other orders,
+        // it is the **currently occupied** province.
+        let needed_at = match supported {
+            SupportedOrder::Move(_, _, dest) => dest.province(),
+            SupportedOrder::Hold(_, target) => target.province(),
+        };
+
+        world_map
+            .find_borders_between(&support_order.region, needed_at)
+            .iter()
+            .any(|b| b.is_passable_by(support_order.unit_type))
+    } else {
+        false
+    }
 }
 
 /// Returns true if an order is a legal support order.
@@ -161,7 +158,7 @@ pub fn is_successful<'a, A: Adjudicate>(
         is_legal(support_order)
             && beneficiary.is_legal()
             && beneficiary == supported
-            && can_reach(&ctx.world_map, supported, support_order)
+            && can_reach(&ctx.world_map, support_order)
             && resolver.resolve(ctx, support_order).into()
     } else {
         false
@@ -184,6 +181,10 @@ pub fn find_for<'a, A: Adjudicate>(
 pub enum SupportOutcome<'a> {
     NotDisrupted,
     SupportingSelf,
+    /// The support order can't reach the province where assistance is required.
+    ///
+    /// Support cannot be convoyed, so reachability is a simple border check.
+    CantReach,
     CutBy(&'a MappedMainOrder),
 }
 
@@ -243,7 +244,7 @@ mod test {
         ];
 
         assert_eq!(supp_com, orders[1]);
-        assert!(super::can_reach(standard_map(), &orders[1], &orders[0]));
+        assert!(super::can_reach(standard_map(), &orders[0]));
 
         let resolver_ctx = ResolverContext::new(standard_map(), orders.clone());
         let mut res_state = ResolverState::with_adjudicator(super::super::rulebook::Rulebook);
@@ -273,6 +274,6 @@ mod test {
         ];
 
         assert_eq!(supp_com, orders[0]);
-        assert!(super::can_reach(standard_map(), &orders[0], &orders[1]));
+        assert!(super::can_reach(standard_map(), &orders[1]));
     }
 }

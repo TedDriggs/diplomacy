@@ -124,6 +124,8 @@ impl Rulebook {
     ) -> SupportOutcome<'a> {
         if support::is_supporting_self(ord) {
             SupportOutcome::SupportingSelf
+        } else if !support::can_reach(ctx.world_map, ord) {
+            SupportOutcome::CantReach
         } else {
             match support::find_cutting_order(ctx, rslv, ord) {
                 Some(cutter) => SupportOutcome::CutBy(cutter),
