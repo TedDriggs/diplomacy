@@ -165,7 +165,7 @@ impl<'de> Deserialize<'de> for Time {
 
             fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
                 v.parse()
-                    .or_else(|_| Err(E::custom(format!("Unable to parse time '{}'", v))))
+                    .map_err(|_| E::custom(format!("Unable to parse time '{}'", v)))
             }
         }
 
