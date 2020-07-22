@@ -1,10 +1,10 @@
 use super::Command;
 use crate::{geo::Location, ShortName};
-use serde::{Deserialize, Serialize};
 use std::fmt;
 
 /// Valid commands for the retreat phase of a turn.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum RetreatCommand<L> {
     Hold,
     Move(L),

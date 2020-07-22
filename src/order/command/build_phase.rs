@@ -1,10 +1,10 @@
 use super::Command;
 use crate::geo::Location;
-use serde::{Deserialize, Serialize};
 use std::fmt;
 
 /// A command issued during the build/disband turn (typically "Winter").
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum BuildCommand {
     /// The recipient region is to spawn a new unit of the ordered type
     /// owned by the issuing nation. This will require that the province

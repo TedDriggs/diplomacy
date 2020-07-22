@@ -1,6 +1,5 @@
 use crate::Nation;
 use crate::ShortName;
-use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 /// The supply-center nature of a province. This information is used in the build phase
@@ -43,7 +42,8 @@ impl PartialEq<ProvinceKey> for Province {
 }
 
 /// An identifier that can be resolved to a province
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ProvinceKey(String);
 
 impl ProvinceKey {

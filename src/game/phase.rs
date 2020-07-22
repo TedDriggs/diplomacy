@@ -1,11 +1,9 @@
+use crate::ShortName;
+#[cfg(feature = "serde")]
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use std::borrow::Cow;
 use std::cmp::{Ordering, PartialOrd};
-use std::fmt;
 use std::str::FromStr;
-
-use crate::ShortName;
-use serde::de;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// The step in a current season. Not all seasons will have all steps.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -143,14 +141,18 @@ impl FromStr for Time {
 
 // Times are represented in their canonical string format.
 
+#[cfg(feature = "serde")]
 impl Serialize for Time {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_str(&self.short_name())
     }
 }
 
+#[cfg(feature = "serde")]
 impl<'de> Deserialize<'de> for Time {
     fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        use std::fmt;
+
         struct TimeVisitor;
 
         impl de::Visitor<'_> for TimeVisitor {

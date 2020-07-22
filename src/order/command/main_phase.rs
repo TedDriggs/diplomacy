@@ -3,14 +3,14 @@ use crate::geo::Location;
 use crate::order::Order;
 use crate::ShortName;
 use crate::UnitType;
-use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::fmt;
 
 pub type MainOrder<L> = Order<L, MainCommand<L>>;
 
 /// A command that is issued to a unit at a location during the main phase of a season.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum MainCommand<L> {
     /// The unit is to remain in place and do nothing else.
     Hold,
@@ -54,7 +54,8 @@ impl<L: Location> fmt::Display for MainCommand<L> {
 }
 
 /// A move command with a destination and an optional convoy specification.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MoveCommand<L> {
     dest: L,
     /// Whether the order required, forbade, or didn't specify convoy usage.
@@ -130,7 +131,8 @@ impl<L: Location> fmt::Display for MoveCommand<L> {
 }
 
 /// Declaration of the order to be supported by a support command.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SupportedOrder<L> {
     /// The supporting unit will attempt to keep the unit in `Region` in place.
     /// A "hold" support covers units that have hold, support, or convoy commands.
@@ -191,7 +193,8 @@ impl<L: Location> PartialEq<Order<L, MainCommand<L>>> for SupportedOrder<L> {
 }
 
 /// An army's move which a fleet should convoy.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ConvoyedMove<L>(L, L);
 
 impl<L> ConvoyedMove<L> {

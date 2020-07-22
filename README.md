@@ -20,3 +20,7 @@ It seeks to achieve that by:
 
 This is not going to be a complete Diplomacy app.
 Any sort of persistence or UI is out of scope.
+
+# Optional Features
+* `serde`: Enable serialization and deserialization of many crate types.
+* `dependency-graph`: Add resolver tracing that generates GraphViz-compatible dependency visualizations for main phase resolution.

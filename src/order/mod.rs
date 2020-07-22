@@ -1,7 +1,6 @@
 //! The model for an order issued to a unit.
 
 use crate::{geo::Location, Nation, ShortName, Unit, UnitPosition, UnitType};
-use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, fmt};
 
 mod command;
@@ -10,7 +9,8 @@ pub use self::command::{
 };
 
 /// An order is issued by a nation and gives a command to a unit in a region.
-#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
+#[derive(Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Order<L: Location, C: Command<L>> {
     /// The nation to which the commanded unit (or province) belongs.
     pub nation: Nation,

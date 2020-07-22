@@ -1,6 +1,5 @@
 use crate::parser::{Error, ErrorKind};
 use crate::{geo::Location, geo::RegionKey, Command, Nation, Order, ShortName};
-use serde::{Deserialize, Serialize};
 use std::borrow::{Borrow, Cow};
 use std::collections::HashMap;
 use std::hash::{BuildHasher, Hash};
@@ -8,14 +7,15 @@ use std::str::FromStr;
 
 /// The type of a military unit. Armies are convoyable land-based units; fleets
 /// are sea-going units which are able to convoy armies.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum UnitType {
     /// A convoyable land-based unit which can traverse inland and coastal terrain.
-    #[serde(rename = "A")]
+    #[cfg_attr(feature = "serde", serde(rename = "A"))]
     Army,
 
     /// A sea-based unit which can traverse sea and coastal terrain.
-    #[serde(rename = "F")]
+    #[cfg_attr(feature = "serde", serde(rename = "F"))]
     Fleet,
 }
 
@@ -45,6 +45,7 @@ impl ShortName for UnitType {
 /// Diplomacy doesn't invest much in unit identity across turns, so there's no difference
 /// between one Austrian fleet and another.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Unit<'a> {
     nation: Cow<'a, Nation>,
     unit_type: UnitType,
@@ -69,6 +70,7 @@ impl<'a> Unit<'a> {
 
 /// A unit's instantaneous position in a region.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct UnitPosition<'a, L = &'a RegionKey> {
     pub unit: Unit<'a>,
     /// The unit's current location.
