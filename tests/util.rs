@@ -20,14 +20,14 @@ pub fn reg_coast(s: &str, c: impl Into<Option<Coast>>) -> RegionKey {
 
 #[macro_export]
 macro_rules! context_and_expectation {
-    ($($rule:tt $(: $outcome:ident)?),+) => {
+    ($($rule:tt $(: $outcome:expr)?),+) => {
         context_and_expectation!(@inner $($rule $(: $outcome)?,)*)
     };
-    ($($rule:tt $(: $outcome:ident)?,)+) => {
+    ($($rule:tt $(: $outcome:expr)?,)+) => {
         {
-            use ::diplomacy::judge::{MappedMainOrder, OrderState, ResolverContext};
+            use ::diplomacy::judge::{MappedMainOrder, ResolverContext};
             let orders = vec![$($rule),*].into_iter().map(ord).collect::<Vec<_>>();
-            let expectations: ::std::collections::HashMap<MappedMainOrder, OrderState> = vec![$($((ord($rule), $outcome),)?)*]
+            let expectations: ::std::collections::HashMap<MappedMainOrder, _> = vec![$($((ord($rule), $outcome),)?)*]
                 .into_iter()
                 .collect();
             (ResolverContext::new(::diplomacy::geo::standard_map(), orders), expectations)
@@ -61,7 +61,7 @@ macro_rules! resolve_main {
 
 #[macro_export]
 macro_rules! assert_state {
-    ($results:ident, $order:tt, $expectation:ident) => {
+    ($results:ident, $order:tt, $expectation:expr) => {
         assert_eq!(
             $expectation,
             *$results
@@ -75,7 +75,7 @@ macro_rules! assert_state {
 /// Adjudicate a set of orders and - if specified - assert that order's success or failure.
 #[macro_export]
 macro_rules! judge {
-    (@using $resolver:path => $($rule:tt $(: $outcome:ident)?),+) => {
+    (@using $resolver:path => $($rule:tt $(: $outcome:expr)?),+) => {
         {
             let results = $resolver(vec![$($rule),*]);
 
@@ -91,10 +91,10 @@ macro_rules! judge {
             results
         }
     };
-    ($($rule:tt $(: $outcome:ident)?),+) => {
+    ($($rule:tt $(: $outcome:expr)?),+) => {
         judge!(@using get_results => $($rule $(: $outcome)*),*)
     };
-    ($($rule:tt $(: $outcome:ident)?,)+) => {
+    ($($rule:tt $(: $outcome:expr)?,)+) => {
         judge!(@using get_results => $($rule $(: $outcome)*),*)
     };
 }
