@@ -227,7 +227,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                 // We now snap to the resolver state from the assumption so that we can
                 // reuse it in future calculations.
                 if first_resolver.dependency_chain.len() == self.dependency_chain.len() {
-                    self.state = first_resolver.state;
+                    *self = first_resolver;
                     self.set_state(order, Known(first_result));
                     first_result
                 } else {
@@ -237,7 +237,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                     // then we cautiously proceed. We update state to match what we've learned
                     // from the hypothetical and proceed with our guesses.
                     if next_dep != order {
-                        self.state = first_resolver.state;
+                        *self = first_resolver;
                         self.set_state(order, Guessing(first_result));
                         self.dependency_chain.push(next_dep);
                         first_result
