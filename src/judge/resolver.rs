@@ -162,6 +162,20 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         (guesser, result)
     }
 
+    /// Take durable state from another `ResolverState`, leaving behind intermediate calculations.
+    ///
+    /// In the original C implementation, this wasn't necessary because hypotheticals directly modified
+    /// the speculating resolver state. That requires the C implementation to unwind guesses that don't
+    /// work out, but allows it to do nothing to leverage successful resolutions.
+    ///
+    /// The Rust implementation does the opposite, so it needs to "snap to" a resolution state that it
+    /// wants to keep.
+    fn snap_to(&mut self, other: Self) {
+        self.state = other.state;
+        self.paradoxical_orders = other.paradoxical_orders;
+        self.dependency_chain = other.dependency_chain;
+    }
+
     /// When a dependency cycle is detected, attempt to resolve all orders in the cycle.
     fn resolve_dependency_cycle(&mut self, cycle: &[&'a MappedMainOrder]) {
         use self::ResolutionState::*;
@@ -227,7 +241,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                 // We now snap to the resolver state from the assumption so that we can
                 // reuse it in future calculations.
                 if first_resolver.dependency_chain.len() == self.dependency_chain.len() {
-                    *self = first_resolver;
+                    self.snap_to(first_resolver);
                     self.set_state(order, Known(first_result));
                     first_result
                 } else {
@@ -237,9 +251,9 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                     // then we cautiously proceed. We update state to match what we've learned
                     // from the hypothetical and proceed with our guesses.
                     if next_dep != order {
-                        *self = first_resolver;
+                        self.snap_to(first_resolver);
                         self.set_state(order, Guessing(first_result));
-                        self.dependency_chain.push(next_dep);
+                        self.dependency_chain.push(order);
                         first_result
                     }
                     // if the next dependency is the one we're already depending on, we're stuck.
