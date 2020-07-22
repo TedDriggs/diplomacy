@@ -22,8 +22,8 @@ impl<'a> ResolverContext<'a> {
     }
 
     /// Get a view of the orders in the order they were submitted.
-    pub fn orders(&self) -> &[MappedMainOrder] {
-        &self.orders
+    pub fn orders(&self) -> impl Iterator<Item = &MappedMainOrder> {
+        self.orders.iter()
     }
 
     /// Resolve the context using the provided adjudicator.
@@ -34,19 +34,7 @@ impl<'a> ResolverContext<'a> {
     pub fn resolve_using<A: Adjudicate>(&'a self, rules: A) -> Outcome<'a, A> {
         let mut rs = ResolverState::with_adjudicator(rules);
 
-        // XXX Paradoxes can trigger infinite loops if we're not careful, so we
-        // try to resolve convoys first so that cycle detection will make progress
-        // towards a global resolution.
-        let mut orders = self.orders().iter().collect::<Vec<_>>();
-        orders.sort_unstable_by_key(|r| {
-            if let MainCommand::Convoy(..) = r.command {
-                1
-            } else {
-                2
-            }
-        });
-
-        for order in orders {
+        for order in self.orders() {
             rs.resolve(&self, order);
         }
 
@@ -59,11 +47,11 @@ impl<'a> ResolverContext<'a> {
     }
 
     pub fn find_order_to_province(&'a self, p: &ProvinceKey) -> Option<&'a MappedMainOrder> {
-        self.orders().iter().find(|o| &o.region == p)
+        self.orders().find(|o| &o.region == p)
     }
 
     pub fn find_order_to_region(&'a self, r: &RegionKey) -> Option<&'a MappedMainOrder> {
-        self.orders().iter().find(|o| &o.region == r)
+        self.orders().find(|o| &o.region == r)
     }
 }
 

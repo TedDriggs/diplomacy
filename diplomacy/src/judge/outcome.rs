@@ -67,7 +67,6 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
         let mut state = resolver.clone();
         let orders = context
             .orders()
-            .iter()
             .map(|ord| {
                 (
                     ord,
@@ -84,7 +83,7 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
     }
 
     /// The orders that participated in resolution, in the order they were provided.
-    pub fn orders(&self) -> &[MappedMainOrder] {
+    pub fn orders(&self) -> impl Iterator<Item = &MappedMainOrder> {
         self.context.orders()
     }
 
@@ -133,7 +132,6 @@ impl<A: Adjudicate> From<Outcome<'_, A>> for HashMap<MappedMainOrder, OrderState
         other
             .context
             .orders()
-            .iter()
             .map(|ord| {
                 (
                     ord.clone(),
