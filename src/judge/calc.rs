@@ -43,10 +43,7 @@ pub fn path_exists<'a, A: Adjudicate>(
 /// so a unit can make the crossing without convoy assistance.
 ///
 /// This function can be used during the main phase or retreat phase.
-pub fn direct_path_exists(
-    map: &Map,
-    order: &Order<RegionKey, impl Command<RegionKey>>,
-) -> bool {
+pub fn direct_path_exists(map: &Map, order: &Order<RegionKey, impl Command<RegionKey>>) -> bool {
     if let Some(dst) = order.move_dest() {
         if let Some(reg) = map.find_region(&dst.short_name()) {
             if order.unit_type.can_occupy(reg.terrain()) {
@@ -166,20 +163,22 @@ pub fn dislodger_of<'a, A: Adjudicate>(
     resolver: &mut ResolverState<'a, A>,
     order: &'a MappedMainOrder,
 ) -> Option<&'a MappedMainOrder> {
-    if let Some(dislodger) = context
+    for would_be_dislodger in context
         .orders()
         .iter()
-        .find(|o| o.is_move_to_province(order.region.province()))
+        .filter(|o| o.is_move_to_province(order.region.province()))
     {
         // If we found someone trying to move into `order`'s old province, we
         // check to see if `order` vacated. If so, then it couldn't have been
         // dislodged.
+        //
+        // We defer this check to avoid triggering unnecessary resolutions
         if order.is_move() && resolver.resolve(context, order).into() {
             return None;
         }
 
-        if resolver.resolve(context, dislodger).into() {
-            return Some(dislodger);
+        if resolver.resolve(context, would_be_dislodger).into() {
+            return Some(would_be_dislodger);
         }
     }
 
