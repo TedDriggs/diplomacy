@@ -3,6 +3,10 @@ name = "diplomacy"
 version = "0.1.0"
 authors = ["Ted Driggs <ted.driggs@outlook.com>"]
 edition = "2018"
+description = "Adjudication library for the board game Diplomacy"
+documentation = "https://docs.rs/diplomacy/0.1.0"
+repository = "https://github.com/TedDriggs/diplomacy"
+license = "MIT"
 
 [dependencies]
 from_variants = "0.4.0"

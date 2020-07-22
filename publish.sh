@@ -1,0 +1,1 @@
+cargo publish --manifest-path=./diplomacy/Cargo.toml
