@@ -1,8 +1,7 @@
 //! Contains helper functions for evaluating the success of support commands
 //! during the main phase of a turn.
 
-use super::{calc, convoy};
-use super::{Adjudicate, MappedMainOrder, OrderState, ResolverContext, ResolverState};
+use super::{calc, Adjudicate, MappedMainOrder, OrderState, ResolverContext, ResolverState};
 use crate::geo::Map;
 use crate::order::{Command, MainCommand, SupportedOrder};
 
@@ -42,30 +41,10 @@ fn order_cuts<'a, A: Adjudicate>(
             return false;
         }
 
-        if calc::direct_path_exists(ctx.world_map, cutting_order) {
-            return true;
-        }
-
-        // This is the 2000 edition version of the rule for support cuts
-        //
-        // A unit reaching its destination via convoy cannot cut support of an attack against that convoy.
-        // We will allow the cut to proceed if an alternate convoy route can be found.
-        match support_order.command {
-            MainCommand::Support(SupportedOrder::Move(_, _, ref supported_dst)) => {
-                // Find all convoy routes then look for one that doesn't go through the destination of
-                // the supported move order
-                convoy::routes(ctx, resolver, cutting_order)
-                    .map(|result| {
-                        result.iter().any(|route| {
-                            !route
-                                .iter()
-                                .any(|order| order.region.province() == supported_dst.province())
-                        })
-                    })
-                    .unwrap_or(false)
-            }
-            _ => convoy::route_exists(ctx, resolver, cutting_order),
-        }
+        // We use the Szykman rule to deal with paradoxes created by convoying support cuts.
+        // Therefore, we don't worry about units being convoyed that cut support on attacks against
+        // their convoys; those situations will be handled by the cycle resolver.
+        calc::path_exists(ctx, resolver, cutting_order)
     } else {
         false
     }

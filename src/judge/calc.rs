@@ -1,9 +1,8 @@
 use super::strength::{Prevent, Strength};
 use super::{convoy, support};
 use super::{Adjudicate, MappedMainOrder, ResolverContext, ResolverState};
-use crate::geo::{Map, ProvinceKey, RegionKey};
-use crate::order::{Command, MainCommand, Order};
-use crate::ShortName;
+use crate::order::{Command, MainCommand};
+use crate::{geo::ProvinceKey, ShortName};
 
 /// Returns true if `order` is a move AND between the source and dest, either:
 ///
@@ -36,25 +35,6 @@ pub fn path_exists<'a, A: Adjudicate>(
     }
 
     // default to false
-    false
-}
-
-/// Returns true if `order` is a move AND there is a direct border between the origin and destination,
-/// so a unit can make the crossing without convoy assistance.
-///
-/// This function can be used during the main phase or retreat phase.
-pub fn direct_path_exists(map: &Map, order: &Order<RegionKey, impl Command<RegionKey>>) -> bool {
-    if let Some(dst) = order.move_dest() {
-        if let Some(reg) = map.find_region(&dst.short_name()) {
-            if order.unit_type.can_occupy(reg.terrain()) {
-                return map
-                    .find_border_between(&order.region, dst)
-                    .map(|b| b.is_passable_by(order.unit_type))
-                    .unwrap_or(false);
-            }
-        }
-    }
-
     false
 }
 
