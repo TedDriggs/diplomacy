@@ -57,7 +57,6 @@ pub fn find_cutting_order<'a, A: Adjudicate>(
     support_order: &MappedMainOrder,
 ) -> Option<&'a MappedMainOrder> {
     ctx.orders()
-        .iter()
         .find(|order| order_cuts(ctx, resolver, support_order, order))
 }
 
@@ -75,7 +74,6 @@ pub fn is_order_cut<'a, A: Adjudicate>(
     support_order: &MappedMainOrder,
 ) -> bool {
     ctx.orders()
-        .iter()
         .any(|order| order_cuts(ctx, resolver, support_order, &order))
 }
 
@@ -151,7 +149,6 @@ pub fn find_for<'a, A: Adjudicate>(
     supported: &MappedMainOrder,
 ) -> Vec<&'a MappedMainOrder> {
     ctx.orders()
-        .iter()
         .filter(|order| is_successful(ctx, resolver, supported, order))
         .collect()
 }

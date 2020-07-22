@@ -67,7 +67,6 @@ fn prevent_result<'a, A: Adjudicate>(
             // A unit that lost a head-to-head cannot prevent.
             if let Some(h2h) = context
                 .orders()
-                .iter()
                 .find(|o| is_head_to_head(context, resolver, o, order))
             {
                 if resolver.resolve(context, h2h).into() {
@@ -93,7 +92,6 @@ pub fn prevent_results<'a, A: Adjudicate>(
 ) -> Vec<Prevent<'a>> {
     context
         .orders()
-        .iter()
         .filter(|ord| ord.is_move_to_province(province))
         .filter_map(|ord| prevent_result(context, resolver, ord))
         .collect()
@@ -109,7 +107,6 @@ pub fn max_prevent_result<'a, A: Adjudicate>(
         let mut best_prevent_strength = 0;
         for order in context
             .orders()
-            .iter()
             .filter(|ord| ord != &preventing && ord.is_move_to_province(dst.into()))
         {
             if is_head_to_head(context, resolver, order, preventing)
@@ -145,7 +142,6 @@ pub fn dislodger_of<'a, A: Adjudicate>(
 ) -> Option<&'a MappedMainOrder> {
     for would_be_dislodger in context
         .orders()
-        .iter()
         .filter(|o| o.is_move_to_province(order.region.province()))
     {
         // If we found someone trying to move into `order`'s old province, we
