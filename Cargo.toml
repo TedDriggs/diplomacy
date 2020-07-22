@@ -8,3 +8,6 @@ edition = "2018"
 from_variants = "0.4.0"
 lazy_static = "1.4.0"
 serde = { version = "1.0.112", features = [ "derive" ] }
+
+[features]
+dependency-graph = []

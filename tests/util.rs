@@ -40,12 +40,23 @@ macro_rules! resolve_main {
     ($context:expr, $expectation:expr) => {{
         let outcome = $context.resolve();
 
-        for order in $context.orders() {
+        check_outcome!(&outcome, $expectation);
+
+        outcome
+    }};
+}
+
+#[macro_export]
+macro_rules! check_outcome {
+    ($outcome:expr, $expectations:expr) => {
+        let outcome = $outcome;
+
+        for order in outcome.orders() {
             println!("{:?}: {:?}", order, outcome.get(order).unwrap());
         }
 
-        for order in $context.orders() {
-            if let Some(expectation) = $expectation.get(order) {
+        for order in outcome.orders() {
+            if let Some(expectation) = $expectations.get(order) {
                 assert_eq!(
                     *expectation,
                     ::diplomacy::judge::OrderState::from(outcome.get(order).unwrap()),
@@ -54,9 +65,7 @@ macro_rules! resolve_main {
                 );
             }
         }
-
-        outcome
-    }};
+    };
 }
 
 #[macro_export]

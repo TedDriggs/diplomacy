@@ -83,6 +83,11 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
         }
     }
 
+    /// The orders that participated in resolution, in the order they were provided.
+    pub fn orders(&self) -> &[MappedMainOrder] {
+        self.context.orders()
+    }
+
     /// Get successful move orders from the phase.
     pub fn moved(&self) -> Vec<&MappedMainOrder> {
         self.orders
@@ -101,6 +106,24 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
     /// Calculate retreat phase starting data based on this main-phase outcome.
     pub fn to_retreat_start(&'a self) -> retreat::Start<'a> {
         retreat::Start::new(self)
+    }
+
+    #[cfg(feature = "dependency-graph")]
+    pub fn dependencies(&self) -> impl fmt::Display {
+        struct Dependencies(std::collections::BTreeSet<(MappedMainOrder, MappedMainOrder)>);
+
+        impl fmt::Display for Dependencies {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                writeln!(f, "digraph G {{")?;
+                for (src, dest) in &self.0 {
+                    writeln!(f, r#"  "{}" -> "{}""#, src, dest)?;
+                }
+
+                writeln!(f, "}}")
+            }
+        }
+
+        Dependencies(self.resolver.dependencies())
     }
 }
 

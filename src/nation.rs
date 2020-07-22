@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use std::fmt;
 
 /// An actor in the game. Nations can own units and issue orders.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
 pub struct Nation(String);
 
 impl ShortName for Nation {

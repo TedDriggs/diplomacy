@@ -2,6 +2,8 @@ use super::{Adjudicate, MappedMainOrder, OrderState, Outcome, Rulebook};
 use crate::geo::{Map, ProvinceKey, RegionKey};
 use crate::order::{Command, MainCommand};
 use std::collections::{HashMap, HashSet};
+#[cfg(feature = "dependency-graph")]
+use std::{cell::RefCell, collections::BTreeSet, rc::Rc};
 
 /// The immutable inputs for a resolution equation.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -106,6 +108,16 @@ pub struct ResolverState<'a, A> {
     /// Orders which form part of a paradox. These should only be convoy orders, and will
     /// be treated as hold orders to advance resolution.
     paradoxical_orders: HashSet<&'a MappedMainOrder>,
+
+    /// A dependency chain which adds every order as soon as a guess is made. This is used
+    /// to facilitate tracing dependencies rather than for cycle detection.
+    #[cfg(feature = "dependency-graph")]
+    greedy_chain: Vec<&'a MappedMainOrder>,
+    /// A set containing directed edges in a graph of order dependencies.
+    #[cfg(feature = "dependency-graph")]
+    deps: Rc<RefCell<BTreeSet<(MappedMainOrder, MappedMainOrder)>>>,
+    /// The conservative dependency chain used to trigger cycle detection. This contains
+    /// guesses that have been visited twice, indicating that a cycle has been found.
     dependency_chain: Vec<&'a MappedMainOrder>,
     adjudicator: A,
 }
@@ -113,11 +125,26 @@ pub struct ResolverState<'a, A> {
 impl<'a, A: Adjudicate> ResolverState<'a, A> {
     /// Create a new resolver for a given rulebook.
     pub fn with_adjudicator(adjudicator: A) -> Self {
-        ResolverState {
-            state: HashMap::new(),
-            dependency_chain: vec![],
-            paradoxical_orders: HashSet::new(),
-            adjudicator,
+        #[cfg(feature = "dependency-graph")]
+        {
+            ResolverState {
+                state: HashMap::new(),
+                deps: Rc::new(RefCell::new(BTreeSet::default())),
+                greedy_chain: vec![],
+                dependency_chain: vec![],
+                paradoxical_orders: HashSet::new(),
+                adjudicator,
+            }
+        }
+
+        #[cfg(not(feature = "dependency-graph"))]
+        {
+            ResolverState {
+                state: HashMap::new(),
+                dependency_chain: vec![],
+                paradoxical_orders: HashSet::new(),
+                adjudicator,
+            }
         }
     }
 
@@ -157,6 +184,12 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         guess: OrderState,
     ) -> (Self, OrderState) {
         let mut guesser = self.clone();
+
+        #[cfg(feature = "dependency-graph")]
+        {
+            guesser.greedy_chain.push(order);
+        }
+
         guesser.set_state(order, ResolutionState::Guessing(guess));
         let result = self.adjudicator.adjudicate(context, &mut guesser, order);
         (guesser, result)
@@ -216,6 +249,16 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         // The Rust debugger doesn't use fmt::Debug when showing values, so we create
         // this string to give us a better way to see which order we're resolving.
         let _order = format!("{}", order);
+
+        #[cfg(feature = "dependency-graph")]
+        {
+            if !self.greedy_chain.is_empty() {
+                self.deps.borrow_mut().insert((
+                    self.greedy_chain[self.greedy_chain.len() - 1].clone(),
+                    order.clone(),
+                ));
+            }
+        }
 
         // dbg!(order);
         // dbg!(&self.state);
@@ -277,6 +320,12 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
                 }
             }
         }
+    }
+
+    /// Get the set of inter-order dependencies encountered while resolving this
+    #[cfg(feature = "dependency-graph")]
+    pub(crate) fn dependencies(&self) -> BTreeSet<(MappedMainOrder, MappedMainOrder)> {
+        self.deps.borrow().clone()
     }
 }
 

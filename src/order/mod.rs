@@ -10,7 +10,7 @@ pub use self::command::{
 };
 
 /// An order is issued by a nation and gives a command to a unit in a region.
-#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
 pub struct Order<L: Location, C: Command<L>> {
     /// The nation to which the commanded unit (or province) belongs.
     pub nation: Nation,

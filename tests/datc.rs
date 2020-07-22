@@ -1080,7 +1080,7 @@ fn t6f16_pandins_paradox() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.17
 #[test]
 fn t6f17_pandins_extended_paradox() {
-    judge! {
+    let (context, expected) = context_and_expectation! {
        "ENG: F lon Supports F wal -> eng",
        "ENG: F wal -> eng": Fails,
        "FRA: A bre -> lon": Fails,
@@ -1089,6 +1089,8 @@ fn t6f17_pandins_extended_paradox() {
        "GER: F nth Supports F bel -> eng",
        "GER: F bel -> eng": Fails,
     };
+
+    check_outcome!(context.resolve(), expected);
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.18
@@ -1162,7 +1164,7 @@ fn t6f22_second_order_paradox_with_two_resolutions() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.23
 #[test]
 fn t6f23_second_order_paradox_with_two_exclusive_convoys() {
-    judge! {
+    let (context, expected) = context_and_expectation! {
        "ENG: F edi -> nth": Fails,
        "ENG: F yor Supports F edi -> nth",
        "FRA: A bre -> lon": Fails,
@@ -1174,6 +1176,8 @@ fn t6f23_second_order_paradox_with_two_exclusive_convoys() {
        "RUS: A nwy -> bel": Fails,
        "RUS: F nth convoys nwy -> bel",
     };
+
+    check_outcome!(context.resolve(), expected);
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.24
@@ -1311,15 +1315,40 @@ fn t6g10_swapped_or_an_head_to_head_battle() {
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.11
+///
+/// This test diverges from the DATC preference; the DATC interprets the existence of the convoy
+/// order as evidence of intent, even if the move is not explicit. However, given that we have
+/// support for explicit convoy preferences in move orders, we prefer instead to allow the overland
+/// route. In that case, the army moving to Norway cuts support, leaving the fleet in Skagerrak
+/// unharmed and dislodging the fleet in Norway.
 #[test]
 fn t6g11_a_convoy_to_an_adjacent_place_with_a_paradox() {
-    judge! {
+    let (context, expected) = context_and_expectation! {
        "ENG: F nwy Supports F nth -> ska",
-       "ENG: F nth -> ska": Succeeds,
-       "RUS: A swe -> nwy": Fails,
+       "ENG: F nth -> ska": Fails,
+       "RUS: A swe -> nwy": Succeeds,
        "RUS: F ska convoys swe -> nwy",
        "RUS: F bar Supports A swe -> nwy",
     };
+
+    check_outcome!(context.resolve(), expected);
+}
+
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.11
+///
+/// This test exercises the spirit of DATC 6.G.11. Because the unit specifies "via convoy" it should
+/// require the convoy not be dislodged and should not be able to cut support at the destination.
+#[test]
+fn t6g11_variant_an_explicit_convoy_to_an_adjacent_place_with_a_paradox() {
+    let (context, expected) = context_and_expectation! {
+       "ENG: F nwy Supports F nth -> ska",
+       "ENG: F nth -> ska": Succeeds,
+       "RUS: A swe -> nwy via Convoy": Fails,
+       "RUS: F ska convoys swe -> nwy",
+       "RUS: F bar Supports A swe -> nwy",
+    };
+
+    check_outcome!(context.resolve(), expected);
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.12

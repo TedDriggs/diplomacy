@@ -265,3 +265,9 @@ impl<'a> From<AttackOutcome<'a>> for bool {
         OrderState::from(ao).into()
     }
 }
+
+impl PartialEq<OrderState> for AttackOutcome<'_> {
+    fn eq(&self, os: &OrderState) -> bool {
+        OrderState::from(self) == *os
+    }
+}
