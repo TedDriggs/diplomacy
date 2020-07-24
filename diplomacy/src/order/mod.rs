@@ -36,6 +36,15 @@ impl<L: Location, C: Command<L>> Order<L, C> {
         }
     }
 
+    pub fn new_from_position(position: UnitPosition<L>, command: C) -> Self {
+        Order::new(
+            position.nation().clone(),
+            position.unit.unit_type(),
+            position.region,
+            command,
+        )
+    }
+
     pub fn unit_position(&self) -> UnitPosition<'_, &L> {
         UnitPosition::from(self)
     }

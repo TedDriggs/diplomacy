@@ -11,6 +11,7 @@ use std::fmt;
 /// type.
 #[derive(FromVariants, PartialEq, Eq)]
 pub enum OrderOutcome<'a> {
+    Invalid(InvalidOrder),
     Hold(HoldOutcome<'a>),
     Move(AttackOutcome<'a>),
     Support(SupportOutcome<'a>),
@@ -20,6 +21,7 @@ pub enum OrderOutcome<'a> {
 impl From<&'_ OrderOutcome<'_>> for OrderState {
     fn from(other: &OrderOutcome<'_>) -> Self {
         match other {
+            OrderOutcome::Invalid(i) => i.into(),
             OrderOutcome::Hold(h) => h.into(),
             OrderOutcome::Move(m) => m.into(),
             OrderOutcome::Support(s) => s.into(),
@@ -37,6 +39,7 @@ impl From<OrderOutcome<'_>> for OrderState {
 impl fmt::Debug for OrderOutcome<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            OrderOutcome::Invalid(oo) => oo.fmt(f),
             OrderOutcome::Hold(oo) => oo.fmt(f),
             OrderOutcome::Move(oo) => oo.fmt(f),
             OrderOutcome::Support(oo) => oo.fmt(f),
@@ -48,6 +51,25 @@ impl fmt::Debug for OrderOutcome<'_> {
 impl PartialEq<OrderState> for OrderOutcome<'_> {
     fn eq(&self, other: &OrderState) -> bool {
         OrderState::from(self) == *other
+    }
+}
+
+/// Outcome for an order that was invalid and not considered during adjudication.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum InvalidOrder {
+    /// There is no unit in position to act on the order.
+    NoUnit,
+    /// There is a unit in the region to which the order is addressed, but it belongs to a nation
+    /// other than the order issuer.
+    ForeignUnit,
+    /// The owning nation issued multiple orders to the same unit, and this order was discarded
+    /// as a result.
+    MultipleToSameUnit,
+}
+
+impl From<&'_ InvalidOrder> for OrderState {
+    fn from(_: &InvalidOrder) -> Self {
+        OrderState::Fails
     }
 }
 

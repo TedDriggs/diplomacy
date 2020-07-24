@@ -4,6 +4,7 @@
 #[path = "./util.rs"]
 mod util;
 
+use diplomacy::geo;
 use diplomacy::judge::OrderState::{Fails, Succeeds};
 use diplomacy::judge::retreat::DestStatus;
 use util::*;
@@ -252,12 +253,16 @@ fn t6c02_three_army_circular_movement_with_support() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.C.3
 #[test]
 fn t6c03_a_disrupted_three_army_circular_movement() {
-    judge! {
+    let (mut submission, expected) = context_and_expectation! {
        "TUR: F ank -> con": Fails,
        "TUR: A bul -> con": Fails,
        "TUR: A smy -> ank": Fails,
        "TUR: A con -> smy": Fails,
     };
+
+    let context = submission.start_adjudication(geo::standard_map());
+    dbg!(context.orders().collect::<Vec<_>>());
+    resolve_main!(context, expected);
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.C.4
@@ -1080,7 +1085,7 @@ fn t6f16_pandins_paradox() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.17
 #[test]
 fn t6f17_pandins_extended_paradox() {
-    let (context, expected) = context_and_expectation! {
+    judge! {
        "ENG: F lon Supports F wal -> eng",
        "ENG: F wal -> eng": Fails,
        "FRA: A bre -> lon": Fails,
@@ -1089,8 +1094,6 @@ fn t6f17_pandins_extended_paradox() {
        "GER: F nth Supports F bel -> eng",
        "GER: F bel -> eng": Fails,
     };
-
-    check_outcome!(context.resolve(), expected);
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.18
@@ -1164,7 +1167,7 @@ fn t6f22_second_order_paradox_with_two_resolutions() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.23
 #[test]
 fn t6f23_second_order_paradox_with_two_exclusive_convoys() {
-    let (context, expected) = context_and_expectation! {
+    judge! {
        "ENG: F edi -> nth": Fails,
        "ENG: F yor Supports F edi -> nth",
        "FRA: A bre -> lon": Fails,
@@ -1176,8 +1179,6 @@ fn t6f23_second_order_paradox_with_two_exclusive_convoys() {
        "RUS: A nwy -> bel": Fails,
        "RUS: F nth convoys nwy -> bel",
     };
-
-    check_outcome!(context.resolve(), expected);
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.F.24
@@ -1323,15 +1324,13 @@ fn t6g10_swapped_or_an_head_to_head_battle() {
 /// unharmed and dislodging the fleet in Norway.
 #[test]
 fn t6g11_a_convoy_to_an_adjacent_place_with_a_paradox() {
-    let (context, expected) = context_and_expectation! {
+    judge! {
        "ENG: F nwy Supports F nth -> ska",
        "ENG: F nth -> ska": Fails,
        "RUS: A swe -> nwy": Succeeds,
        "RUS: F ska convoys swe -> nwy",
        "RUS: F bar Supports A swe -> nwy",
     };
-
-    check_outcome!(context.resolve(), expected);
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.11
@@ -1340,15 +1339,13 @@ fn t6g11_a_convoy_to_an_adjacent_place_with_a_paradox() {
 /// require the convoy not be dislodged and should not be able to cut support at the destination.
 #[test]
 fn t6g11_variant_an_explicit_convoy_to_an_adjacent_place_with_a_paradox() {
-    let (context, expected) = context_and_expectation! {
+    judge! {
        "ENG: F nwy Supports F nth -> ska",
        "ENG: F nth -> ska": Succeeds,
        "RUS: A swe -> nwy via Convoy": Fails,
        "RUS: F ska convoys swe -> nwy",
        "RUS: F bar Supports A swe -> nwy",
     };
-
-    check_outcome!(context.resolve(), expected);
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.12
@@ -1495,13 +1492,14 @@ fn t6h03_no_convoy_during_retreat() {
 fn t6h04_no_other_moves_during_retreat() {
     use diplomacy::judge::retreat::OrderOutcome::*;
 
-    let (context, expected) = context_and_expectation! {
+    let (mut submission, expected) = context_and_expectation! {
        "ENG: F nth Hold": Succeeds,
        "ENG: A hol Hold": Fails,
        "GER: F kie Supports A ruh -> hol",
        "GER: A ruh -> hol": Succeeds,
     };
 
+    let context = submission.start_adjudication(geo::standard_map());
     let outcome = resolve_main!(context, expected);
 
     judge_retreat! {
@@ -1514,12 +1512,13 @@ fn t6h04_no_other_moves_during_retreat() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.5
 #[test]
 fn t6h05_a_unit_may_not_retreat_to_the_area_from_which_it_is_attacked() {
-    let (context, expected) = context_and_expectation! {
+    let (mut submission, expected) = context_and_expectation! {
        "RUS: F con Supports F bla -> ank",
        "RUS: F bla -> ank": Succeeds,
        "TUR: F ank Hold": Fails,
     };
 
+    let context = submission.start_adjudication(geo::standard_map());
     let outcome = resolve_main!(context, expected);
 
     judge_retreat! {
@@ -1531,7 +1530,7 @@ fn t6h05_a_unit_may_not_retreat_to_the_area_from_which_it_is_attacked() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.6
 #[test]
 fn t6h06_unit_may_not_retreat_to_a_contested_area() {
-    let (context, expected) = context_and_expectation! {
+    let (mut submission, expected) = context_and_expectation! {
        "AUS: A bud Supports A tri -> vie",
        "AUS: A tri -> vie": Succeeds,
        "GER: A mun -> boh": Fails,
@@ -1539,6 +1538,7 @@ fn t6h06_unit_may_not_retreat_to_a_contested_area() {
        "ITA: A vie Hold": Fails,
     };
 
+    let context = submission.start_adjudication(geo::standard_map());
     let outcome = resolve_main!(context, expected);
 
     judge_retreat! {
@@ -1552,7 +1552,7 @@ fn t6h06_unit_may_not_retreat_to_a_contested_area() {
 fn t6h07_multiple_retreat_to_same_area_will_disband_units() {
     use diplomacy::judge::retreat::OrderOutcome::*;
 
-    let (context, expected) = context_and_expectation! {
+    let (mut submission, expected) = context_and_expectation! {
        "AUS: A bud Supports A tri -> vie",
        "AUS: A tri -> vie": Succeeds,
        "GER: A mun Supports A sil -> boh",
@@ -1561,6 +1561,7 @@ fn t6h07_multiple_retreat_to_same_area_will_disband_units() {
        "ITA: A boh Hold": Fails,
     };
 
+    let context = submission.start_adjudication(geo::standard_map());
     let outcome = resolve_main!(context, expected);
 
     judge_retreat! {
@@ -1575,7 +1576,7 @@ fn t6h07_multiple_retreat_to_same_area_will_disband_units() {
 fn t6h08_triple_retreat_to_same_area_will_disband_units() {
     use diplomacy::judge::retreat::OrderOutcome::*;
 
-    let (context, expected) = context_and_expectation! {
+    let (mut submission, expected) = context_and_expectation! {
        "ENG: A lvp -> edi": Succeeds,
        "ENG: F yor Supports A lvp -> edi",
        "ENG: F nwy Hold": Fails,
@@ -1587,6 +1588,7 @@ fn t6h08_triple_retreat_to_same_area_will_disband_units() {
        "RUS: F hol Hold": Fails,
     };
 
+    let context = submission.start_adjudication(geo::standard_map());
     let outcome = resolve_main!(context, expected);
 
     // If this test fails because of the preventing order, that's okay.
@@ -1603,7 +1605,7 @@ fn t6h08_triple_retreat_to_same_area_will_disband_units() {
 fn t6h09_dislodged_unit_will_not_make_attackers_area_contested() {
     use diplomacy::judge::retreat::OrderOutcome::*;
 
-    let (context, expected) = context_and_expectation! {
+    let (mut submission, expected) = context_and_expectation! {
        "ENG: F hel -> kie": Succeeds,
        "ENG: F den Supports F hel -> kie",
        "GER: A ber -> pru": Succeeds,
@@ -1612,6 +1614,7 @@ fn t6h09_dislodged_unit_will_not_make_attackers_area_contested() {
        "RUS: A pru -> ber": Fails,
     };
 
+    let context = submission.start_adjudication(geo::standard_map());
     let outcome = resolve_main!(context, expected);
 
     judge_retreat! {
@@ -1625,7 +1628,7 @@ fn t6h09_dislodged_unit_will_not_make_attackers_area_contested() {
 fn t6h10_not_retreating_to_attacker_does_not_mean_contested() {
     use diplomacy::judge::retreat::OrderOutcome::*;
 
-    let (context, expected) = context_and_expectation! {
+    let (mut submission, expected) = context_and_expectation! {
        "ENG: A kie Hold": Fails,
        "GER: A ber -> kie": Succeeds,
        "GER: A mun Supports A ber -> kie",
@@ -1634,6 +1637,7 @@ fn t6h10_not_retreating_to_attacker_does_not_mean_contested() {
        "RUS: A sil Supports A war -> pru",
     };
 
+    let context = submission.start_adjudication(geo::standard_map());
     let outcome = resolve_main!(context, expected);
 
     judge_retreat! {
@@ -1648,7 +1652,7 @@ fn t6h10_not_retreating_to_attacker_does_not_mean_contested() {
 fn t6h11_retreat_when_dislodged_by_adjacent_convoy() {
     use diplomacy::judge::retreat::OrderOutcome::*;
 
-    let (context, expected) = context_and_expectation! {
+    let (mut submission, expected) = context_and_expectation! {
        "FRA: A gas -> mar via Convoy": Succeeds,
        "FRA: A bur Supports A gas -> mar",
        "FRA: F mao convoys gas -> mar",
@@ -1657,6 +1661,7 @@ fn t6h11_retreat_when_dislodged_by_adjacent_convoy() {
        "ITA: A mar Hold": Fails,
     };
 
+    let context = submission.start_adjudication(geo::standard_map());
     let outcome = resolve_main!(context, expected);
 
     judge_retreat! {
@@ -1685,13 +1690,14 @@ fn t6h12_retreat_when_dislodged_by_adjacent_convoy_while_trying_to_do_the_same()
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.13
 #[test]
 fn t6h13_no_retreat_with_convoy_in_main_phase() {
-    let (context, expected) = context_and_expectation! {
+    let (mut submission, expected) = context_and_expectation! {
        "ENG: A pic Hold": Fails,
        "ENG: F eng convoys pic -> lon",
        "FRA: A par -> pic": Succeeds,
        "FRA: A bre Supports A par -> pic",
     };
 
+    let context = submission.start_adjudication(geo::standard_map());
     let outcome = resolve_main!(context, expected);
 
     judge_retreat! {
@@ -1705,7 +1711,7 @@ fn t6h13_no_retreat_with_convoy_in_main_phase() {
 fn t6h14_no_retreat_with_support_in_main_phase() {
     use diplomacy::judge::retreat::OrderOutcome::*;
 
-    let (context, expected) = context_and_expectation! {
+    let (mut submission, expected) = context_and_expectation! {
        "ENG: A pic Hold": Fails,
        "ENG: F eng Supports A pic -> bel",
        "FRA: A par -> pic": Succeeds,
@@ -1715,6 +1721,7 @@ fn t6h14_no_retreat_with_support_in_main_phase() {
        "GER: A mar -> bur": Succeeds,
     };
 
+    let context = submission.start_adjudication(geo::standard_map());
     let outcome = resolve_main!(context, expected);
 
     judge_retreat! {
@@ -1727,12 +1734,13 @@ fn t6h14_no_retreat_with_support_in_main_phase() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.15
 #[test]
 fn t6h15_no_coastal_crawl_in_retreat() {
-    let (context, expected) = context_and_expectation! {
+    let (mut submission, expected) = context_and_expectation! {
        "ENG: F por Hold": Fails,
        "FRA: F spa(sc) -> por": Succeeds,
        "FRA: F mao Supports F spa(sc) -> por",
     };
 
+    let context = submission.start_adjudication(geo::standard_map());
     let outcome = resolve_main!(context, expected);
 
     judge_retreat! {
@@ -1744,7 +1752,7 @@ fn t6h15_no_coastal_crawl_in_retreat() {
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.H.16
 #[test]
 fn t6h16_contested_for_both_coasts() {
-    let (context, expected) = context_and_expectation! {
+    let (mut submission, expected) = context_and_expectation! {
        "FRA: F mao -> spa(nc)": Fails,
        "FRA: F gas -> spa(nc)": Fails,
        "FRA: F wes Hold": Fails,
@@ -1752,6 +1760,7 @@ fn t6h16_contested_for_both_coasts() {
        "ITA: F tys -> wes": Succeeds,
     };
 
+    let context = submission.start_adjudication(geo::standard_map());
     let outcome = resolve_main!(context, expected);
 
     judge_retreat! {
