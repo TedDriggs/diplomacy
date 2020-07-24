@@ -15,7 +15,7 @@ pub struct Rulebook;
 impl Rulebook {
     /// Apply rules to determine hold outcome.
     fn adjudicate_hold<'a>(
-        ctx: &'a ResolverContext<'a>,
+        ctx: &ResolverContext<'a>,
         rslv: &mut ResolverState<'a, Self>,
         ord: &'a MappedMainOrder,
     ) -> HoldOutcome<'a> {
@@ -26,7 +26,7 @@ impl Rulebook {
 
     /// Apply rules to determine move outcome.
     fn adjudicate_move<'a>(
-        ctx: &'a ResolverContext<'a>,
+        ctx: &ResolverContext<'a>,
         rslv: &mut ResolverState<'a, Self>,
         ord: &'a MappedMainOrder,
     ) -> AttackOutcome<'a> {
@@ -118,7 +118,7 @@ impl Rulebook {
     }
 
     fn adjudicate_support<'a>(
-        ctx: &'a ResolverContext<'a>,
+        ctx: &ResolverContext<'a>,
         rslv: &mut ResolverState<'a, Self>,
         ord: &'a MappedMainOrder,
     ) -> SupportOutcome<'a> {
@@ -135,7 +135,7 @@ impl Rulebook {
     }
 
     fn adjudicate_convoy<'a>(
-        ctx: &'a ResolverContext<'a>,
+        ctx: &ResolverContext<'a>,
         rslv: &mut ResolverState<'a, Self>,
         ord: &'a MappedMainOrder,
     ) -> ConvoyOutcome<'a> {
@@ -170,7 +170,7 @@ impl Rulebook {
 impl Adjudicate for Rulebook {
     fn adjudicate<'a>(
         &self,
-        context: &'a ResolverContext<'a>,
+        context: &ResolverContext<'a>,
         resolver: &mut ResolverState<'a, Self>,
         order: &'a MappedMainOrder,
     ) -> OrderState {
@@ -179,11 +179,16 @@ impl Adjudicate for Rulebook {
 
     fn explain<'a>(
         &self,
-        context: &'a ResolverContext<'a>,
+        context: &ResolverContext<'a>,
         resolver: &mut ResolverState<'a, Self>,
         order: &'a MappedMainOrder,
     ) -> OrderOutcome<'a> {
         use crate::order::MainCommand::*;
+
+        if let Some(reason) = resolver.invalid_orders.get(order) {
+            return OrderOutcome::Invalid(*reason);
+        }
+
         match order.command {
             // A move order succeeds when the unit successfully transitions to the target.
             Move(..) => Rulebook::adjudicate_move(context, resolver, order).into(),

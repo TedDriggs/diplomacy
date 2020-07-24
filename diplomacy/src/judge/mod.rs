@@ -13,7 +13,7 @@ pub mod support;
 
 use std::collections::HashMap;
 
-pub use self::outcome::{OrderOutcome, Outcome};
+pub use self::outcome::{InvalidOrder, OrderOutcome, Outcome};
 pub use self::state_type::OrderState;
 
 pub use self::convoy::ConvoyOutcome;
@@ -22,7 +22,7 @@ pub use self::rulebook::HoldOutcome;
 pub(self) use self::strength::Prevent;
 pub use self::support::SupportOutcome;
 
-pub use self::resolver::{ResolverContext, ResolverState};
+pub use self::resolver::{ResolverContext, ResolverState, Submission};
 pub use self::rulebook::Rulebook;
 use crate::geo::{Border, Map, RegionKey, Terrain};
 use crate::order::{BuildOrder, MainCommand, Order, RetreatOrder};
@@ -37,14 +37,14 @@ pub trait Adjudicate: Clone {
     /// Determine the success of an order.
     fn adjudicate<'a>(
         &self,
-        context: &'a ResolverContext<'a>,
+        context: &ResolverContext<'a>,
         resolver: &mut ResolverState<'a, Self>,
         order: &'a MappedMainOrder,
     ) -> OrderState;
 
     fn explain<'a>(
         &self,
-        context: &'a ResolverContext<'a>,
+        context: &ResolverContext<'a>,
         resolver: &mut ResolverState<'a, Self>,
         order: &'a MappedMainOrder,
     ) -> OrderOutcome<'a>;
@@ -55,7 +55,8 @@ pub fn adjudicate<O: IntoIterator<Item = MappedMainOrder>>(
     map: &Map,
     orders: O,
 ) -> HashMap<MappedMainOrder, OrderState> {
-    let ctx = ResolverContext::new(map, orders.into_iter().collect());
+    let orders = orders.into_iter().collect::<Vec<_>>();
+    let ctx = ResolverContext::new(map, orders.iter());
     ctx.resolve().into()
 }
 

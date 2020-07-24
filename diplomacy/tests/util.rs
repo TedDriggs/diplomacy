@@ -25,12 +25,12 @@ macro_rules! context_and_expectation {
     };
     ($($rule:tt $(: $outcome:expr)?,)+) => {
         {
-            use ::diplomacy::judge::{MappedMainOrder, ResolverContext};
+            use ::diplomacy::judge::{MappedMainOrder, Submission};
             let orders = vec![$($rule),*].into_iter().map(ord).collect::<Vec<_>>();
             let expectations: ::std::collections::HashMap<MappedMainOrder, _> = vec![$($((ord($rule), $outcome),)?)*]
                 .into_iter()
                 .collect();
-            (ResolverContext::new(::diplomacy::geo::standard_map(), orders), expectations)
+            (Submission::with_inferred_state(orders), expectations)
         }
     };
 }
@@ -142,10 +142,10 @@ pub fn retreat_ord(s: &str) -> MappedRetreatOrder {
 
 pub fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
     let parsed = orders.into_iter().map(ord).collect::<Vec<_>>();
-    let ctx = ResolverContext::new(geo::standard_map(), parsed.clone());
+    let ctx = ResolverContext::new(geo::standard_map(), &parsed);
 
     let out = ctx.resolve();
-    for o in parsed {
+    for o in &parsed {
         println!("{:?}: {:?}", o, out.get(&o).unwrap());
     }
 

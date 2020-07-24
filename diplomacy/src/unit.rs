@@ -147,6 +147,32 @@ impl<L: Location, C: Command<L>> UnitPositions<L> for Vec<Order<L, C>> {
     }
 }
 
+/// Infer unit positions from a collection of orders. This assumes orders are trustworthy
+/// and complete:
+///
+/// 1. There is an order for every unit.
+/// 2. Orders are only issued to units that exist.
+/// 3. There is at most one order per province.
+impl<L: Location, C: Command<L>> UnitPositions<L> for Vec<&'_ Order<L, C>> {
+    fn unit_positions(&self) -> Vec<UnitPosition<'_, &L>> {
+        self.iter().copied().map(UnitPosition::from).collect()
+    }
+
+    fn find_province_occupier(&self, province: &L::Province) -> Option<UnitPosition<'_, &L>> {
+        self.iter()
+            .copied()
+            .find(|ord| ord.region.province() == province)
+            .map(UnitPosition::from)
+    }
+
+    fn find_region_occupier(&self, region: &L) -> Option<Unit<'_>> {
+        self.iter()
+            .copied()
+            .find(|ord| ord.region == *region)
+            .map(Unit::from)
+    }
+}
+
 impl<L, K, H> UnitPositions<L> for HashMap<K, UnitPosition<'_, &L>, H>
 where
     L: Location + Eq,

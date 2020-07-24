@@ -1,29 +1,151 @@
-use super::{Adjudicate, MappedMainOrder, OrderState, Outcome, Rulebook};
+use super::{Adjudicate, InvalidOrder, MappedMainOrder, OrderState, Outcome, Rulebook};
 use crate::geo::{Map, ProvinceKey, RegionKey};
-use crate::order::{Command, MainCommand};
+use crate::order::{Command, MainCommand, Order};
+use crate::{Unit, UnitPosition, UnitPositions};
 use std::collections::{HashMap, HashSet};
 #[cfg(feature = "dependency-graph")]
 use std::{cell::RefCell, collections::BTreeSet, rc::Rc};
 
+pub struct Submission {
+    submitted_orders: Vec<MappedMainOrder>,
+    civil_disorder_orders: Vec<MappedMainOrder>,
+    starting_state: Option<Box<dyn UnitPositions<RegionKey>>>,
+}
+
+impl Submission {
+    pub fn new(
+        starting_state: impl 'static + UnitPositions<RegionKey>,
+        orders: Vec<MappedMainOrder>,
+    ) -> Self {
+        Submission {
+            submitted_orders: orders,
+            civil_disorder_orders: vec![],
+            starting_state: Some(Box::new(starting_state)),
+        }
+    }
+
+    pub fn with_inferred_state(
+        orders: Vec<MappedMainOrder>
+    ) -> Self {
+        Submission {
+            submitted_orders: orders,
+            civil_disorder_orders: vec![],
+            starting_state: None,
+        }
+    }
+
+    pub fn start_adjudication<'a>(&'a mut self, world: &'a Map) -> ResolverContext<'a> {
+        let mut invalid_orders = HashMap::new();
+        let mut inserted_orders = vec![];
+
+        {
+            let positions = self.unit_positions().into_iter().collect::<HashSet<_>>();
+            let mut ordered_units = HashSet::new();
+
+            // Reject any invalid orders to prevent them being considered for the rest of
+            // the resolution process.
+            for order in &self.submitted_orders {
+                if !positions.contains(&order.unit_position()) {
+                    if self.find_region_occupier(&order.region).is_some() {
+                        invalid_orders.insert(order, InvalidOrder::ForeignUnit);
+                    } else {
+                        invalid_orders.insert(order, InvalidOrder::NoUnit);
+                    }
+                } else if !ordered_units.insert(order) {
+                    invalid_orders.insert(order, InvalidOrder::MultipleToSameUnit);
+                }
+            }
+
+            // Having rejected invalid orders, we figure out which positions still
+            let positions_with_valid_orders = self
+                .submitted_orders()
+                .filter(|o| !invalid_orders.contains_key(o))
+                .map(|o| o.unit_position())
+                .collect::<HashSet<_>>();
+
+            // Issue hold orders to any units that don't have orders.
+            for position in positions.difference(&positions_with_valid_orders) {
+                if !positions_with_valid_orders.contains(&position) {
+                    inserted_orders.push(Order::new(
+                        position.nation().clone(),
+                        position.unit.unit_type(),
+                        position.region.clone(),
+                        MainCommand::Hold,
+                    ))
+                }
+            }
+        }
+
+        self.civil_disorder_orders = inserted_orders;
+
+        let mut context = ResolverContext::new(
+            world,
+            self.submitted_orders
+                .iter()
+                .filter(|o| !invalid_orders.contains_key(o))
+                .chain(&self.civil_disorder_orders),
+        );
+
+        context.invalid_orders = invalid_orders;
+
+        context
+    }
+
+    pub fn submitted_orders(&self) -> impl Iterator<Item = &MappedMainOrder> {
+        self.submitted_orders.iter()
+    }
+}
+
+impl UnitPositions<RegionKey> for Submission {
+    fn unit_positions(&self) -> Vec<UnitPosition<'_>> {
+        if let Some(start) = self.starting_state.as_ref() {
+            start.unit_positions()
+        } else {
+            self.submitted_orders.unit_positions()
+        }
+    }
+
+    fn find_province_occupier(&self, province: &ProvinceKey) -> Option<UnitPosition<'_>> {
+        if let Some(start) = self.starting_state.as_ref() {
+            start.find_province_occupier(province)
+        } else {
+            self.submitted_orders.find_province_occupier(province)
+        }
+    }
+
+    fn find_region_occupier(&self, region: &RegionKey) -> Option<Unit<'_>> {
+        if let Some(start) = self.starting_state.as_ref() {
+            start.find_region_occupier(region)
+        } else {
+            self.submitted_orders.find_region_occupier(region)
+        }
+    }
+}
+
 /// The immutable inputs for a resolution equation.
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResolverContext<'a> {
     /// Set of orders which were issued during this turn.
-    orders: Vec<MappedMainOrder>,
+    orders: Vec<&'a MappedMainOrder>,
 
     /// The map against which orders were issued.
     pub world_map: &'a Map,
+
+    invalid_orders: HashMap<&'a MappedMainOrder, InvalidOrder>,
 }
 
 impl<'a> ResolverContext<'a> {
     /// Creates a new resolver context for a set of orders on a map.
-    pub fn new(world_map: &'a Map, orders: Vec<MappedMainOrder>) -> Self {
-        ResolverContext { world_map, orders }
+    pub fn new(world_map: &'a Map, orders: impl IntoIterator<Item = &'a MappedMainOrder>) -> Self {
+        ResolverContext {
+            world_map,
+            orders: orders.into_iter().collect(),
+            invalid_orders: HashMap::new(),
+        }
     }
 
     /// Get a view of the orders in the order they were submitted.
-    pub fn orders(&self) -> impl Iterator<Item = &MappedMainOrder> {
-        self.orders.iter()
+    pub fn orders<'b>(&'b self) -> impl 'b + Iterator<Item = &'a MappedMainOrder> where 'a: 'b {
+        self.orders.iter().copied()
     }
 
     /// Resolve the context using the provided adjudicator.
@@ -33,6 +155,10 @@ impl<'a> ResolverContext<'a> {
     /// as they work towards a solution.
     pub fn resolve_using<A: Adjudicate>(&'a self, rules: A) -> Outcome<'a, A> {
         let mut rs = ResolverState::with_adjudicator(rules);
+
+        for (order, reason) in &self.invalid_orders {
+            rs.invalid_orders.insert(order, *reason);
+        }
 
         for order in self.orders() {
             rs.resolve(&self, order);
@@ -46,12 +172,8 @@ impl<'a> ResolverContext<'a> {
         self.resolve_using(Rulebook)
     }
 
-    pub fn find_order_to_province(&'a self, p: &ProvinceKey) -> Option<&'a MappedMainOrder> {
+    pub fn find_order_to_province(&self, p: &ProvinceKey) -> Option<&'a MappedMainOrder> {
         self.orders().find(|o| &o.region == p)
-    }
-
-    pub fn find_order_to_region(&'a self, r: &RegionKey) -> Option<&'a MappedMainOrder> {
-        self.orders().find(|o| &o.region == r)
     }
 }
 
@@ -108,34 +230,11 @@ pub struct ResolverState<'a, A> {
     /// guesses that have been visited twice, indicating that a cycle has been found.
     dependency_chain: Vec<&'a MappedMainOrder>,
     adjudicator: A,
+
+    pub(in crate::judge) invalid_orders: HashMap<&'a MappedMainOrder, InvalidOrder>,
 }
 
-impl<'a, A: Adjudicate> ResolverState<'a, A> {
-    /// Create a new resolver for a given rulebook.
-    pub fn with_adjudicator(adjudicator: A) -> Self {
-        #[cfg(feature = "dependency-graph")]
-        {
-            ResolverState {
-                state: HashMap::new(),
-                deps: Rc::new(RefCell::new(BTreeSet::default())),
-                greedy_chain: vec![],
-                dependency_chain: vec![],
-                paradoxical_orders: HashSet::new(),
-                adjudicator,
-            }
-        }
-
-        #[cfg(not(feature = "dependency-graph"))]
-        {
-            ResolverState {
-                state: HashMap::new(),
-                dependency_chain: vec![],
-                paradoxical_orders: HashSet::new(),
-                adjudicator,
-            }
-        }
-    }
-
+impl<'a, A> ResolverState<'a, A> {
     pub fn adjudicator(&self) -> &A {
         &self.adjudicator
     }
@@ -159,18 +258,47 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
     pub(crate) fn order_in_paradox(&self, order: &'a MappedMainOrder) -> bool {
         self.paradoxical_orders.contains(order)
     }
+}
+
+impl<'a, A: Adjudicate> ResolverState<'a, A> {
+    /// Create a new resolver for a given rulebook.
+    pub fn with_adjudicator(adjudicator: A) -> Self {
+        #[cfg(feature = "dependency-graph")]
+        {
+            ResolverState {
+                state: HashMap::new(),
+                deps: Rc::new(RefCell::new(BTreeSet::default())),
+                greedy_chain: vec![],
+                dependency_chain: vec![],
+                paradoxical_orders: HashSet::new(),
+                adjudicator,
+                invalid_orders: HashMap::new(),
+            }
+        }
+
+        #[cfg(not(feature = "dependency-graph"))]
+        {
+            ResolverState {
+                state: HashMap::new(),
+                dependency_chain: vec![],
+                paradoxical_orders: HashSet::new(),
+                adjudicator,
+                invalid_orders: HashMap::new(),
+            }
+        }
+    }
 
     /// Create a clone of the resolver state, add a guess at the success or failure
     /// of the given order, then adjudicate the order with the amended resolver.
     ///
     /// This returns the entire guesser because in some cases the calling resolver needs
     /// the dependency chain and the entire state generated during the post-guess adjudication.
-    fn with_guess(
+    fn with_guess<'b>(
         &self,
-        context: &'a ResolverContext<'a>,
+        context: &'b ResolverContext<'a>,
         order: &'a MappedMainOrder,
         guess: OrderState,
-    ) -> (Self, OrderState) {
+    ) -> (ResolverState<'a, A>, OrderState) {
         let mut guesser = self.clone();
 
         #[cfg(feature = "dependency-graph")]
@@ -228,7 +356,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
     /// the resolver's state in the process.
     pub fn resolve(
         &mut self,
-        context: &'a ResolverContext<'a>,
+        context: &ResolverContext<'a>,
         order: &'a MappedMainOrder,
     ) -> OrderState {
         use self::ResolutionState::*;

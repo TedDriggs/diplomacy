@@ -9,7 +9,7 @@ use crate::{geo::ProvinceKey, ShortName};
 /// 1. A border exists and the order permits direct travel OR
 /// 1. A non-disrupted convoy route exists.
 pub fn path_exists<'a, A: Adjudicate>(
-    context: &'a ResolverContext<'a>,
+    context: &ResolverContext<'a>,
     resolver: &mut ResolverState<'a, A>,
     order: &MappedMainOrder,
 ) -> bool {
@@ -41,7 +41,7 @@ pub fn path_exists<'a, A: Adjudicate>(
 /// Two orders form a head-to-head battle when they are mirrored moves and no convoy exists to
 /// ferry one of the armies around the other one.
 pub fn is_head_to_head<'a, A: Adjudicate>(
-    context: &'a ResolverContext<'a>,
+    context: &ResolverContext<'a>,
     resolver: &mut ResolverState<'a, A>,
     order1: &MappedMainOrder,
     order2: &MappedMainOrder,
@@ -56,7 +56,7 @@ pub fn is_head_to_head<'a, A: Adjudicate>(
 }
 
 fn prevent_result<'a, A: Adjudicate>(
-    context: &'a ResolverContext<'a>,
+    context: &ResolverContext<'a>,
     resolver: &mut ResolverState<'a, A>,
     order: &'a MappedMainOrder,
 ) -> Option<Prevent<'a>> {
@@ -86,7 +86,7 @@ fn prevent_result<'a, A: Adjudicate>(
 
 /// Get all prevents for a province, with their supporters.
 pub fn prevent_results<'a, A: Adjudicate>(
-    context: &'a ResolverContext<'a>,
+    context: &ResolverContext<'a>,
     resolver: &mut ResolverState<'a, A>,
     province: &ProvinceKey,
 ) -> Vec<Prevent<'a>> {
@@ -98,7 +98,7 @@ pub fn prevent_results<'a, A: Adjudicate>(
 }
 
 pub fn max_prevent_result<'a, A: Adjudicate>(
-    context: &'a ResolverContext<'a>,
+    context: &ResolverContext<'a>,
     resolver: &mut ResolverState<'a, A>,
     preventing: &MappedMainOrder,
 ) -> Option<Prevent<'a>> {
@@ -136,7 +136,7 @@ pub fn max_prevent_result<'a, A: Adjudicate>(
 /// MOVE decision has status 'moves' and in case the unit (of the DISLODGE
 /// decision) was ordered to move has a MOVE decision with status 'fails'.
 pub fn dislodger_of<'a, A: Adjudicate>(
-    context: &'a ResolverContext<'a>,
+    context: &ResolverContext<'a>,
     resolver: &mut ResolverState<'a, A>,
     order: &'a MappedMainOrder,
 ) -> Option<&'a MappedMainOrder> {
@@ -180,7 +180,7 @@ mod tests {
         .map(|ord| ord.parse::<MappedMainOrder>().unwrap())
         .collect::<Vec<_>>();
 
-        let context = ResolverContext::new(crate::geo::standard_map(), orders.clone());
+        let context = ResolverContext::new(crate::geo::standard_map(), &orders);
         let mut state = ResolverState::with_adjudicator(Rulebook);
 
         assert_eq!(
@@ -204,7 +204,7 @@ mod tests {
         .map(|ord| ord.parse::<MappedMainOrder>().unwrap())
         .collect::<Vec<_>>();
 
-        let context = ResolverContext::new(crate::geo::standard_map(), orders.clone());
+        let context = ResolverContext::new(crate::geo::standard_map(), &orders);
         let mut state = ResolverState::with_adjudicator(Rulebook);
         let nth_prevent = max_prevent_result(&context, &mut state, &orders[3]);
         let swe_prevent = max_prevent_result(&context, &mut state, &orders[4]);

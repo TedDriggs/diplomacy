@@ -83,7 +83,7 @@ fn route_steps<'a>(
 
 /// Finds all valid convoy routes for a given move order.
 pub fn routes<'a, A: Adjudicate>(
-    ctx: &'a ResolverContext<'a>,
+    ctx: &ResolverContext<'a>,
     state: &mut ResolverState<'a, A>,
     mv_ord: &MappedMainOrder,
 ) -> Result<Vec<Vec<&'a MappedMainOrder>>, ConvoyRouteError> {
@@ -115,7 +115,7 @@ pub fn routes<'a, A: Adjudicate>(
 
 /// Determines if any valid convoy route exists for the given move order.
 pub fn route_exists<'a, A: Adjudicate>(
-    ctx: &'a ResolverContext<'a>,
+    ctx: &ResolverContext<'a>,
     state: &mut ResolverState<'a, A>,
     mv_ord: &MappedMainOrder,
 ) -> bool {
