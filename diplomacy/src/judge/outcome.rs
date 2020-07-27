@@ -95,6 +95,12 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
                     resolver.adjudicator().explain(context, &mut state, ord),
                 )
             })
+            .chain(
+                context
+                    .invalid_orders
+                    .iter()
+                    .map(|(&ord, &reason)| (ord, reason.into())),
+            )
             .collect();
 
         Self {
