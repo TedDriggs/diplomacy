@@ -9,74 +9,53 @@ use std::{cell::RefCell, collections::BTreeSet, rc::Rc};
 pub struct Submission {
     submitted_orders: Vec<MappedMainOrder>,
     civil_disorder_orders: Vec<MappedMainOrder>,
-    starting_state: Option<Box<dyn UnitPositions<RegionKey>>>,
+    /// A map of indexes in `submitted_orders` to the reason those orders are invalid.
+    // This uses indices because Rust doesn't support self-referential structs.
+    invalid_orders: HashMap<usize, InvalidOrder>,
 }
 
 impl Submission {
+    /// Start a new adjudication by submitting orders against a given starting
+    /// state. This will identify and resolve invalid orders, and generate hold orders
+    /// for any units that lack valid orders.
     pub fn new(
-        starting_state: impl 'static + UnitPositions<RegionKey>,
+        starting_state: &impl UnitPositions<RegionKey>,
         orders: Vec<MappedMainOrder>,
     ) -> Self {
-        Submission {
-            submitted_orders: orders,
-            civil_disorder_orders: vec![],
-            starting_state: Some(Box::new(starting_state)),
-        }
+        Submission::new_internal(Some(starting_state), orders)
     }
 
-    pub fn with_inferred_state(
-        orders: Vec<MappedMainOrder>
+    pub fn with_inferred_state(orders: Vec<MappedMainOrder>) -> Self {
+        Submission::new_internal(None::<&Vec<MappedMainOrder>>, orders)
+    }
+
+    fn new_internal(
+        start: Option<&impl UnitPositions<RegionKey>>,
+        orders: Vec<MappedMainOrder>,
     ) -> Self {
-        Submission {
+        let mut temp = Submission {
             submitted_orders: orders,
             civil_disorder_orders: vec![],
-            starting_state: None,
-        }
+            invalid_orders: HashMap::new(),
+        };
+
+        let (invalid_orders, missing_orders) = if let Some(start) = start {
+            temp.finish_creation(start)
+        } else {
+            temp.finish_creation(&temp.submitted_orders)
+        };
+        temp.invalid_orders = invalid_orders;
+        temp.civil_disorder_orders = missing_orders;
+
+        temp
     }
 
-    pub fn start_adjudication<'a>(&'a mut self, world: &'a Map) -> ResolverContext<'a> {
-        let mut invalid_orders = HashMap::new();
-        let mut inserted_orders = vec![];
-
-        {
-            let positions = self.unit_positions().into_iter().collect::<HashSet<_>>();
-            let mut ordered_units = HashSet::new();
-
-            // Reject any invalid orders to prevent them being considered for the rest of
-            // the resolution process.
-            for order in &self.submitted_orders {
-                if !positions.contains(&order.unit_position()) {
-                    if self.find_region_occupier(&order.region).is_some() {
-                        invalid_orders.insert(order, InvalidOrder::ForeignUnit);
-                    } else {
-                        invalid_orders.insert(order, InvalidOrder::NoUnit);
-                    }
-                } else if !ordered_units.insert(order) {
-                    invalid_orders.insert(order, InvalidOrder::MultipleToSameUnit);
-                }
-            }
-
-            // Having rejected invalid orders, we figure out which positions still
-            let positions_with_valid_orders = self
-                .submitted_orders()
-                .filter(|o| !invalid_orders.contains_key(o))
-                .map(|o| o.unit_position())
-                .collect::<HashSet<_>>();
-
-            // Issue hold orders to any units that don't have orders.
-            for position in positions.difference(&positions_with_valid_orders) {
-                if !positions_with_valid_orders.contains(&position) {
-                    inserted_orders.push(Order::new(
-                        position.nation().clone(),
-                        position.unit.unit_type(),
-                        position.region.clone(),
-                        MainCommand::Hold,
-                    ))
-                }
-            }
-        }
-
-        self.civil_disorder_orders = inserted_orders;
+    pub fn start_adjudication<'a>(&'a self, world: &'a Map) -> ResolverContext<'a> {
+        let invalid_orders = self
+            .invalid_orders
+            .iter()
+            .map(|(idx, reason)| (&self.submitted_orders[*idx], *reason))
+            .collect::<HashMap<_, _>>();
 
         let mut context = ResolverContext::new(
             world,
@@ -91,34 +70,102 @@ impl Submission {
         context
     }
 
+    /// The exact orders that were provided at submission time, including invalid orders and
+    /// excluding orders generated due to civil disorder.
     pub fn submitted_orders(&self) -> impl Iterator<Item = &MappedMainOrder> {
         self.submitted_orders.iter()
     }
+
+    pub fn generated_orders(&self) -> impl Iterator<Item = &MappedMainOrder> {
+        self.civil_disorder_orders.iter()
+    }
+
+    /// The orders that are used for the remainder of adjudication. This contains exactly one
+    /// well-formed order for each unit in play.
+    pub fn adjudicated_orders(&self) -> impl Iterator<Item = &MappedMainOrder> {
+        let invalid = self
+            .invalid_orders
+            .keys()
+            .map(|idx| &self.submitted_orders[*idx])
+            .collect::<HashSet<_>>();
+
+        self.submitted_orders()
+            .filter(move |ord| !invalid.contains(ord))
+            .chain(&self.civil_disorder_orders)
+    }
+
+    /// After we create the struct we have to finish up the creation process by removing
+    /// invalid orders and injecting holds for units that are missing orders.
+    fn finish_creation(
+        &self,
+        start: &impl UnitPositions<RegionKey>,
+    ) -> (HashMap<usize, InvalidOrder>, Vec<MappedMainOrder>) {
+        let mut invalid_orders = HashMap::new();
+        let mut inserted_orders = vec![];
+
+        let positions = start.unit_positions().into_iter().collect::<HashSet<_>>();
+        let mut ordered_units = HashSet::new();
+
+        // Reject any invalid orders to prevent them being considered for the rest of
+        // the resolution process.
+        for (index, order) in self.submitted_orders.iter().enumerate() {
+            if !positions.contains(&order.unit_position()) {
+                if self.find_region_occupier(&order.region).is_some() {
+                    invalid_orders.insert(index, InvalidOrder::ForeignUnit);
+                } else {
+                    invalid_orders.insert(index, InvalidOrder::NoUnit);
+                }
+            } else if !ordered_units.insert(order) {
+                invalid_orders.insert(index, InvalidOrder::MultipleToSameUnit);
+            }
+        }
+
+        let invalids = invalid_orders
+            .keys()
+            .map(|idx| &self.submitted_orders[*idx])
+            .collect::<HashSet<_>>();
+
+        // Having rejected invalid orders, we figure out which positions still
+        let positions_with_valid_orders = self
+            .submitted_orders()
+            .filter(|o| !invalids.contains(o))
+            .map(|o| o.unit_position())
+            .collect::<HashSet<_>>();
+
+        // Issue hold orders to any units that don't have orders.
+        for position in positions.difference(&positions_with_valid_orders) {
+            if !positions_with_valid_orders.contains(&position) {
+                inserted_orders.push(Order::new(
+                    position.nation().clone(),
+                    position.unit.unit_type(),
+                    position.region.clone(),
+                    MainCommand::Hold,
+                ))
+            }
+        }
+
+        (invalid_orders, inserted_orders)
+    }
 }
 
+/// Unit positions at the start of the turn.
 impl UnitPositions<RegionKey> for Submission {
     fn unit_positions(&self) -> Vec<UnitPosition<'_>> {
-        if let Some(start) = self.starting_state.as_ref() {
-            start.unit_positions()
-        } else {
-            self.submitted_orders.unit_positions()
-        }
+        self.adjudicated_orders()
+            .map(|ord| ord.unit_position())
+            .collect()
     }
 
     fn find_province_occupier(&self, province: &ProvinceKey) -> Option<UnitPosition<'_>> {
-        if let Some(start) = self.starting_state.as_ref() {
-            start.find_province_occupier(province)
-        } else {
-            self.submitted_orders.find_province_occupier(province)
-        }
+        self.adjudicated_orders()
+            .find(|ord| ord.region.province() == province)
+            .map(|ord| ord.unit_position())
     }
 
     fn find_region_occupier(&self, region: &RegionKey) -> Option<Unit<'_>> {
-        if let Some(start) = self.starting_state.as_ref() {
-            start.find_region_occupier(region)
-        } else {
-            self.submitted_orders.find_region_occupier(region)
-        }
+        self.adjudicated_orders()
+            .find(|ord| ord.region == *region)
+            .map(|ord| ord.unit_position().unit)
     }
 }
 
@@ -130,7 +177,7 @@ pub struct ResolverContext<'a> {
     /// The map against which orders were issued.
     pub world_map: &'a Map,
 
-    invalid_orders: HashMap<&'a MappedMainOrder, InvalidOrder>,
+    pub(in crate::judge) invalid_orders: HashMap<&'a MappedMainOrder, InvalidOrder>,
 }
 
 impl<'a> ResolverContext<'a> {
@@ -144,7 +191,10 @@ impl<'a> ResolverContext<'a> {
     }
 
     /// Get a view of the orders in the order they were submitted.
-    pub fn orders<'b>(&'b self) -> impl 'b + Iterator<Item = &'a MappedMainOrder> where 'a: 'b {
+    pub fn orders<'b>(&'b self) -> impl 'b + Iterator<Item = &'a MappedMainOrder>
+    where
+        'a: 'b,
+    {
         self.orders.iter().copied()
     }
 
