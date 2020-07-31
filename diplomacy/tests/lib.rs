@@ -5,7 +5,7 @@ extern crate diplomacy;
 mod util;
 
 use diplomacy::geo;
-use diplomacy::judge::{adjudicate, OrderState};
+use diplomacy::judge::{OrderState, Rulebook, Submission};
 use diplomacy::order::{ConvoyedMove, MainCommand, MoveCommand, Order, SupportedOrder};
 
 use diplomacy::{Nation, UnitType};
@@ -14,12 +14,11 @@ use crate::util::*;
 
 #[test]
 fn dipmath_figure9() {
-    let map = geo::standard_map();
     let eng = Nation::from("eng");
     let ger = Nation::from("ger");
     let rus = Nation::from("rus");
 
-    let orders = vec![
+    let orders = Submission::with_inferred_state(vec![
         Order::new(
             eng,
             UnitType::Fleet,
@@ -48,12 +47,12 @@ fn dipmath_figure9() {
                 reg("nwy"),
             )),
         ),
-    ];
+    ]);
 
-    let result = adjudicate(&map, orders);
+    let result = orders.adjudicate(geo::standard_map(), Rulebook);
 
-    for (_, r) in result.iter() {
-        assert_eq!(&OrderState::Succeeds, r);
+    for order in orders.submitted_orders() {
+        assert_eq!(result.get(order).unwrap(), &OrderState::Succeeds);
     }
 }
 
@@ -63,7 +62,7 @@ fn dipmath_figure6() {
     let ger = Nation::from("ger");
     let rus = Nation::from("rus");
 
-    let orders = vec![
+    let orders = Submission::with_inferred_state(vec![
         Order::new(
             ger.clone(),
             UnitType::Army,
@@ -88,7 +87,7 @@ fn dipmath_figure6() {
             reg("boh"),
             MoveCommand::new(reg("sil")).into(),
         ),
-    ];
+    ]);
 
     assert!(geo::standard_map()
         .find_border_between(&reg("ber"), &reg("sil"))
@@ -100,13 +99,16 @@ fn dipmath_figure6() {
         .find_border_between(&reg("sil"), &reg("boh"))
         .is_some());
 
-    let result = adjudicate(geo::standard_map(), orders);
-    for (o, r) in &result {
-        if o.nation == ger {
-            assert_eq!(r, &OrderState::Succeeds);
-        } else {
-            assert_eq!(r, &OrderState::Fails);
-        }
+    let result = orders.adjudicate(geo::standard_map(), Rulebook);
+    for o in orders.submitted_orders() {
+        assert_eq!(
+            result.get(o).unwrap(),
+            if o.nation == ger {
+                &OrderState::Succeeds
+            } else {
+                &OrderState::Fails
+            }
+        );
     }
 }
 
@@ -118,7 +120,7 @@ fn dipmath_figure16() {
     let aus = Nation::from("aus");
     let ita = Nation::from("ita");
 
-    let orders = vec![
+    let orders = Submission::with_inferred_state(vec![
         Order::new(
             tur.clone(),
             Fleet,
@@ -149,14 +151,17 @@ fn dipmath_figure16() {
             reg("ion"),
             ConvoyedMove::new(reg("tun"), reg("gre")).into(),
         ),
-    ];
+    ]);
 
-    let state = adjudicate(geo::standard_map(), orders);
-    for (o, r) in &state {
-        if o.nation == ita {
-            assert_eq!(r, &OrderState::Fails);
-        } else {
-            assert_eq!(r, &OrderState::Succeeds);
-        }
+    let result = orders.adjudicate(geo::standard_map(), Rulebook);
+    for o in orders.submitted_orders() {
+        assert_eq!(
+            result.get(o).unwrap(),
+            if o.nation != ita {
+                &OrderState::Succeeds
+            } else {
+                &OrderState::Fails
+            }
+        );
     }
 }

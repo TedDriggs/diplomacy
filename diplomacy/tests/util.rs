@@ -3,7 +3,7 @@
 
 use diplomacy::geo;
 use diplomacy::geo::{Coast, ProvinceKey, RegionKey};
-use diplomacy::judge::{MappedMainOrder, MappedRetreatOrder, OrderState, ResolverContext};
+use diplomacy::judge::{MappedMainOrder, MappedRetreatOrder, OrderState, Rulebook};
 use std::collections::HashMap;
 
 pub fn prov(s: &str) -> ProvinceKey {
@@ -19,9 +19,9 @@ pub fn reg_coast(s: &str, c: impl Into<Option<Coast>>) -> RegionKey {
 }
 
 #[macro_export]
-macro_rules! context_and_expectation {
+macro_rules! submit_main_phase {
     ($($rule:tt $(: $outcome:expr)?),+) => {
-        context_and_expectation!(@inner $($rule $(: $outcome)?,)*)
+        submit_main_phase!(@inner $($rule $(: $outcome)?,)*)
     };
     ($($rule:tt $(: $outcome:expr)?,)+) => {
         {
@@ -38,25 +38,19 @@ macro_rules! context_and_expectation {
 #[macro_export]
 macro_rules! resolve_main {
     ($context:expr, $expectation:expr) => {{
-        let outcome = $context.resolve();
+        let outcome = $context.adjudicate(
+            ::diplomacy::geo::standard_map(),
+            ::diplomacy::judge::Rulebook,
+        );
 
-        check_outcome!(&outcome, $expectation);
-
-        outcome
-    }};
-}
-
-#[macro_export]
-macro_rules! check_outcome {
-    ($outcome:expr, $expectations:expr) => {
-        let outcome = $outcome;
-
-        for order in outcome.orders() {
+        // We refer back to the submitted orders to ensure we visit orders in the same
+        // order across test runs. This makes output diffing easier.
+        for order in $context.submitted_orders() {
             println!("{:?}: {:?}", order, outcome.get(order).unwrap());
         }
 
-        for order in outcome.orders() {
-            if let Some(expectation) = $expectations.get(order) {
+        for order in $context.submitted_orders() {
+            if let Some(expectation) = $expectation.get(order) {
                 assert_eq!(
                     *expectation,
                     ::diplomacy::judge::OrderState::from(outcome.get(order).unwrap()),
@@ -65,7 +59,9 @@ macro_rules! check_outcome {
                 );
             }
         }
-    };
+
+        outcome
+    }};
 }
 
 #[macro_export]
@@ -142,10 +138,10 @@ pub fn retreat_ord(s: &str) -> MappedRetreatOrder {
 
 pub fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
     let parsed = orders.into_iter().map(ord).collect::<Vec<_>>();
-    let ctx = ResolverContext::new(geo::standard_map(), &parsed);
+    let ctx = diplomacy::judge::Submission::with_inferred_state(parsed);
 
-    let out = ctx.resolve();
-    for o in &parsed {
+    let out = ctx.adjudicate(geo::standard_map(), Rulebook);
+    for o in ctx.submitted_orders() {
         println!("{:?}: {:?}", o, out.get(&o).unwrap());
     }
 
