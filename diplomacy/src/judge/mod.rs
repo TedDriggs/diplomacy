@@ -11,8 +11,6 @@ mod state_type;
 mod strength;
 pub mod support;
 
-use std::collections::HashMap;
-
 pub use self::outcome::{InvalidOrder, OrderOutcome, Outcome};
 pub use self::state_type::OrderState;
 
@@ -24,7 +22,7 @@ pub use self::support::SupportOutcome;
 
 pub use self::resolver::{ResolverContext, ResolverState, Submission};
 pub use self::rulebook::Rulebook;
-use crate::geo::{Border, Map, RegionKey, Terrain};
+use crate::geo::{Border, RegionKey, Terrain};
 use crate::order::{BuildOrder, MainCommand, Order, RetreatOrder};
 use crate::UnitType;
 
@@ -48,16 +46,6 @@ pub trait Adjudicate: Clone {
         resolver: &mut ResolverState<'a, Self>,
         order: &'a MappedMainOrder,
     ) -> OrderOutcome<'a>;
-}
-
-/// Adjudicate a set of orders
-pub fn adjudicate<O: IntoIterator<Item = MappedMainOrder>>(
-    map: &Map,
-    orders: O,
-) -> HashMap<MappedMainOrder, OrderState> {
-    let orders = orders.into_iter().collect::<Vec<_>>();
-    let ctx = ResolverContext::new(map, orders.iter());
-    ctx.resolve().into()
 }
 
 impl Border {

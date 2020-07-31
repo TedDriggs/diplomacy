@@ -2,7 +2,6 @@ use super::{
     retreat, Adjudicate, AttackOutcome, ConvoyOutcome, HoldOutcome, MappedMainOrder, OrderState,
     ResolverContext, ResolverState, SupportOutcome,
 };
-use crate::order::Command;
 use from_variants::FromVariants;
 use std::collections::HashMap;
 use std::fmt;
@@ -76,14 +75,14 @@ impl From<&'_ InvalidOrder> for OrderState {
 /// Contains information about the outcome of a turn, used for reporting back
 /// to players and for setting up the next turn.
 pub struct Outcome<'a, A> {
-    pub(in crate::judge) context: &'a ResolverContext<'a>,
+    pub(in crate::judge) context: ResolverContext<'a>,
     pub(in crate::judge) resolver: ResolverState<'a, A>,
     pub(in crate::judge) orders: HashMap<&'a MappedMainOrder, OrderOutcome<'a>>,
 }
 
 impl<'a, A: Adjudicate> Outcome<'a, A> {
     pub(in crate::judge) fn new(
-        context: &'a ResolverContext,
+        context: ResolverContext<'a>,
         resolver: ResolverState<'a, A>,
     ) -> Self {
         let mut state = resolver.clone();
@@ -92,7 +91,7 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
             .map(|ord| {
                 (
                     ord,
-                    resolver.adjudicator().explain(context, &mut state, ord),
+                    resolver.adjudicator().explain(&context, &mut state, ord),
                 )
             })
             .chain(
@@ -110,20 +109,16 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
         }
     }
 
-    /// The orders that participated in resolution, in the order they were provided.
+    /// The orders that participated in resolution, in the order they were provided. This does not
+    /// include invalid orders.
     pub fn orders(&self) -> impl Iterator<Item = &MappedMainOrder> {
         self.context.orders()
     }
 
-    /// Get successful move orders from the phase.
-    pub fn moved(&self) -> Vec<&MappedMainOrder> {
-        self.orders
-            .iter()
-            .filter(|(o, outcome)| {
-                o.is_move() && **outcome == OrderOutcome::Move(AttackOutcome::Succeeds)
-            })
-            .map(|(order, _)| *order)
-            .collect()
+    /// The union of all orders known to the outcome. This will include any invalid orders and the hold
+    /// orders generated to ensure all units had an order during adjudication.
+    pub fn all_orders(&self) -> impl Iterator<Item = &MappedMainOrder> {
+        self.orders.keys().copied()
     }
 
     pub fn get(&'a self, order: &'a MappedMainOrder) -> Option<&'a OrderOutcome<'a>> {
@@ -167,16 +162,5 @@ impl<A: Adjudicate> From<Outcome<'_, A>> for HashMap<MappedMainOrder, OrderState
                 )
             })
             .collect()
-    }
-}
-
-impl<'a, A: Adjudicate> fmt::Display for Outcome<'a, A> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "MOVED")?;
-        for ord in self.moved() {
-            writeln!(f, "  {}", ord)?;
-        }
-
-        Ok(())
     }
 }

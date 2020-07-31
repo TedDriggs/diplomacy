@@ -50,7 +50,8 @@ impl Submission {
         temp
     }
 
-    pub fn start_adjudication<'a>(&'a self, world: &'a Map) -> ResolverContext<'a> {
+    /// Adjudicate the submission using the provided map and rules
+    pub fn adjudicate<'a, A: Adjudicate>(&'a self, world: &'a Map, rules: A) -> Outcome<'a, A> {
         let invalid_orders = self
             .invalid_orders
             .iter()
@@ -67,7 +68,7 @@ impl Submission {
 
         context.invalid_orders = invalid_orders;
 
-        context
+        context.resolve_using(rules)
     }
 
     /// The exact orders that were provided at submission time, including invalid orders and
@@ -76,6 +77,7 @@ impl Submission {
         self.submitted_orders.iter()
     }
 
+    /// Orders that were not submitted but were adjudicated to ensure every unit has an order.
     pub fn generated_orders(&self) -> impl Iterator<Item = &MappedMainOrder> {
         self.civil_disorder_orders.iter()
     }
@@ -181,7 +183,7 @@ pub struct ResolverContext<'a> {
 }
 
 impl<'a> ResolverContext<'a> {
-    /// Creates a new resolver context for a set of orders on a map.
+    /// Creates a new resolver context for a set of valid orders on a map.
     pub fn new(world_map: &'a Map, orders: impl IntoIterator<Item = &'a MappedMainOrder>) -> Self {
         ResolverContext {
             world_map,
@@ -203,7 +205,7 @@ impl<'a> ResolverContext<'a> {
     /// The adjudicator is responsible for rule questions, while the resolver is responsible for
     /// tracking whether orders are successful. The two are interdependent, calling back and forth
     /// as they work towards a solution.
-    pub fn resolve_using<A: Adjudicate>(&'a self, rules: A) -> Outcome<'a, A> {
+    pub fn resolve_using<A: Adjudicate>(self, rules: A) -> Outcome<'a, A> {
         let mut rs = ResolverState::with_adjudicator(rules);
 
         for (order, reason) in &self.invalid_orders {
@@ -217,11 +219,6 @@ impl<'a> ResolverContext<'a> {
         Outcome::new(self, rs)
     }
 
-    /// Resolve the orders in the context using the standard rulebook
-    pub fn resolve(&'a self) -> Outcome<'a, Rulebook> {
-        self.resolve_using(Rulebook)
-    }
-
     pub fn find_order_to_province(&self, p: &ProvinceKey) -> Option<&'a MappedMainOrder> {
         self.orders().find(|o| &o.region == p)
     }
@@ -230,7 +227,7 @@ impl<'a> ResolverContext<'a> {
 #[allow(clippy::implicit_hasher)]
 impl<'a> From<ResolverContext<'a>> for HashMap<MappedMainOrder, OrderState> {
     fn from(rc: ResolverContext<'a>) -> Self {
-        rc.resolve().into()
+        rc.resolve_using(Rulebook).into()
     }
 }
 
