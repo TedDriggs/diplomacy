@@ -136,14 +136,12 @@ impl Submission {
 
         // Issue hold orders to any units that don't have orders.
         for position in positions.difference(&positions_with_valid_orders) {
-            if !positions_with_valid_orders.contains(&position) {
-                inserted_orders.push(Order::new(
-                    position.nation().clone(),
-                    position.unit.unit_type(),
-                    position.region.clone(),
-                    MainCommand::Hold,
-                ))
-            }
+            inserted_orders.push(Order::new(
+                position.nation().clone(),
+                position.unit.unit_type(),
+                position.region.clone(),
+                MainCommand::Hold,
+            ));
         }
 
         (invalid_orders, inserted_orders)
