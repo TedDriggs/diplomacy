@@ -1,6 +1,6 @@
 use super::{
-    retreat, Adjudicate, AttackOutcome, ConvoyOutcome, HoldOutcome, MappedMainOrder, OrderState,
-    ResolverContext, ResolverState, SupportOutcome,
+    retreat, Adjudicate, AttackOutcome, Context, ConvoyOutcome, HoldOutcome, MappedMainOrder,
+    OrderState, ResolverState, SupportOutcome,
 };
 use from_variants::FromVariants;
 use std::collections::HashMap;
@@ -75,16 +75,13 @@ impl From<&'_ InvalidOrder> for OrderState {
 /// Contains information about the outcome of a turn, used for reporting back
 /// to players and for setting up the next turn.
 pub struct Outcome<'a, A> {
-    pub(in crate::judge) context: ResolverContext<'a, A>,
+    pub(in crate::judge) context: Context<'a, A>,
     pub(in crate::judge) resolver: ResolverState<'a>,
     pub(in crate::judge) orders: HashMap<&'a MappedMainOrder, OrderOutcome<'a>>,
 }
 
 impl<'a, A: Adjudicate> Outcome<'a, A> {
-    pub(in crate::judge) fn new(
-        context: ResolverContext<'a, A>,
-        resolver: ResolverState<'a>,
-    ) -> Self {
+    pub(in crate::judge) fn new(context: Context<'a, A>, resolver: ResolverState<'a>) -> Self {
         let mut state = resolver.clone();
         let orders = context
             .orders()

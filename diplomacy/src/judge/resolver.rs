@@ -58,7 +58,7 @@ impl Submission {
             .map(|(idx, reason)| (&self.submitted_orders[*idx], *reason))
             .collect::<HashMap<_, _>>();
 
-        let mut context = ResolverContext::new(
+        let mut context = Context::new(
             world,
             rules,
             self.submitted_orders
@@ -170,8 +170,14 @@ impl UnitPositions<RegionKey> for Submission {
     }
 }
 
-/// The immutable inputs for a resolution equation.
-pub struct ResolverContext<'a, A> {
+/// The immutable inputs to adjudication, including the valid orders, the world map, and the rulebook.
+///
+/// # Usage
+/// This struct is primarily used by the `Adjudicate` trait to provide access to orders and the world map
+/// for custom adjudication functions.
+///
+/// The struct is internally created by `diplomacy::judge::Submission::adjudicate`.
+pub struct Context<'a, A> {
     /// Set of orders which were issued during this turn.
     orders: Vec<&'a MappedMainOrder>,
 
@@ -183,14 +189,14 @@ pub struct ResolverContext<'a, A> {
     pub(in crate::judge) invalid_orders: HashMap<&'a MappedMainOrder, InvalidOrder>,
 }
 
-impl<'a, A: Adjudicate> ResolverContext<'a, A> {
+impl<'a, A: Adjudicate> Context<'a, A> {
     /// Creates a new resolver context for a set of valid orders on a map.
-    pub fn new(
+    pub(crate) fn new(
         world_map: &'a Map,
         rules: A,
         orders: impl IntoIterator<Item = &'a MappedMainOrder>,
     ) -> Self {
-        ResolverContext {
+        Context {
             world_map,
             rules,
             orders: orders.into_iter().collect(),
@@ -231,8 +237,8 @@ impl<'a, A: Adjudicate> ResolverContext<'a, A> {
 }
 
 #[allow(clippy::implicit_hasher)]
-impl<'a> From<ResolverContext<'a, Rulebook>> for HashMap<MappedMainOrder, OrderState> {
-    fn from(rc: ResolverContext<'a, Rulebook>) -> Self {
+impl<'a> From<Context<'a, Rulebook>> for HashMap<MappedMainOrder, OrderState> {
+    fn from(rc: Context<'a, Rulebook>) -> Self {
         rc.resolve().into()
     }
 }
@@ -339,7 +345,7 @@ impl<'a> ResolverState<'a> {
     /// the dependency chain and the entire state generated during the post-guess adjudication.
     fn with_guess<'b>(
         &self,
-        context: &'b ResolverContext<'a, impl Adjudicate>,
+        context: &'b Context<'a, impl Adjudicate>,
         order: &'a MappedMainOrder,
         guess: OrderState,
     ) -> (ResolverState<'a>, OrderState) {
@@ -400,7 +406,7 @@ impl<'a> ResolverState<'a> {
     /// the resolver's state in the process.
     pub fn resolve(
         &mut self,
-        context: &ResolverContext<'a, impl Adjudicate>,
+        context: &Context<'a, impl Adjudicate>,
         order: &'a MappedMainOrder,
     ) -> OrderState {
         use self::ResolutionState::*;

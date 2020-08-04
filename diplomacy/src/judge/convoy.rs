@@ -1,4 +1,4 @@
-use super::{Adjudicate, MappedMainOrder, OrderState, ResolverContext, ResolverState};
+use super::{Adjudicate, Context, MappedMainOrder, OrderState, ResolverState};
 use crate::geo::{Map, ProvinceKey};
 use crate::order::{Command, MainCommand};
 use crate::UnitType;
@@ -83,7 +83,7 @@ fn route_steps<'a>(
 
 /// Finds all valid convoy routes for a given move order.
 pub fn routes<'a>(
-    ctx: &ResolverContext<'a, impl Adjudicate>,
+    ctx: &Context<'a, impl Adjudicate>,
     state: &mut ResolverState<'a>,
     mv_ord: &MappedMainOrder,
 ) -> Result<Vec<Vec<&'a MappedMainOrder>>, ConvoyRouteError> {
@@ -115,7 +115,7 @@ pub fn routes<'a>(
 
 /// Determines if any valid convoy route exists for the given move order.
 pub fn route_exists<'a>(
-    ctx: &ResolverContext<'a, impl Adjudicate>,
+    ctx: &Context<'a, impl Adjudicate>,
     state: &mut ResolverState<'a>,
     mv_ord: &MappedMainOrder,
 ) -> bool {

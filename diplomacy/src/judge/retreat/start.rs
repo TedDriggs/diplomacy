@@ -1,7 +1,7 @@
 use crate::geo::{Border, ProvinceKey, RegionKey};
 use crate::judge::{
-    calc::dislodger_of, calc::prevent_results, convoy, retreat, Adjudicate, MappedMainOrder,
-    OrderState, Outcome, Prevent, ResolverContext, ResolverState,
+    calc::dislodger_of, calc::prevent_results, convoy, retreat, Adjudicate, Context,
+    MappedMainOrder, OrderState, Outcome, Prevent, ResolverState,
 };
 use crate::{order::Command, Unit, UnitPosition, UnitPositions};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -90,7 +90,7 @@ impl<'a> Start<'a> {
 }
 
 fn is_valid_retreat_route<'a>(
-    main_phase: &'a ResolverContext<'a, impl Adjudicate>,
+    main_phase: &'a Context<'a, impl Adjudicate>,
     state: &mut ResolverState<'a>,
     non_dislodged_positions: &impl UnitPositions<RegionKey>,
     dislodged: &HashMap<&MappedMainOrder, &MappedMainOrder>,

@@ -1,6 +1,6 @@
 use super::calc::{dislodger_of, is_head_to_head, max_prevent_result, path_exists};
 use super::convoy::ConvoyOutcome;
-use super::resolver::{ResolverContext, ResolverState};
+use super::resolver::{Context, ResolverState};
 use super::support::{self, SupportOutcome};
 use super::{Adjudicate, MappedMainOrder, OrderOutcome, OrderState};
 use crate::geo::Terrain;
@@ -15,7 +15,7 @@ pub struct Rulebook;
 impl Rulebook {
     /// Apply rules to determine hold outcome.
     fn adjudicate_hold<'a>(
-        ctx: &ResolverContext<'a, Self>,
+        ctx: &Context<'a, Self>,
         rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
     ) -> HoldOutcome<'a> {
@@ -26,7 +26,7 @@ impl Rulebook {
 
     /// Apply rules to determine move outcome.
     fn adjudicate_move<'a>(
-        ctx: &ResolverContext<'a, Self>,
+        ctx: &Context<'a, Self>,
         rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
     ) -> AttackOutcome<'a> {
@@ -118,7 +118,7 @@ impl Rulebook {
     }
 
     fn adjudicate_support<'a>(
-        ctx: &ResolverContext<'a, Self>,
+        ctx: &Context<'a, Self>,
         rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
     ) -> SupportOutcome<'a> {
@@ -135,7 +135,7 @@ impl Rulebook {
     }
 
     fn adjudicate_convoy<'a>(
-        ctx: &ResolverContext<'a, Self>,
+        ctx: &Context<'a, Self>,
         rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
     ) -> ConvoyOutcome<'a> {
@@ -170,7 +170,7 @@ impl Rulebook {
 impl Adjudicate for Rulebook {
     fn adjudicate<'a>(
         &self,
-        context: &ResolverContext<'a, Self>,
+        context: &Context<'a, Self>,
         resolver: &mut ResolverState<'a>,
         order: &'a MappedMainOrder,
     ) -> OrderState {
@@ -179,7 +179,7 @@ impl Adjudicate for Rulebook {
 
     fn explain<'a>(
         &self,
-        context: &ResolverContext<'a, Self>,
+        context: &Context<'a, Self>,
         resolver: &mut ResolverState<'a>,
         order: &'a MappedMainOrder,
     ) -> OrderOutcome<'a> {

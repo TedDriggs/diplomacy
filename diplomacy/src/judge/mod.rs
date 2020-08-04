@@ -20,7 +20,7 @@ pub use self::rulebook::HoldOutcome;
 pub(self) use self::strength::Prevent;
 pub use self::support::SupportOutcome;
 
-pub use self::resolver::{ResolverContext, ResolverState, Submission};
+pub use self::resolver::{Context, ResolverState, Submission};
 pub use self::rulebook::Rulebook;
 use crate::geo::{Border, RegionKey, Terrain};
 use crate::order::{BuildOrder, MainCommand, Order, RetreatOrder};
@@ -35,14 +35,14 @@ pub trait Adjudicate: Sized {
     /// Determine the success of an order.
     fn adjudicate<'a>(
         &self,
-        context: &ResolverContext<'a, Self>,
+        context: &Context<'a, Self>,
         resolver: &mut ResolverState<'a>,
         order: &'a MappedMainOrder,
     ) -> OrderState;
 
     fn explain<'a>(
         &self,
-        context: &ResolverContext<'a, Self>,
+        context: &Context<'a, Self>,
         resolver: &mut ResolverState<'a>,
         order: &'a MappedMainOrder,
     ) -> OrderOutcome<'a>;

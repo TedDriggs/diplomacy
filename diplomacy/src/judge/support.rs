@@ -1,12 +1,12 @@
 //! Contains helper functions for evaluating the success of support commands
 //! during the main phase of a turn.
 
-use super::{calc, Adjudicate, MappedMainOrder, OrderState, ResolverContext, ResolverState};
+use super::{calc, Adjudicate, Context, MappedMainOrder, OrderState, ResolverState};
 use crate::geo::Map;
 use crate::order::{Command, MainCommand, SupportedOrder};
 
 fn order_cuts<'a>(
-    ctx: &ResolverContext<'a, impl Adjudicate>,
+    ctx: &Context<'a, impl Adjudicate>,
     resolver: &mut ResolverState<'a>,
     support_order: &MappedMainOrder,
     cutting_order: &'a MappedMainOrder,
@@ -52,7 +52,7 @@ fn order_cuts<'a>(
 
 /// Find all orders which cut a specified support order.
 pub fn find_cutting_order<'a>(
-    ctx: &ResolverContext<'a, impl Adjudicate>,
+    ctx: &Context<'a, impl Adjudicate>,
     resolver: &mut ResolverState<'a>,
     support_order: &MappedMainOrder,
 ) -> Option<&'a MappedMainOrder> {
@@ -69,7 +69,7 @@ pub fn find_cutting_order<'a>(
 ///
 /// This method short-circuits the search after any hit has been found.
 pub fn is_order_cut<'a>(
-    ctx: &ResolverContext<'a, impl Adjudicate>,
+    ctx: &Context<'a, impl Adjudicate>,
     resolver: &mut ResolverState<'a>,
     support_order: &MappedMainOrder,
 ) -> bool {
@@ -126,7 +126,7 @@ fn is_legal(support_order: &MappedMainOrder) -> bool {
 
 /// Returns true if a given support order successfully supports the specified supported order.
 pub fn is_successful<'a>(
-    ctx: &ResolverContext<'a, impl Adjudicate>,
+    ctx: &Context<'a, impl Adjudicate>,
     resolver: &mut ResolverState<'a>,
     supported: &MappedMainOrder,
     support_order: &'a MappedMainOrder,
@@ -144,7 +144,7 @@ pub fn is_successful<'a>(
 
 /// Finds all successful orders which support a given order.
 pub fn find_for<'a>(
-    ctx: &ResolverContext<'a, impl Adjudicate>,
+    ctx: &Context<'a, impl Adjudicate>,
     resolver: &mut ResolverState<'a>,
     supported: &MappedMainOrder,
 ) -> Vec<&'a MappedMainOrder> {
@@ -188,7 +188,7 @@ impl<'a> From<SupportOutcome<'a>> for OrderState {
 
 #[cfg(test)]
 mod test {
-    use super::super::{ResolverContext, ResolverState};
+    use super::super::{Context, ResolverState};
     use super::*;
     use crate::geo::{standard_map, RegionKey};
     use crate::order::{MainCommand, MoveCommand, Order, SupportedOrder};
@@ -222,7 +222,7 @@ mod test {
         assert_eq!(supp_com, orders[1]);
         assert!(super::can_reach(standard_map(), &orders[0]));
 
-        let resolver_ctx = ResolverContext::new(standard_map(), crate::judge::Rulebook, &orders);
+        let resolver_ctx = Context::new(standard_map(), crate::judge::Rulebook, &orders);
         let mut res_state = ResolverState::new();
         let supporters = find_for(&resolver_ctx, &mut res_state, &orders[1]);
         assert!(!supporters.is_empty());
