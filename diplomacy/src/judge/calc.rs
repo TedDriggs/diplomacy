@@ -8,9 +8,9 @@ use crate::{geo::ProvinceKey, ShortName};
 ///
 /// 1. A border exists and the order permits direct travel OR
 /// 1. A non-disrupted convoy route exists.
-pub fn path_exists<'a, A: Adjudicate>(
-    context: &ResolverContext<'a>,
-    resolver: &mut ResolverState<'a, A>,
+pub fn path_exists<'a>(
+    context: &ResolverContext<'a, impl Adjudicate>,
+    resolver: &mut ResolverState<'a>,
     order: &MappedMainOrder,
 ) -> bool {
     if let MainCommand::Move(cmd) = &order.command {
@@ -40,9 +40,9 @@ pub fn path_exists<'a, A: Adjudicate>(
 
 /// Two orders form a head-to-head battle when they are mirrored moves and no convoy exists to
 /// ferry one of the armies around the other one.
-pub fn is_head_to_head<'a, A: Adjudicate>(
-    context: &ResolverContext<'a>,
-    resolver: &mut ResolverState<'a, A>,
+pub fn is_head_to_head<'a>(
+    context: &ResolverContext<'a, impl Adjudicate>,
+    resolver: &mut ResolverState<'a>,
     order1: &MappedMainOrder,
     order2: &MappedMainOrder,
 ) -> bool {
@@ -55,9 +55,9 @@ pub fn is_head_to_head<'a, A: Adjudicate>(
         && !convoy::route_exists(context, resolver, order2)
 }
 
-fn prevent_result<'a, A: Adjudicate>(
-    context: &ResolverContext<'a>,
-    resolver: &mut ResolverState<'a, A>,
+fn prevent_result<'a>(
+    context: &ResolverContext<'a, impl Adjudicate>,
+    resolver: &mut ResolverState<'a>,
     order: &'a MappedMainOrder,
 ) -> Option<Prevent<'a>> {
     if order.is_move() {
@@ -85,9 +85,9 @@ fn prevent_result<'a, A: Adjudicate>(
 }
 
 /// Get all prevents for a province, with their supporters.
-pub fn prevent_results<'a, A: Adjudicate>(
-    context: &ResolverContext<'a>,
-    resolver: &mut ResolverState<'a, A>,
+pub fn prevent_results<'a>(
+    context: &ResolverContext<'a, impl Adjudicate>,
+    resolver: &mut ResolverState<'a>,
     province: &ProvinceKey,
 ) -> Vec<Prevent<'a>> {
     context
@@ -97,9 +97,9 @@ pub fn prevent_results<'a, A: Adjudicate>(
         .collect()
 }
 
-pub fn max_prevent_result<'a, A: Adjudicate>(
-    context: &ResolverContext<'a>,
-    resolver: &mut ResolverState<'a, A>,
+pub fn max_prevent_result<'a>(
+    context: &ResolverContext<'a, impl Adjudicate>,
+    resolver: &mut ResolverState<'a>,
     preventing: &MappedMainOrder,
 ) -> Option<Prevent<'a>> {
     preventing.move_dest().and_then(|dst| {
@@ -135,9 +135,9 @@ pub fn max_prevent_result<'a, A: Adjudicate>(
 /// There is a unit with a move order to the area of the unit, for which the
 /// MOVE decision has status 'moves' and in case the unit (of the DISLODGE
 /// decision) was ordered to move has a MOVE decision with status 'fails'.
-pub fn dislodger_of<'a, A: Adjudicate>(
-    context: &ResolverContext<'a>,
-    resolver: &mut ResolverState<'a, A>,
+pub fn dislodger_of<'a>(
+    context: &ResolverContext<'a, impl Adjudicate>,
+    resolver: &mut ResolverState<'a>,
     order: &'a MappedMainOrder,
 ) -> Option<&'a MappedMainOrder> {
     for would_be_dislodger in context
@@ -180,8 +180,8 @@ mod tests {
         .map(|ord| ord.parse::<MappedMainOrder>().unwrap())
         .collect::<Vec<_>>();
 
-        let context = ResolverContext::new(crate::geo::standard_map(), &orders);
-        let mut state = ResolverState::with_adjudicator(Rulebook);
+        let context = ResolverContext::new(crate::geo::standard_map(), Rulebook, &orders);
+        let mut state = ResolverState::new();
 
         assert_eq!(
             max_prevent_result(&context, &mut state, &orders[1]),
@@ -204,8 +204,8 @@ mod tests {
         .map(|ord| ord.parse::<MappedMainOrder>().unwrap())
         .collect::<Vec<_>>();
 
-        let context = ResolverContext::new(crate::geo::standard_map(), &orders);
-        let mut state = ResolverState::with_adjudicator(Rulebook);
+        let context = ResolverContext::new(crate::geo::standard_map(), Rulebook, &orders);
+        let mut state = ResolverState::new();
         let nth_prevent = max_prevent_result(&context, &mut state, &orders[3]);
         let swe_prevent = max_prevent_result(&context, &mut state, &orders[4]);
 

@@ -15,8 +15,8 @@ pub struct Rulebook;
 impl Rulebook {
     /// Apply rules to determine hold outcome.
     fn adjudicate_hold<'a>(
-        ctx: &ResolverContext<'a>,
-        rslv: &mut ResolverState<'a, Self>,
+        ctx: &ResolverContext<'a, Self>,
+        rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
     ) -> HoldOutcome<'a> {
         dislodger_of(ctx, rslv, ord)
@@ -26,8 +26,8 @@ impl Rulebook {
 
     /// Apply rules to determine move outcome.
     fn adjudicate_move<'a>(
-        ctx: &ResolverContext<'a>,
-        rslv: &mut ResolverState<'a, Self>,
+        ctx: &ResolverContext<'a, Self>,
+        rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
     ) -> AttackOutcome<'a> {
         if ord.command.move_dest() == Some(&ord.region) {
@@ -118,8 +118,8 @@ impl Rulebook {
     }
 
     fn adjudicate_support<'a>(
-        ctx: &ResolverContext<'a>,
-        rslv: &mut ResolverState<'a, Self>,
+        ctx: &ResolverContext<'a, Self>,
+        rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
     ) -> SupportOutcome<'a> {
         if support::is_supporting_self(ord) {
@@ -135,8 +135,8 @@ impl Rulebook {
     }
 
     fn adjudicate_convoy<'a>(
-        ctx: &ResolverContext<'a>,
-        rslv: &mut ResolverState<'a, Self>,
+        ctx: &ResolverContext<'a, Self>,
+        rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
     ) -> ConvoyOutcome<'a> {
         // Test case 6.F.1: Fleets cannot convoy in coastal areas
@@ -170,8 +170,8 @@ impl Rulebook {
 impl Adjudicate for Rulebook {
     fn adjudicate<'a>(
         &self,
-        context: &ResolverContext<'a>,
-        resolver: &mut ResolverState<'a, Self>,
+        context: &ResolverContext<'a, Self>,
+        resolver: &mut ResolverState<'a>,
         order: &'a MappedMainOrder,
     ) -> OrderState {
         self.explain(context, resolver, order).into()
@@ -179,8 +179,8 @@ impl Adjudicate for Rulebook {
 
     fn explain<'a>(
         &self,
-        context: &ResolverContext<'a>,
-        resolver: &mut ResolverState<'a, Self>,
+        context: &ResolverContext<'a, Self>,
+        resolver: &mut ResolverState<'a>,
         order: &'a MappedMainOrder,
     ) -> OrderOutcome<'a> {
         use crate::order::MainCommand::*;

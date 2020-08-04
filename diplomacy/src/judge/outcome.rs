@@ -75,25 +75,20 @@ impl From<&'_ InvalidOrder> for OrderState {
 /// Contains information about the outcome of a turn, used for reporting back
 /// to players and for setting up the next turn.
 pub struct Outcome<'a, A> {
-    pub(in crate::judge) context: ResolverContext<'a>,
-    pub(in crate::judge) resolver: ResolverState<'a, A>,
+    pub(in crate::judge) context: ResolverContext<'a, A>,
+    pub(in crate::judge) resolver: ResolverState<'a>,
     pub(in crate::judge) orders: HashMap<&'a MappedMainOrder, OrderOutcome<'a>>,
 }
 
 impl<'a, A: Adjudicate> Outcome<'a, A> {
     pub(in crate::judge) fn new(
-        context: ResolverContext<'a>,
-        resolver: ResolverState<'a, A>,
+        context: ResolverContext<'a, A>,
+        resolver: ResolverState<'a>,
     ) -> Self {
         let mut state = resolver.clone();
         let orders = context
             .orders()
-            .map(|ord| {
-                (
-                    ord,
-                    resolver.adjudicator().explain(&context, &mut state, ord),
-                )
-            })
+            .map(|ord| (ord, context.rules.explain(&context, &mut state, ord)))
             .chain(
                 context
                     .invalid_orders

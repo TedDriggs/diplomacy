@@ -82,9 +82,9 @@ fn route_steps<'a>(
 }
 
 /// Finds all valid convoy routes for a given move order.
-pub fn routes<'a, A: Adjudicate>(
-    ctx: &ResolverContext<'a>,
-    state: &mut ResolverState<'a, A>,
+pub fn routes<'a>(
+    ctx: &ResolverContext<'a, impl Adjudicate>,
+    state: &mut ResolverState<'a>,
     mv_ord: &MappedMainOrder,
 ) -> Result<Vec<Vec<&'a MappedMainOrder>>, ConvoyRouteError> {
     if mv_ord.unit_type == UnitType::Fleet {
@@ -114,9 +114,9 @@ pub fn routes<'a, A: Adjudicate>(
 }
 
 /// Determines if any valid convoy route exists for the given move order.
-pub fn route_exists<'a, A: Adjudicate>(
-    ctx: &ResolverContext<'a>,
-    state: &mut ResolverState<'a, A>,
+pub fn route_exists<'a>(
+    ctx: &ResolverContext<'a, impl Adjudicate>,
+    state: &mut ResolverState<'a>,
     mv_ord: &MappedMainOrder,
 ) -> bool {
     routes(ctx, state, mv_ord)

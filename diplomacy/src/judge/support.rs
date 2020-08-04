@@ -5,9 +5,9 @@ use super::{calc, Adjudicate, MappedMainOrder, OrderState, ResolverContext, Reso
 use crate::geo::Map;
 use crate::order::{Command, MainCommand, SupportedOrder};
 
-fn order_cuts<'a, A: Adjudicate>(
-    ctx: &ResolverContext<'a>,
-    resolver: &mut ResolverState<'a, A>,
+fn order_cuts<'a>(
+    ctx: &ResolverContext<'a, impl Adjudicate>,
+    resolver: &mut ResolverState<'a>,
     support_order: &MappedMainOrder,
     cutting_order: &'a MappedMainOrder,
 ) -> bool {
@@ -51,9 +51,9 @@ fn order_cuts<'a, A: Adjudicate>(
 }
 
 /// Find all orders which cut a specified support order.
-pub fn find_cutting_order<'a, A: Adjudicate>(
-    ctx: &ResolverContext<'a>,
-    resolver: &mut ResolverState<'a, A>,
+pub fn find_cutting_order<'a>(
+    ctx: &ResolverContext<'a, impl Adjudicate>,
+    resolver: &mut ResolverState<'a>,
     support_order: &MappedMainOrder,
 ) -> Option<&'a MappedMainOrder> {
     ctx.orders()
@@ -68,9 +68,9 @@ pub fn find_cutting_order<'a, A: Adjudicate>(
 /// in 'cut' when the DISLODGE decision of the unit has status 'dislodged' (dislodge rule).
 ///
 /// This method short-circuits the search after any hit has been found.
-pub fn is_order_cut<'a, A: Adjudicate>(
-    ctx: &ResolverContext<'a>,
-    resolver: &mut ResolverState<'a, A>,
+pub fn is_order_cut<'a>(
+    ctx: &ResolverContext<'a, impl Adjudicate>,
+    resolver: &mut ResolverState<'a>,
     support_order: &MappedMainOrder,
 ) -> bool {
     ctx.orders()
@@ -125,9 +125,9 @@ fn is_legal(support_order: &MappedMainOrder) -> bool {
 }
 
 /// Returns true if a given support order successfully supports the specified supported order.
-pub fn is_successful<'a, A: Adjudicate>(
-    ctx: &ResolverContext<'a>,
-    resolver: &mut ResolverState<'a, A>,
+pub fn is_successful<'a>(
+    ctx: &ResolverContext<'a, impl Adjudicate>,
+    resolver: &mut ResolverState<'a>,
     supported: &MappedMainOrder,
     support_order: &'a MappedMainOrder,
 ) -> bool {
@@ -143,9 +143,9 @@ pub fn is_successful<'a, A: Adjudicate>(
 }
 
 /// Finds all successful orders which support a given order.
-pub fn find_for<'a, A: Adjudicate>(
-    ctx: &ResolverContext<'a>,
-    resolver: &mut ResolverState<'a, A>,
+pub fn find_for<'a>(
+    ctx: &ResolverContext<'a, impl Adjudicate>,
+    resolver: &mut ResolverState<'a>,
     supported: &MappedMainOrder,
 ) -> Vec<&'a MappedMainOrder> {
     ctx.orders()
@@ -222,8 +222,8 @@ mod test {
         assert_eq!(supp_com, orders[1]);
         assert!(super::can_reach(standard_map(), &orders[0]));
 
-        let resolver_ctx = ResolverContext::new(standard_map(), &orders);
-        let mut res_state = ResolverState::with_adjudicator(super::super::rulebook::Rulebook);
+        let resolver_ctx = ResolverContext::new(standard_map(), crate::judge::Rulebook, &orders);
+        let mut res_state = ResolverState::new();
         let supporters = find_for(&resolver_ctx, &mut res_state, &orders[1]);
         assert!(!supporters.is_empty());
     }

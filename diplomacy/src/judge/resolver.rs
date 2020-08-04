@@ -60,6 +60,7 @@ impl Submission {
 
         let mut context = ResolverContext::new(
             world,
+            rules,
             self.submitted_orders
                 .iter()
                 .filter(|o| !invalid_orders.contains_key(o))
@@ -68,7 +69,7 @@ impl Submission {
 
         context.invalid_orders = invalid_orders;
 
-        context.resolve_using(rules)
+        context.resolve()
     }
 
     /// The exact orders that were provided at submission time, including invalid orders and
@@ -170,9 +171,11 @@ impl UnitPositions<RegionKey> for Submission {
 }
 
 /// The immutable inputs for a resolution equation.
-pub struct ResolverContext<'a> {
+pub struct ResolverContext<'a, A> {
     /// Set of orders which were issued during this turn.
     orders: Vec<&'a MappedMainOrder>,
+
+    pub rules: A,
 
     /// The map against which orders were issued.
     pub world_map: &'a Map,
@@ -180,11 +183,16 @@ pub struct ResolverContext<'a> {
     pub(in crate::judge) invalid_orders: HashMap<&'a MappedMainOrder, InvalidOrder>,
 }
 
-impl<'a> ResolverContext<'a> {
+impl<'a, A: Adjudicate> ResolverContext<'a, A> {
     /// Creates a new resolver context for a set of valid orders on a map.
-    pub fn new(world_map: &'a Map, orders: impl IntoIterator<Item = &'a MappedMainOrder>) -> Self {
+    pub fn new(
+        world_map: &'a Map,
+        rules: A,
+        orders: impl IntoIterator<Item = &'a MappedMainOrder>,
+    ) -> Self {
         ResolverContext {
             world_map,
+            rules,
             orders: orders.into_iter().collect(),
             invalid_orders: HashMap::new(),
         }
@@ -203,8 +211,8 @@ impl<'a> ResolverContext<'a> {
     /// The adjudicator is responsible for rule questions, while the resolver is responsible for
     /// tracking whether orders are successful. The two are interdependent, calling back and forth
     /// as they work towards a solution.
-    pub fn resolve_using<A: Adjudicate>(self, rules: A) -> Outcome<'a, A> {
-        let mut rs = ResolverState::with_adjudicator(rules);
+    pub fn resolve(self) -> Outcome<'a, A> {
+        let mut rs = ResolverState::new();
 
         for (order, reason) in &self.invalid_orders {
             rs.invalid_orders.insert(order, *reason);
@@ -223,9 +231,9 @@ impl<'a> ResolverContext<'a> {
 }
 
 #[allow(clippy::implicit_hasher)]
-impl<'a> From<ResolverContext<'a>> for HashMap<MappedMainOrder, OrderState> {
-    fn from(rc: ResolverContext<'a>) -> Self {
-        rc.resolve_using(Rulebook).into()
+impl<'a> From<ResolverContext<'a, Rulebook>> for HashMap<MappedMainOrder, OrderState> {
+    fn from(rc: ResolverContext<'a, Rulebook>) -> Self {
+        rc.resolve().into()
     }
 }
 
@@ -258,7 +266,7 @@ impl std::fmt::Debug for ResolutionState {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ResolverState<'a, A> {
+pub struct ResolverState<'a> {
     state: HashMap<&'a MappedMainOrder, ResolutionState>,
     /// Orders which form part of a paradox. These should only be convoy orders, and will
     /// be treated as hold orders to advance resolution.
@@ -274,14 +282,34 @@ pub struct ResolverState<'a, A> {
     /// The conservative dependency chain used to trigger cycle detection. This contains
     /// guesses that have been visited twice, indicating that a cycle has been found.
     dependency_chain: Vec<&'a MappedMainOrder>,
-    adjudicator: A,
 
     pub(in crate::judge) invalid_orders: HashMap<&'a MappedMainOrder, InvalidOrder>,
 }
 
-impl<'a, A> ResolverState<'a, A> {
-    pub fn adjudicator(&self) -> &A {
-        &self.adjudicator
+impl<'a> ResolverState<'a> {
+    /// Create a new resolver for a given rulebook.
+    pub fn new() -> Self {
+        #[cfg(feature = "dependency-graph")]
+        {
+            ResolverState {
+                state: HashMap::new(),
+                deps: Rc::new(RefCell::new(BTreeSet::default())),
+                greedy_chain: vec![],
+                dependency_chain: vec![],
+                paradoxical_orders: HashSet::new(),
+                invalid_orders: HashMap::new(),
+            }
+        }
+
+        #[cfg(not(feature = "dependency-graph"))]
+        {
+            ResolverState {
+                state: HashMap::new(),
+                dependency_chain: vec![],
+                paradoxical_orders: HashSet::new(),
+                invalid_orders: HashMap::new(),
+            }
+        }
     }
 
     fn clear_state(&mut self, order: &MappedMainOrder) {
@@ -303,35 +331,6 @@ impl<'a, A> ResolverState<'a, A> {
     pub(crate) fn order_in_paradox(&self, order: &'a MappedMainOrder) -> bool {
         self.paradoxical_orders.contains(order)
     }
-}
-
-impl<'a, A: Adjudicate> ResolverState<'a, A> {
-    /// Create a new resolver for a given rulebook.
-    pub fn with_adjudicator(adjudicator: A) -> Self {
-        #[cfg(feature = "dependency-graph")]
-        {
-            ResolverState {
-                state: HashMap::new(),
-                deps: Rc::new(RefCell::new(BTreeSet::default())),
-                greedy_chain: vec![],
-                dependency_chain: vec![],
-                paradoxical_orders: HashSet::new(),
-                adjudicator,
-                invalid_orders: HashMap::new(),
-            }
-        }
-
-        #[cfg(not(feature = "dependency-graph"))]
-        {
-            ResolverState {
-                state: HashMap::new(),
-                dependency_chain: vec![],
-                paradoxical_orders: HashSet::new(),
-                adjudicator,
-                invalid_orders: HashMap::new(),
-            }
-        }
-    }
 
     /// Create a clone of the resolver state, add a guess at the success or failure
     /// of the given order, then adjudicate the order with the amended resolver.
@@ -340,10 +339,10 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
     /// the dependency chain and the entire state generated during the post-guess adjudication.
     fn with_guess<'b>(
         &self,
-        context: &'b ResolverContext<'a>,
+        context: &'b ResolverContext<'a, impl Adjudicate>,
         order: &'a MappedMainOrder,
         guess: OrderState,
-    ) -> (ResolverState<'a, A>, OrderState) {
+    ) -> (ResolverState<'a>, OrderState) {
         let mut guesser = self.clone();
 
         #[cfg(feature = "dependency-graph")]
@@ -352,7 +351,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
         }
 
         guesser.set_state(order, ResolutionState::Guessing(guess));
-        let result = self.adjudicator.adjudicate(context, &mut guesser, order);
+        let result = context.rules.adjudicate(context, &mut guesser, order);
         (guesser, result)
     }
 
@@ -401,7 +400,7 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
     /// the resolver's state in the process.
     pub fn resolve(
         &mut self,
-        context: &ResolverContext<'a>,
+        context: &ResolverContext<'a, impl Adjudicate>,
         order: &'a MappedMainOrder,
     ) -> OrderState {
         use self::ResolutionState::*;
@@ -490,9 +489,15 @@ impl<'a, A: Adjudicate> ResolverState<'a, A> {
     }
 }
 
+impl Default for ResolverState<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[allow(clippy::implicit_hasher)]
-impl<'a, A: Adjudicate> From<ResolverState<'a, A>> for HashMap<MappedMainOrder, OrderState> {
-    fn from(state: ResolverState<'a, A>) -> Self {
+impl<'a> From<ResolverState<'a>> for HashMap<MappedMainOrder, OrderState> {
+    fn from(state: ResolverState<'a>) -> Self {
         let mut out_map = HashMap::with_capacity(state.state.len());
 
         for (order, order_state) in state.state {

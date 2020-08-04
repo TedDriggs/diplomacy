@@ -31,19 +31,19 @@ pub type MappedBuildOrder = BuildOrder<RegionKey>;
 pub type MappedRetreatOrder = RetreatOrder<RegionKey>;
 
 /// A clonable container for a rulebook which can be used to adjudicate a turn.
-pub trait Adjudicate: Clone {
+pub trait Adjudicate: Sized {
     /// Determine the success of an order.
     fn adjudicate<'a>(
         &self,
-        context: &ResolverContext<'a>,
-        resolver: &mut ResolverState<'a, Self>,
+        context: &ResolverContext<'a, Self>,
+        resolver: &mut ResolverState<'a>,
         order: &'a MappedMainOrder,
     ) -> OrderState;
 
     fn explain<'a>(
         &self,
-        context: &ResolverContext<'a>,
-        resolver: &mut ResolverState<'a, Self>,
+        context: &ResolverContext<'a, Self>,
+        resolver: &mut ResolverState<'a>,
         order: &'a MappedMainOrder,
     ) -> OrderOutcome<'a>;
 }

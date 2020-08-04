@@ -89,9 +89,9 @@ impl<'a> Start<'a> {
     }
 }
 
-fn is_valid_retreat_route<'a, A: Adjudicate>(
-    main_phase: &'a ResolverContext<'a>,
-    state: &mut ResolverState<'a, A>,
+fn is_valid_retreat_route<'a>(
+    main_phase: &'a ResolverContext<'a, impl Adjudicate>,
+    state: &mut ResolverState<'a>,
     non_dislodged_positions: &impl UnitPositions<RegionKey>,
     dislodged: &HashMap<&MappedMainOrder, &MappedMainOrder>,
     retreater: &MappedMainOrder,
