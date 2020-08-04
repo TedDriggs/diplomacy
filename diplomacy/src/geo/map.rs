@@ -14,7 +14,7 @@ pub struct Map {
 impl Map {
     /// Iterate through the provinces in the map. Each province will be returned exactly once,
     /// but order is unspecified.
-    pub fn provinces(&self) -> impl Iterator<Item=&Province> {
+    pub fn provinces(&self) -> impl Iterator<Item = &Province> {
         self.provinces.values()
     }
 

@@ -7,5 +7,5 @@
 mod resolver;
 mod start;
 
-pub use self::start::{DestStatus, Destinations, Start};
 pub use self::resolver::{Context, OrderOutcome, Outcome};
+pub use self::start::{DestStatus, Destinations, Start};
