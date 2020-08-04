@@ -39,6 +39,7 @@ impl fmt::Display for Error {
 
 /// Different kinds of parsing error; this is not meant to be exhaustive.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum ErrorKind {
     InvalidUnitType,
     UnknownCommand,
@@ -49,6 +50,7 @@ pub enum ErrorKind {
     MalformedRegion,
     MalformedSupport,
     MalformedConvoy,
+    TooFewWords(usize),
 }
 
 impl fmt::Display for ErrorKind {
@@ -61,6 +63,7 @@ impl fmt::Display for ErrorKind {
             ErrorKind::MalformedSupport => write!(f, "Malformed support command"),
             ErrorKind::MalformedConvoy => write!(f, "Malformed convoy command"),
             ErrorKind::MalformedMove => write!(f, "Malformed move command"),
+            ErrorKind::TooFewWords(min) => write!(f, "Too few words, expected {}", min),
         }
     }
 }

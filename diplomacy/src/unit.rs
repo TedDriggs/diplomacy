@@ -86,6 +86,44 @@ impl<'a, L> UnitPosition<'a, L> {
     pub fn nation(&self) -> &Nation {
         self.unit.nation()
     }
+
+    /// Create a view of the unit position that has a reference to its region.
+    pub fn as_region_ref(&self) -> UnitPosition<'a, &L> {
+        UnitPosition {
+            unit: self.unit.clone(),
+            region: &self.region,
+        }
+    }
+}
+
+impl<'a> FromStr for UnitPosition<'a, RegionKey> {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut words = s.split_ascii_whitespace();
+        let nation = if let Some(first_word) = words.next() {
+            Nation::from(first_word.trim_end_matches(':'))
+        } else {
+            return Err(Error::new(ErrorKind::TooFewWords(3), s));
+        };
+
+        let unit_type = if let Some(word) = words.next() {
+            UnitType::from_str(word)?
+        } else {
+            return Err(Error::new(ErrorKind::TooFewWords(3), s));
+        };
+
+        let region = if let Some(word) = words.next() {
+            RegionKey::from_str(word)?
+        } else {
+            return Err(Error::new(ErrorKind::TooFewWords(3), s));
+        };
+
+        Ok(UnitPosition::new(
+            Unit::new(Cow::Owned(nation), unit_type),
+            region,
+        ))
+    }
 }
 
 /// Knowledge of unit positions at a point in time.
@@ -201,7 +239,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use super::UnitType;
+    use super::{UnitPosition, UnitType};
+    use crate::{geo::RegionKey, Nation};
 
     #[test]
     fn parse_unit_type() {
@@ -211,5 +250,11 @@ mod test {
         assert_eq!(Ok(UnitType::Fleet), "F".parse());
         assert_eq!(Ok(UnitType::Army), "a".parse());
         assert_eq!(Ok(UnitType::Fleet), "f".parse());
+    }
+
+    #[test]
+    fn parse_unit_position() {
+        let pos: UnitPosition<'_, RegionKey> = "FRA: F bre".parse().unwrap();
+        assert_eq!(pos.nation(), &Nation::from("FRA"));
     }
 }
