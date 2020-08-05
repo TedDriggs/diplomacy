@@ -2,15 +2,14 @@ use crate::ShortName;
 #[cfg(feature = "serde")]
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use std::borrow::Cow;
-use std::cmp::{Ordering, PartialOrd};
 use std::str::FromStr;
 
 /// The step in a current season. Not all seasons will have all steps.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Phase {
-    Main = 0,
-    Retreat = 1,
-    Build = 2,
+    Main,
+    Retreat,
+    Build,
 }
 
 impl ShortName for Phase {
@@ -39,15 +38,19 @@ impl FromStr for Phase {
 /// The current season in the year. Not all game variants use all seasons.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Season {
-    Spring = 0,
-    Fall = 2,
+    Spring,
+    Summer,
+    Fall,
+    Winter,
 }
 
 impl ShortName for Season {
     fn short_name(&self) -> std::borrow::Cow<'_, str> {
         match self {
             Season::Spring => Cow::Borrowed("S"),
+            Season::Summer => Cow::Borrowed("U"),
             Season::Fall => Cow::Borrowed("F"),
+            Season::Winter => Cow::Borrowed("W"),
         }
     }
 }
@@ -58,34 +61,36 @@ impl FromStr for Season {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "S" => Ok(Season::Spring),
+            "U" => Ok(Season::Summer),
             "F" => Ok(Season::Fall),
+            "W" => Ok(Season::Winter),
             _ => Err(()),
         }
     }
 }
 
 /// Represents a specific point in game time.
-#[derive(Debug, Clone, PartialEq, Eq, Ord, Hash)]
-pub struct Time(Season, usize, Phase);
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Time(usize, Season, Phase);
 
 impl Time {
+    pub fn new(season: Season, year: usize, phase: Phase) -> Self {
+        Time(year, season, phase)
+    }
+
     /// The season component of the time.
     pub fn season(&self) -> Season {
-        self.0
+        self.1
     }
 
     /// The year component.
     pub fn year(&self) -> usize {
-        self.1
+        self.0
     }
 
     /// The phase of the season and year.
     pub fn phase(&self) -> Phase {
         self.2
-    }
-
-    fn ord_id(&self) -> usize {
-        (self.year() << 6) + ((self.season() as usize) << 3) + (self.phase() as usize)
     }
 }
 
@@ -102,25 +107,13 @@ impl ShortName for Time {
 
 impl From<(Season, usize, Phase)> for Time {
     fn from((s, y, p): (Season, usize, Phase)) -> Self {
-        Time(s, y, p)
-    }
-}
-
-impl<'a> From<&'a Time> for usize {
-    fn from(t: &Time) -> Self {
-        t.ord_id()
+        Time(y, s, p)
     }
 }
 
 impl PartialEq<(Season, Phase)> for Time {
     fn eq(&self, rhs: &(Season, Phase)) -> bool {
-        self.0 == rhs.0 && self.2 == rhs.1
-    }
-}
-
-impl PartialOrd for Time {
-    fn partial_cmp(&self, rhs: &Time) -> Option<Ordering> {
-        usize::partial_cmp(&self.ord_id(), &rhs.ord_id())
+        self.1 == rhs.0 && self.2 == rhs.1
     }
 }
 
@@ -129,8 +122,8 @@ impl FromStr for Time {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.len() == 6 {
             Ok(Time(
-                s[0..1].parse()?,
                 s[1..5].parse().or(Err(()))?,
+                s[0..1].parse()?,
                 s[5..6].parse()?,
             ))
         } else {
@@ -190,7 +183,7 @@ mod test {
 
     #[test]
     fn cmp() {
-        let turns = vec!["S1901M", "S1901R", "F1901M", "F1901R", "F1901B"];
+        let turns = vec!["S1901M", "S1901R", "F1901M", "F1901R", "F1901B", "W1901B"];
 
         let parsed = turns
             .iter()
