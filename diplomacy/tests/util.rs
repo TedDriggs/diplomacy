@@ -128,12 +128,12 @@ macro_rules! judge_retreat {
 
 pub fn ord(s: &str) -> MappedMainOrder {
     s.parse()
-        .unwrap_or_else(|_| panic!(format!("'{}' should be a valid order", s)))
+        .unwrap_or_else(|_| panic!("'{}' should be a valid order", s))
 }
 
 pub fn retreat_ord(s: &str) -> MappedRetreatOrder {
     s.parse()
-        .unwrap_or_else(|_| panic!(format!("'{}' should be a valid order", s)))
+        .unwrap_or_else(|_| panic!("'{}' should be a valid order", s))
 }
 
 pub fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
