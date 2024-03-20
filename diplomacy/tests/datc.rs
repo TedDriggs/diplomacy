@@ -1286,10 +1286,6 @@ fn t6g07_swapping_with_illegal_intent() {
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.8
-///
-/// For this case, this adjudicator believes that "via Convoy" should be binding:
-/// If the unit asked for a non-existent convoy, it should not move.
-/// This diverges from the DATC opinion that this should be dropped if no such convoy exists.
 #[test]
 fn t6g08_explicit_convoy_that_isnt_there() {
     judge! {
@@ -1326,12 +1322,6 @@ fn t6g10_swapped_or_an_head_to_head_battle() {
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.G.11
-///
-/// This test diverges from the DATC preference; the DATC interprets the existence of the convoy
-/// order as evidence of intent, even if the move is not explicit. However, given that we have
-/// support for explicit convoy preferences in move orders, we prefer instead to allow the overland
-/// route. In that case, the army moving to Norway cuts support, leaving the fleet in Skagerrak
-/// unharmed and dislodging the fleet in Norway.
 #[test]
 fn t6g11_a_convoy_to_an_adjacent_place_with_a_paradox() {
     judge! {
