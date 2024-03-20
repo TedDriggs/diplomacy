@@ -3,6 +3,7 @@
 extern crate diplomacy;
 
 mod util;
+mod world;
 
 use diplomacy::geo;
 use diplomacy::judge::{OrderState, Rulebook, Submission};

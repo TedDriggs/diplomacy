@@ -69,7 +69,7 @@ pub struct Context<'a, W: WorldState> {
     ownerships: HashMap<&'a Nation, HashSet<ProvinceKey>>,
     last_time: &'a HashMap<ProvinceKey, Nation>,
     this_time: &'a W,
-    orders: Vec<&'a MappedBuildOrder>,
+    orders: Vec<MappedBuildOrder>,
 }
 
 impl<'a, W: WorldState> Context<'a, W> {
@@ -83,7 +83,7 @@ impl<'a, W: WorldState> Context<'a, W> {
         world: &'a Map,
         last_time: &'a HashMap<ProvinceKey, Nation>,
         this_time: &'a W,
-        orders: Vec<&'a MappedBuildOrder>,
+        orders: impl IntoIterator<Item = MappedBuildOrder>,
     ) -> Self {
         if last_time.is_empty() {
             panic!("At least one supply center must have been owned by at least one nation. Did you forget to pass the initial world state?");
@@ -113,7 +113,7 @@ impl<'a, W: WorldState> Context<'a, W> {
             ownerships,
             last_time,
             this_time,
-            orders,
+            orders: orders.into_iter().collect(),
         }
     }
 
@@ -348,6 +348,12 @@ pub struct Outcome<'a> {
     pub orders: HashMap<&'a MappedBuildOrder, OrderOutcome>,
     pub civil_disorder: HashSet<(UnitType, RegionKey)>,
     pub final_units: HashMap<&'a Nation, HashSet<(UnitType, RegionKey)>>,
+}
+
+impl<'a> Outcome<'a> {
+    pub fn get(&self, order: &MappedBuildOrder) -> Option<&OrderOutcome> {
+        self.orders.get(order)
+    }
 }
 
 /// Rulebook function for build-phase adjudication. This function does not worry about order quantities,

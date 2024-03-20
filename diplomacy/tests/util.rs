@@ -1,9 +1,11 @@
 #![allow(dead_code)]
 #![cfg(test)]
 
-use diplomacy::geo;
-use diplomacy::geo::{Coast, ProvinceKey, RegionKey};
-use diplomacy::judge::{MappedMainOrder, MappedRetreatOrder, OrderState, Rulebook};
+use diplomacy::{
+    geo::{self, Coast, ProvinceKey, RegionKey},
+    judge::{MappedBuildOrder, MappedMainOrder, MappedRetreatOrder, OrderState, Rulebook},
+    Nation,
+};
 use std::collections::HashMap;
 
 pub fn prov(s: &str) -> ProvinceKey {
@@ -126,12 +128,50 @@ macro_rules! judge_retreat {
     };
 }
 
+/// Adjudicate a build phase that occurs in the provided world
+#[macro_export]
+macro_rules! judge_build {
+    ($world:expr) => {
+        judge_build!($world, )
+    };
+    ($world:expr, $($rule:tt $(: $expected:expr)?),+) => {
+        judge_build!($world, $($rule $(: $expected)?,)+)
+    };
+    ($world:expr, $($rule:tt $(: $expected:expr)?,)*) => {
+        {
+            let map = geo::standard_map();
+            let last_time = initial_ownerships();
+            let world = $world;
+            let build_context = ::diplomacy::judge::build::Context::new(&map, &last_time, &world, vec![$($rule),*].into_iter().map(build_ord));
+            let outcome = build_context.resolve();
+            $(
+                $(
+                    assert_eq!(
+                        $expected,
+                        *outcome.get(&build_ord($rule)).expect("Order should be in results"),
+                        $rule
+                    );
+                )*
+            )*
+
+            let final_units = outcome.final_units.into_iter().map(|(k, v)| (k.clone(), v)).collect::<std::collections::HashMap<_, _>>();
+
+            (final_units, outcome.civil_disorder)
+        }
+    };
+}
+
 pub fn ord(s: &str) -> MappedMainOrder {
     s.parse()
         .unwrap_or_else(|e| panic!("'{}' should be a valid order: {}", s, e))
 }
 
 pub fn retreat_ord(s: &str) -> MappedRetreatOrder {
+    s.parse()
+        .unwrap_or_else(|e| panic!("'{}' should be a valid order: {}", s, e))
+}
+
+pub fn build_ord(s: &str) -> MappedBuildOrder {
     s.parse()
         .unwrap_or_else(|e| panic!("'{}' should be a valid order: {}", s, e))
 }
@@ -146,4 +186,23 @@ pub fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
     }
 
     out.into()
+}
+
+pub fn initial_ownerships() -> HashMap<ProvinceKey, Nation> {
+    vec![
+        ("ENG", vec!["edi", "lvp", "lon"]),
+        ("FRA", vec!["bre", "par", "mar"]),
+        ("GER", vec!["kie", "ber", "mun"]),
+        ("ITA", vec!["ven", "rom", "nap"]),
+        ("AUS", vec!["vie", "bud", "tri"]),
+        ("RUS", vec!["stp", "mos", "war", "sev"]),
+        ("TUR", vec!["con", "ank", "smy"]),
+    ]
+    .into_iter()
+    .flat_map(|(nat, provs)| {
+        provs
+            .into_iter()
+            .map(move |prov| (ProvinceKey::from(prov), Nation::from(nat)))
+    })
+    .collect()
 }

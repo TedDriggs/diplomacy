@@ -4,10 +4,15 @@
 #[path = "./util.rs"]
 mod util;
 
-use diplomacy::geo;
+#[path = "./world.rs"]
+mod world;
+
+use diplomacy::geo::RegionKey;
 use diplomacy::judge::OrderState::{Fails, Succeeds};
 use diplomacy::judge::{retreat::DestStatus, InvalidOrder, OrderOutcome, Rulebook};
+use diplomacy::{geo, Nation, UnitType};
 use util::*;
+use world::TestWorld;
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.A.1
 #[test]
@@ -238,9 +243,12 @@ fn t6b13_coastal_crawl_not_allowed() {
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.B.14
 #[test]
-#[ignore]
 fn t6b14_building_with_unspecified_coast() {
-    judge! { "RUS: Build F St Petersburg" };
+    use diplomacy::judge::build::OrderOutcome::*;
+    judge_build! {
+        TestWorld::empty(),
+        "RUS: F stp build": InvalidTerrain
+    };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.C.1
@@ -1756,100 +1764,314 @@ fn t6h16_contested_for_both_coasts() {
     };
 }
 
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.I.1
+#[test]
+fn t6i01_too_many_build_orders() {
+    use diplomacy::judge::build::OrderOutcome::*;
+    let world = TestWorld::empty()
+        .with_unit("GER: F den")
+        .with_unit("GER: A ruh")
+        .with_unit("GER: A pru");
+    judge_build! { world,
+        // This first one seems like an error in the DATC; the intent
+        // was likely to build in `kie`, but the build was issued to
+        // a Russian home supply center instead.
+        "GER: A war build": InvalidProvince,
+        "GER: A ber build": Succeeds,
+        "GER: A mun build": AllBuildsUsed,
+    };
+}
+
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.I.2
 #[test]
-#[ignore]
 fn t6i02_fleets_can_not_be_build_in_land_areas() {
-    judge! { "RUS: Build F mos" };
+    use diplomacy::judge::build::OrderOutcome::*;
+    let world = TestWorld::empty();
+    judge_build! { world,
+        "RUS: F mos build": InvalidTerrain
+    };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.I.3
 #[test]
-#[ignore]
 fn t6i03_supply_center_must_be_empty_for_building() {
-    judge! { "GER: Build A ber" };
+    use diplomacy::judge::build::OrderOutcome::*;
+    let world = TestWorld::empty().with_unit("GER: A ber");
+    judge_build! { world,
+       "GER: A ber build": OccupiedProvince
+    };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.I.4
 #[test]
-#[ignore]
 fn t6i04_both_coasts_must_be_empty_for_building() {
-    judge! { "RUS: Build A St Petersburg(nc)" };
+    use diplomacy::judge::build::OrderOutcome::*;
+    let world = TestWorld::empty().with_unit("RUS: F stp(sc)");
+    judge_build! { world, "RUS: F stp(nc) build": OccupiedProvince };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.I.5
 #[test]
-#[ignore]
 fn t6i05_building_in_home_supply_center_that_is_not_owned() {
-    judge! { "GER: Build A ber" };
+    use diplomacy::judge::build::OrderOutcome::*;
+    let world = TestWorld::empty().with_occupier("ber", "RUS");
+    judge_build! {
+        world,
+        "GER: A ber build": ForeignControlled
+    };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.I.6
 #[test]
-#[ignore]
 fn t6i06_building_in_owned_supply_center_that_is_not_a_home_supply_center() {
-    judge! { "GER: Build A war" };
+    use diplomacy::judge::build::OrderOutcome::*;
+    let world = TestWorld::empty().with_occupier("war", "GER");
+    judge_build! {
+        world,
+        "GER: A war build": InvalidProvince
+    };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.I.7
 #[test]
-#[ignore]
 fn t6i07_only_one_build_in_a_home_supply_center() {
-    judge! { "RUS: Build A mos", "RUS: Build A mos" };
+    use diplomacy::judge::build::OrderOutcome::*;
+    let world = TestWorld::empty()
+        .with_unit("RUS: F sev")
+        .with_unit("RUS: F stp(nc)");
+    let (final_units, _) = judge_build! {
+        world,
+        "RUS: A mos build": Succeeds,
+        // This is running into an issue where this implementation doesn't
+        // consider these two distinct orders, so it cannot validate that
+        // only one order succeeded. Instead of checking that this order
+        // failed, we add another valid build and ensure it too succeeds.
+        "RUS: A mos build",
+        "RUS: A war build": Succeeds
+    };
+
+    assert_eq!(final_units.values().flatten().count(), 4);
+}
+
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.1
+#[test]
+fn t6j01_too_many_remove_orders() {
+    use diplomacy::judge::build::OrderOutcome::*;
+    let world = TestWorld::empty()
+        .with_unit("ITA: A mar")
+        .with_unit("FRA: F lyo")
+        .with_unit("FRA: A pic")
+        .with_unit("FRA: A par");
+    judge_build! {
+        world,
+        // This is running into an issue where this implementation doesn't
+        // consider these two distinct orders, so it cannot validate that
+        // only one order succeeded.
+        "FRA: F lyo disband": Succeeds,
+        "FRA: A pic disband": AllDisbandsUsed,
+        "FRA: A par disband": AllDisbandsUsed
+    };
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.2
 #[test]
-#[ignore]
 fn t6j02_removing_the_same_unit_twice() {
-    judge! { "FRA: Remove A par", "FRA: Remove A par" };
+    use diplomacy::judge::build::OrderOutcome::*;
+    let world = TestWorld::empty()
+        .with_unit("ENG: F bre")
+        .with_unit("ITA: A mar")
+        .with_unit("FRA: A par")
+        .with_unit("FRA: F lyo")
+        .with_unit("FRA: A ruh");
+    let (final_units, civil_disorder) = judge_build! {
+        world,
+        "FRA: A par disband": Succeeds,
+        // This implementation doesn't consider these two distinct orders,
+        // so it cannot validate that only one order succeeded. To ensure
+        // that a nation cannot trick the adjudicator with duplicate disband
+        // orders, the test has been modified to require France to remove
+        // two units, and the test ensures that one unit was forcibly disbanded.
+        "FRA: A par disband"
+    };
+
+    assert_eq!(final_units.get(&Nation::from("FRA")).unwrap().len(), 1);
+    assert!(!civil_disorder.is_empty());
 }
 
+/// This test differs significantly from the test as written, for two reasons:
+///
+/// 1. The test-as-written does not require Russia to disband anything, as it
+///    controls both Sweden and St Petersburg. This appears to be an error in
+///    the test.
+/// 2. The test says that Sweden should disband for being farther from a home
+///    supply center, but the 2023 rules instead say distance should be measured
+///    from an _owned_ supply center.
+///
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.3
 #[test]
-#[ignore]
 fn t6j03_civil_disorder_two_armies_with_different_distance() {
-    judge! { "" };
+    let world = TestWorld::empty()
+        .with_occupier("war", "GER")
+        .with_occupier("mos", "GER")
+        .with_occupier("sev", "TUR")
+        .with_unit("RUS: A fin")
+        .with_unit("RUS: A pru");
+    let (_, civil_disorder) = judge_build!(world);
+    assert_eq!(
+        civil_disorder,
+        std::iter::once((UnitType::Army, RegionKey::new("pru", None))).collect()
+    );
+}
+
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.4
+#[test]
+fn t6j04_civil_disorder_two_armies_with_equal_distance() {
+    let world = TestWorld::empty()
+        .with_occupier("stp", "ENG")
+        .with_occupier("war", "GER")
+        .with_occupier("sev", "TUR")
+        .with_unit("RUS: A lvn")
+        .with_unit("RUS: A ukr");
+
+    let (_, civil_disorder) = judge_build!(world);
+
+    assert_eq!(
+        civil_disorder,
+        std::iter::once((UnitType::Army, RegionKey::new("lvn", None))).collect()
+    );
+}
+
+/// This test had to be modified, as it ignores the 2023 change
+/// where disband distances are measured from owned supply centers,
+/// rather than home supply centers.
+///
+/// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.5
+#[test]
+fn t6j05_civil_disorder_two_fleets_with_different_distance() {
+    let world = TestWorld::empty()
+        .with_occupier("mos", "ENG")
+        .with_occupier("war", "GER")
+        .with_occupier("sev", "TUR")
+        .with_unit("RUS: F ska")
+        .with_unit("RUS: F nao");
+
+    let (_, civil_disorder) = judge_build!(world);
+
+    assert_eq!(
+        civil_disorder,
+        std::iter::once((UnitType::Fleet, RegionKey::new("nao", None))).collect()
+    );
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.6
 #[test]
-#[ignore]
 fn t6j06_civil_disorder_two_fleets_with_equal_distance() {
-    judge! { "" };
+    let world = TestWorld::empty()
+        .with_occupier("stp", "ENG")
+        .with_occupier("mos", "ENG")
+        .with_occupier("war", "GER")
+        .with_occupier("sev", "TUR")
+        .with_occupier("mun", "RUS")
+        .with_unit("RUS: F bot")
+        .with_unit("RUS: F nth");
+
+    let (_, civil_disorder) = judge_build!(world);
+
+    assert_eq!(
+        civil_disorder,
+        std::iter::once((UnitType::Fleet, RegionKey::new("bot", None))).collect()
+    );
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.7
 #[test]
-#[ignore]
 fn t6j07_civil_disorder_two_fleets_and_army_with_equal_distance() {
-    judge! { "" };
+    let world = TestWorld::empty()
+        .with_occupier("mos", "ENG")
+        .with_occupier("sev", "TUR")
+        .with_unit("RUS: A boh")
+        .with_unit("RUS: F ska")
+        .with_unit("RUS: F nth");
+
+    let (_, civil_disorder) = judge_build!(world);
+
+    assert_eq!(
+        civil_disorder,
+        std::iter::once((UnitType::Fleet, RegionKey::new("nth", None))).collect()
+    );
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.8
 #[test]
-#[ignore]
 fn t6j08_civil_disorder_a_fleet_with_shorter_distance_then_the_army() {
-    judge! { "" };
+    let world = TestWorld::empty()
+        .with_occupier("stp", "ENG")
+        .with_occupier("mos", "ENG")
+        .with_occupier("sev", "TUR")
+        .with_unit("RUS: A tyr")
+        .with_unit("RUS: F bal");
+
+    let (_, civil_disorder) = judge_build!(world);
+
+    assert_eq!(
+        civil_disorder,
+        std::iter::once((UnitType::Army, RegionKey::new("tyr", None))).collect()
+    );
 }
 
+/// The location of the disbanded army was moved from Greece to
+/// Albania, as this test was not updated to the 2023 rule to use
+/// owned supply centers rather than home supply centers.
+///
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.9
 #[test]
-#[ignore]
 fn t6j09_civil_disorder_must_be_counted_from_both_coasts() {
-    judge! { "" };
+    let world = TestWorld::empty()
+        .with_occupier("war", "GER")
+        .with_occupier("mos", "ENG")
+        .with_unit("RUS: A alb")
+        .with_unit("RUS: A sev")
+        .with_unit("RUS: F ska");
+
+    let (_, civil_disorder) = judge_build!(world);
+
+    assert_eq!(
+        civil_disorder,
+        std::iter::once((UnitType::Army, RegionKey::new("alb", None))).collect()
+    );
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.10
 #[test]
-#[ignore]
 fn t6j10_civil_disorder_counting_convoying_distance() {
-    judge! { "" };
+    let world = TestWorld::empty()
+        .with_occupier("ven", "AUS")
+        .with_occupier("rom", "FRA")
+        .with_unit("ITA: A pie")
+        .with_unit("ITA: A alb");
+
+    let (_, civil_disorder) = judge_build!(world);
+
+    assert_eq!(
+        civil_disorder,
+        std::iter::once((UnitType::Army, RegionKey::new("pie", None))).collect()
+    );
 }
 
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.J.11
 #[test]
-#[ignore]
-fn t6j11_civil_disorder_counting_distance_without_convoying_fleet() {
-    judge! { "" };
+fn t6j11_distance_to_owned_supply_center() {
+    let world = TestWorld::empty()
+        .with_occupier("ven", "AUS")
+        .with_occupier("rom", "FRA")
+        .with_occupier("nap", "AUS")
+        .with_unit("ITA: A war")
+        .with_unit("ITA: A tus");
+
+    let (_, civil_disorder) = judge_build!(world);
+
+    assert_eq!(
+        civil_disorder,
+        std::iter::once((UnitType::Army, RegionKey::new("tus", None))).collect()
+    );
 }
