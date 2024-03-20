@@ -205,9 +205,7 @@ impl<'a> Resolution<'a> {
             return *outcome;
         }
 
-        let mut delta = if let Some(delta) = self.deltas.get_mut(&order.nation) {
-            delta
-        } else {
+        let Some(delta) = self.deltas.get_mut(&order.nation) else {
             return self.resolve_as(order, RedeploymentProhibited);
         };
 
