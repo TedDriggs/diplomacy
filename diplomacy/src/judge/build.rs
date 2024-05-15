@@ -63,7 +63,7 @@ pub trait WorldState {
 }
 
 /// The immutable pieces of a build-phase order resolution
-pub struct ResolverContext<'a, W: WorldState> {
+pub struct Context<'a, W: WorldState> {
     world: &'a Map,
     home_scs: HashMap<&'a Nation, HashSet<ProvinceKey>>,
     ownerships: HashMap<&'a Nation, i16>,
@@ -72,7 +72,7 @@ pub struct ResolverContext<'a, W: WorldState> {
     orders: Vec<&'a MappedBuildOrder>,
 }
 
-impl<'a, W: WorldState> ResolverContext<'a, W> {
+impl<'a, W: WorldState> Context<'a, W> {
     /// Create a new context for resolution.
     ///
     /// # First Winter
@@ -136,7 +136,7 @@ struct Resolution<'a> {
 }
 
 impl<'a> Resolution<'a> {
-    pub fn new<W: WorldState>(context: &'a ResolverContext<W>) -> Self {
+    pub fn new<W: WorldState>(context: &'a Context<W>) -> Self {
         let final_units = context
             .this_time
             .nations()
@@ -165,7 +165,7 @@ impl<'a> Resolution<'a> {
         }
     }
 
-    pub fn resolve(mut self, context: &'a ResolverContext<impl WorldState>) -> Outcome<'a> {
+    pub fn resolve(mut self, context: &'a Context<impl WorldState>) -> Outcome<'a> {
         for order in &context.orders {
             self.resolve_order(context, order);
         }
@@ -195,7 +195,7 @@ impl<'a> Resolution<'a> {
 
     fn resolve_order(
         &mut self,
-        context: &'a ResolverContext<impl WorldState>,
+        context: &'a Context<impl WorldState>,
         order: &'a MappedBuildOrder,
     ) -> OrderOutcome {
         use self::OrderOutcome::*;
@@ -271,10 +271,7 @@ pub struct Outcome<'a> {
 
 /// Rulebook function for build-phase adjudication. This function does not worry about order quantities,
 /// and just focuses on whether or not a given build or disband command is otherwise valid.
-fn adjudicate(
-    context: &ResolverContext<impl WorldState>,
-    order: &MappedBuildOrder,
-) -> OrderOutcome {
+fn adjudicate(context: &Context<impl WorldState>, order: &MappedBuildOrder) -> OrderOutcome {
     use self::OrderOutcome::*;
     let province = order.region.province();
 
