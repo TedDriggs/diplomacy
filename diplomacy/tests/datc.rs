@@ -649,15 +649,14 @@ fn t6d30_move_without_coast_and_support() {
 }
 
 /// In this case the proposed behavior is that the fleet order should be treated as illegal and
-/// dropped entirely. It's not clear why that would be the case in computerized games, so this
-/// test will remain ignored.
+/// dropped entirely. It's not clear why that would be the case in computerized games, but it is
+/// sensible to still test that the army move fails.
 ///
 /// http://web.inter.nl.net/users/L.B.Kruijswijk/#6.D.31
 #[test]
-#[ignore]
 fn t6d31_a_tricky_impossible_support() {
     judge! {
-       "AUS: A rum -> arm",
+       "AUS: A rum -> arm": Fails,
        "TUR: F bla Supports A rum -> arm",
     };
 }
