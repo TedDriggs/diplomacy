@@ -1,6 +1,7 @@
 # diplomacy
 
-[![Build Status](https://travis-ci.org/TedDriggs/diplomacy.svg?branch=master)](https://travis-ci.org/TedDriggs/diplomacy)
+[![Build Status](https://github.com/TedDriggs/diplomacy/workflows/CI/badge.svg)](https://github.com/TedDriggs/diplomacy/actions)
+[![Latest Version](https://img.shields.io/crates/v/diplomacy.svg)](https://crates.io/crates/diplomacy)
 
 **This is a work in progress.**
 
@@ -22,5 +23,6 @@ This is not going to be a complete Diplomacy app.
 Any sort of persistence or UI is out of scope.
 
 # Optional Features
-* `serde`: Enable serialization and deserialization of many crate types.
-* `dependency-graph`: Add resolver tracing that generates GraphViz-compatible dependency visualizations for main phase resolution.
+
+-   `serde`: Enable serialization and deserialization of many crate types.
+-   `dependency-graph`: Add resolver tracing that generates GraphViz-compatible dependency visualizations for main phase resolution.
