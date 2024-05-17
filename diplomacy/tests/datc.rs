@@ -1865,9 +1865,6 @@ fn t6j01_too_many_remove_orders() {
         .with_unit("FRA: A par");
     judge_build! {
         world,
-        // This is running into an issue where this implementation doesn't
-        // consider these two distinct orders, so it cannot validate that
-        // only one order succeeded.
         "FRA: F lyo disband": Succeeds,
         "FRA: A pic disband": AllDisbandsUsed,
         "FRA: A par disband": AllDisbandsUsed
