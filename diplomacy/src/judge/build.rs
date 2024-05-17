@@ -66,7 +66,7 @@ pub trait WorldState {
 pub struct Context<'a, W: WorldState> {
     world: &'a Map,
     home_scs: HashMap<&'a Nation, HashSet<ProvinceKey>>,
-    ownerships: HashMap<&'a Nation, i16>,
+    ownerships: HashMap<&'a Nation, HashSet<ProvinceKey>>,
     last_time: &'a HashMap<ProvinceKey, Nation>,
     this_time: &'a W,
     orders: Vec<&'a MappedBuildOrder>,
@@ -90,7 +90,7 @@ impl<'a, W: WorldState> Context<'a, W> {
         }
 
         let mut home_scs = HashMap::with_capacity(25);
-        let mut ownerships = HashMap::new();
+        let mut ownerships = HashMap::<&Nation, HashSet<ProvinceKey>>::new();
 
         // Figure out who owns what and where nations are allowed to build.
         for province in world.provinces().filter(|p| p.is_supply_center()) {
@@ -103,7 +103,7 @@ impl<'a, W: WorldState> Context<'a, W> {
 
             let key = ProvinceKey::from(province);
             if let Some(nation) = this_time.occupier(&key).or_else(|| last_time.get(&key)) {
-                *ownerships.entry(nation).or_insert(0) += 1;
+                ownerships.entry(nation).or_default().insert(key);
             }
         }
 
@@ -148,7 +148,8 @@ impl<'a> Resolution<'a> {
             .ownerships
             .iter()
             .filter_map(|(&nation, ownerships)| {
-                let adjustment = ownerships - context.this_time.unit_count(nation) as i16;
+                let adjustment = i16::from(ownerships.len() as u8)
+                    - i16::from(context.this_time.unit_count(nation));
                 match adjustment {
                     0 => None,
                     x if x > 0 => Some((nation, (BuildCommand::Build, x))),
@@ -170,21 +171,7 @@ impl<'a> Resolution<'a> {
             self.resolve_order(context, order);
         }
 
-        for (nation, delta) in &mut self.deltas {
-            if delta.0 == BuildCommand::Build || delta.1 == 0 {
-                continue;
-            }
-
-            let usize_delta: usize = delta.1.try_into().unwrap();
-            let units = self.final_units.remove(nation).unwrap();
-
-            for unit in units.clone().into_iter().take(usize_delta) {
-                self.civil_disorder.insert(unit);
-            }
-
-            self.final_units
-                .insert(nation, units.into_iter().skip(usize_delta).collect());
-        }
+        self.compute_mandatory_disbands(context);
 
         Outcome {
             orders: self.state,
@@ -259,6 +246,100 @@ impl<'a> Resolution<'a> {
     ) -> OrderOutcome {
         self.state.insert(order, resolution);
         resolution
+    }
+
+    /// Balance unit populations with national supply centers by forcibly disbanding
+    /// excess units. This will only have an effect if a nation did not issue enough
+    /// disband orders to cover their supply center losses.
+    fn compute_mandatory_disbands(&mut self, context: &'a Context<impl WorldState>) {
+        let world_graph = context.world.to_graph();
+
+        for (nation, delta) in &mut self.deltas {
+            if delta.0 == BuildCommand::Build || delta.1 == 0 {
+                continue;
+            }
+
+            let usize_delta: usize = delta.1.try_into().unwrap();
+            let units = self.final_units.remove(nation).unwrap();
+
+            // Per 2023 rulebook, units disband based on distance from the nation's owned
+            // supply centers (earlier editions had it based on distance from the home supply centers)
+            let Some(owned_scs) = context.ownerships.get(*nation) else {
+                // If there are no owned supply centers, all units disband
+                self.civil_disorder.extend(units);
+                continue;
+            };
+
+            // Get all regions in the owned supply centers. The rules require checking
+            // distance to all coasts, so province precision is insufficient.
+            let owned_sc_regions = context
+                .world
+                .regions()
+                .filter(|r| owned_scs.contains(r.province()))
+                .collect::<Vec<_>>();
+
+            let mut units_by_disband_priority = units
+                .into_iter()
+                .map(|unit| {
+                    let unit_region = context
+                        .world
+                        .find_region(&unit.1.to_string())
+                        .unwrap_or_else(|| {
+                            panic!("Unit location {} should exist in world", unit.1)
+                        });
+
+                    if owned_sc_regions.contains(&unit_region) {
+                        return (unit, 0);
+                    }
+
+                    let min_distance = owned_sc_regions
+                        .iter()
+                        .filter_map(|sc_region| {
+                            // Using dijkstra because there isn't an obvious way to estimate
+                            // distance for A*, and the graph size is so small that the efficiency
+                            // difference shouldn't matter.
+                            petgraph::algo::dijkstra(
+                                &world_graph,
+                                &unit_region,
+                                Some(sc_region),
+                                // Per DATC test 6.J.6, terrain is ingored in this
+                                // calculation. This is a deviation from older versions
+                                // of the DATC, which stated that sea units could only
+                                // consider sea distances
+                                |_| 1,
+                            )
+                            .get(sc_region)
+                            .copied()
+                        })
+                        .min()
+                        .unwrap_or(i32::MAX);
+
+                    (unit, min_distance)
+                })
+                .collect::<Vec<_>>();
+
+            // Per the DATC, units are sorted by distance from an owned SC. Equidistant fleets
+            // are disbanded before armies, and sorting of units within the same type is done
+            // alphabetically.
+            units_by_disband_priority.sort_by(|a, b| {
+                // Distance from nearest owned supply center, descending
+                b.1.cmp(&a.1)
+                    // when equidistant, disband fleets before armies
+                    .then(b.0 .0.cmp(&a.0 .0))
+                    // when units are same type and equidistant, disband in alphabetical order
+                    .then_with(|| a.0 .1.cmp(&b.0 .1))
+            });
+
+            // Add units from the disband queue to the civil disorder output
+            self.civil_disorder
+                .extend(units_by_disband_priority.drain(0..usize_delta).map(|v| v.0));
+
+            // Add the remaining units to the map of units that survive the turn.
+            self.final_units.insert(
+                nation,
+                units_by_disband_priority.into_iter().map(|v| v.0).collect(),
+            );
+        }
     }
 }
 
