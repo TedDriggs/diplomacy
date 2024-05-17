@@ -1,5 +1,5 @@
 //! An adjudicator for orders in the board game Diplomacy. This adjudicator will
-//! be fully compatible with the [Diplomacy Adjudicator Test Cases](http://web.inter.nl.net/users/L.B.Kruijswijk/).
+//! be fully compatible with the [Diplomacy Adjudicator Test Cases](https://webdiplomacy.net/doc/DATC_v3_0.html).
 
 pub mod calendar;
 pub mod geo;

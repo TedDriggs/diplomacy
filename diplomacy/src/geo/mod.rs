@@ -1,5 +1,5 @@
 //! This module contains the types needed to build a map of the world in Diplomacy.
-//! Terminology in this module comes from the [DATC](http://web.inter.nl.net/users/L.B.Kruijswijk/).
+//! Terminology in this module comes from the [DATC](https://webdiplomacy.net/doc/DATC_v3_0.html).
 
 mod border;
 mod location;
