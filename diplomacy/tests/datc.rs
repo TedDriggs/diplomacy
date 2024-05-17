@@ -1215,6 +1215,35 @@ fn t6f24_second_order_paradox_with_no_resolution() {
     };
 }
 
+/// https://webdiplomacy.net/doc/DATC_v3_0.html#6.F.25
+#[test]
+fn t6f25_cut_support_last() {
+    judge! {
+        "GER: A ruh -> bel": Fails,
+        "GER: A hol Supports A ruh -> bel",
+        "GER: A den -> nwy",
+        "GER: F ska Convoys den -> nwy",
+        "GER: A fin Supports A den -> nwy",
+        "ENG: A yor -> hol": Succeeds,
+        "ENG: F nth Convoys yor -> hol",
+        "ENG: F hel Supports A yor -> hol",
+        "ENG: A bel hold",
+        "RUS: F nwg -> nth": Fails,
+        "RUS: F nwy Supports F nwg -> nth",
+        "RUS: F swe -> ska": Fails,
+    };
+}
+
+/// https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.1
+#[test]
+fn t6g01_two_units_can_swap_provinces_by_convoy() {
+    judge! {
+        "ENG: A nwy -> swe": Succeeds,
+        "ENG: F ska Convoys nwy -> swe",
+        "RUS: A swe -> nwy": Succeeds
+    };
+}
+
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.2
 #[test]
 fn t6g02_kidnapping_an_army() {
@@ -1227,11 +1256,10 @@ fn t6g02_kidnapping_an_army() {
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.3
 #[test]
-#[ignore]
-fn t6g03_kidnapping_with_a_disrupted_convoy() {
+fn t6g03_unwanted_disrupted_convoy_to_adjacent_province() {
     judge! {
-       "FRA: F bre -> eng",
-       "FRA: A pic -> bel",
+       "FRA: F bre -> eng": Succeeds,
+       "FRA: A pic -> bel": Succeeds,
        "FRA: A bur Supports A pic -> bel",
        "FRA: F mao Supports F bre -> eng",
        "ENG: F eng convoys pic -> bel",
@@ -1240,15 +1268,14 @@ fn t6g03_kidnapping_with_a_disrupted_convoy() {
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.4
 #[test]
-#[ignore]
-fn t6g04_kidnapping_with_a_disrupted_convoy_and_opposite_move() {
+fn t6g04_unwanted_disrupted_convoy_to_adjacent_province_and_opposite_move() {
     judge! {
-       "FRA: F bre -> eng",
-       "FRA: A pic -> bel",
+       "FRA: F bre -> eng": Succeeds,
+       "FRA: A pic -> bel": Succeeds,
        "FRA: A bur Supports A pic -> bel",
        "FRA: F mao Supports F bre -> eng",
        "ENG: F eng convoys pic -> bel",
-       "ENG: A bel -> pic",
+       "ENG: A bel -> pic": Fails,
     };
 }
 
