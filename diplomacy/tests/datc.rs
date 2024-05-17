@@ -568,10 +568,21 @@ fn t6d21_dislodging_does_not_cancel_a_support_cut() {
 #[test]
 fn t6d22_impossible_fleet_move_can_not_be_supported() {
     judge! {
-       "GER: F kie -> mun",
+       "GER: F kie -> mun": Fails,
        "GER: A bur Supports F kie -> mun",
-       "RUS: A mun -> kie",
+       "RUS: A mun -> kie": Succeeds,
        "RUS: A ber Supports A mun -> kie",
+    };
+}
+
+/// https://webdiplomacy.net/doc/DATC_v3_0.html#6.D.23
+#[test]
+fn t6d23_impossible_coast_move_can_not_be_supported() {
+    judge! {
+       "ITA: F lyo -> spa(sc)": Succeeds,
+       "ITA: F wes Supports F lyo -> spa(sc)",
+       "FRA: F spa(nc) -> lyo": Fails,
+       "FRA: F mar Supports F spa(nc) -> lyo",
     };
 }
 
@@ -579,11 +590,11 @@ fn t6d22_impossible_fleet_move_can_not_be_supported() {
 #[test]
 fn t6d24_impossible_army_move_can_not_be_supported() {
     judge! {
-       "FRA: A mar -> lyo",
+       "FRA: A mar -> lyo": Fails,
        "FRA: F spa(sc) Supports A mar -> lyo",
-       "ITA: F lyo Hold",
+       "ITA: F lyo Hold": Fails,
        "TUR: F tys Supports F wes -> lyo",
-       "TUR: F wes -> lyo",
+       "TUR: F wes -> lyo": Succeeds,
     };
 }
 
@@ -594,7 +605,7 @@ fn t6d25_failing_hold_support_can_be_supported() {
        "GER: A ber Supports A pru",
        "GER: F kie Supports A ber",
        "RUS: F bal Supports A pru -> ber",
-       "RUS: A pru -> ber",
+       "RUS: A pru -> ber": Fails,
     };
 }
 
@@ -605,7 +616,7 @@ fn t6d26_failing_move_support_can_be_supported() {
        "GER: A ber Supports A pru -> sil",
        "GER: F kie Supports A ber",
        "RUS: F bal Supports A pru -> ber",
-       "RUS: A pru -> ber",
+       "RUS: A pru -> ber": Fails,
     };
 }
 
@@ -613,7 +624,7 @@ fn t6d26_failing_move_support_can_be_supported() {
 #[test]
 fn t6d27_failing_convoy_can_be_supported() {
     judge! {
-       "ENG: F swe -> bal",
+       "ENG: F swe -> bal": Fails,
        "ENG: F den Supports F swe -> bal",
        "GER: A ber Hold",
        "RUS: F bal convoys ber -> lvn",
@@ -623,36 +634,33 @@ fn t6d27_failing_convoy_can_be_supported() {
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.D.28
 #[test]
-#[ignore]
 fn t6d28_impossible_move_and_support() {
     judge! {
        "AUS: A bud Supports F rum",
        "RUS: F rum -> hol",
-       "TUR: F bla -> rum",
+       "TUR: F bla -> rum": Fails,
        "TUR: A bul Supports F bla -> rum",
     };
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.D.29
 #[test]
-#[ignore]
 fn t6d29_move_to_impossible_coast_and_support() {
     judge! {
        "AUS: A bud Supports F rum",
        "RUS: F rum -> bul(sc)",
-       "TUR: F bla -> rum",
+       "TUR: F bla -> rum": Fails,
        "TUR: A bul Supports F bla -> rum",
     };
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.D.30
 #[test]
-#[ignore]
 fn t6d30_move_without_coast_and_support() {
     judge! {
        "ITA: F aeg Supports F con",
-       "RUS: F con -> bul",
-       "TUR: F bla -> con",
+       "RUS: F con -> bul": Fails,
+       "TUR: F bla -> con": Fails,
        "TUR: A bul Supports F bla -> con",
     };
 }
@@ -670,18 +678,14 @@ fn t6d31_a_tricky_impossible_support() {
     };
 }
 
-/// In this case it is proposed that the army order be treated as illegal and dropped entirely.
-/// It's not clear why that should be the case, so this will remain ignored for now.
-///
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.D.32
 #[test]
-#[ignore]
 fn t6d32_a_missing_fleet() {
     judge! {
        "ENG: F edi Supports A lvp -> yor",
-       "ENG: A lvp -> yor",
+       "ENG: A lvp -> yor": Fails,
        "FRA: F lon Supports A yor",
-       "GER: A yor -> hol",
+       "GER: A yor -> hol": Fails,
     };
 }
 
@@ -793,12 +797,12 @@ fn t6e06_not_dislodge_because_of_own_support_has_still_effect() {
 #[test]
 fn t6e07_no_self_dislodgement_with_beleaguered_garrison() {
     judge! {
-       "ENG: F nth Hold",
+       "ENG: F nth Hold": Succeeds,
        "ENG: F yor Supports F nwy -> nth",
        "GER: F hol Supports F hel -> nth",
-       "GER: F hel -> nth",
+       "GER: F hel -> nth": Fails,
        "RUS: F ska Supports F nwy -> nth",
-       "RUS: F nwy -> nth",
+       "RUS: F nwy -> nth": Fails,
     };
 }
 
@@ -806,12 +810,12 @@ fn t6e07_no_self_dislodgement_with_beleaguered_garrison() {
 #[test]
 fn t6e08_no_self_dislodgement_with_beleaguered_garrison_and_head_to_head_battle() {
     judge! {
-       "ENG: F nth -> nwy",
+       "ENG: F nth -> nwy": Fails,
        "ENG: F yor Supports F nwy -> nth",
        "GER: F hol Supports F hel -> nth",
-       "GER: F hel -> nth",
+       "GER: F hel -> nth": Fails,
        "RUS: F ska Supports F nwy -> nth",
-       "RUS: F nwy -> nth",
+       "RUS: F nwy -> nth": Fails,
     };
 }
 
@@ -832,13 +836,13 @@ fn t6e09_almost_self_dislodgement_with_beleaguered_garrison() {
 #[test]
 fn t6e10_almost_circular_movement_with_no_self_dislodgement_with_beleaguered_garrison() {
     judge! {
-       "ENG: F nth -> den",
+       "ENG: F nth -> den": Fails,
        "ENG: F yor Supports F nwy -> nth",
        "GER: F hol Supports F hel -> nth",
-       "GER: F hel -> nth",
-       "GER: F den -> hel",
+       "GER: F hel -> nth": Fails,
+       "GER: F den -> hel": Fails,
        "RUS: F ska Supports F nwy -> nth",
-       "RUS: F nwy -> nth",
+       "RUS: F nwy -> nth": Fails,
     };
 }
 
