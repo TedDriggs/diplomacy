@@ -1774,9 +1774,6 @@ fn t6i01_too_many_build_orders() {
         .with_unit("GER: A ruh")
         .with_unit("GER: A pru");
     judge_build! { world,
-        // This first one seems like an error in the DATC; the intent
-        // was likely to build in `kie`, but the build was issued to
-        // a Russian home supply center instead.
         "GER: A war build": InvalidProvince,
         "GER: A ber build": Succeeds,
         "GER: A mun build": AllBuildsUsed,
@@ -1843,10 +1840,9 @@ fn t6i07_only_one_build_in_a_home_supply_center() {
     let (final_units, _) = judge_build! {
         world,
         "RUS: A mos build": Succeeds,
-        // This is running into an issue where this implementation doesn't
-        // consider these two distinct orders, so it cannot validate that
-        // only one order succeeded. Instead of checking that this order
-        // failed, we add another valid build and ensure it too succeeds.
+        // This implementation doesn't consider these two distinct orders,
+        // so it cannot validate that only one order succeeded.
+        // Instead, we add another valid build and ensure it too succeeds.
         "RUS: A mos build",
         "RUS: A war build": Succeeds
     };
@@ -1859,14 +1855,14 @@ fn t6i07_only_one_build_in_a_home_supply_center() {
 fn t6j01_too_many_remove_orders() {
     use diplomacy::judge::build::OrderOutcome::*;
     let world = TestWorld::empty()
-        .with_unit("ITA: A mar")
-        .with_unit("FRA: F lyo")
+        .with_occupier("bre", "ENG")
+        .with_occupier("mar", "ITA")
         .with_unit("FRA: A pic")
         .with_unit("FRA: A par");
     judge_build! {
         world,
-        "FRA: F lyo disband": Succeeds,
-        "FRA: A pic disband": AllDisbandsUsed,
+        "FRA: F lyo disband": DisbandingNonexistentUnit,
+        "FRA: A pic disband": Succeeds,
         "FRA: A par disband": AllDisbandsUsed
     };
 }
@@ -1884,11 +1880,6 @@ fn t6j02_removing_the_same_unit_twice() {
     let (final_units, civil_disorder) = judge_build! {
         world,
         "FRA: A par disband": Succeeds,
-        // This implementation doesn't consider these two distinct orders,
-        // so it cannot validate that only one order succeeded. To ensure
-        // that a nation cannot trick the adjudicator with duplicate disband
-        // orders, the test has been modified to require France to remove
-        // two units, and the test ensures that one unit was forcibly disbanded.
         "FRA: A par disband"
     };
 
@@ -1896,15 +1887,6 @@ fn t6j02_removing_the_same_unit_twice() {
     assert!(!civil_disorder.is_empty());
 }
 
-/// This test differs significantly from the test as written, for two reasons:
-///
-/// 1. The test-as-written does not require Russia to disband anything, as it
-///    controls both Sweden and St Petersburg. This appears to be an error in
-///    the test.
-/// 2. The test says that Sweden should disband for being farther from a home
-///    supply center, but the 2023 rules instead say distance should be measured
-///    from an _owned_ supply center.
-///
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.3
 #[test]
 fn t6j03_civil_disorder_two_armies_with_different_distance() {
@@ -1912,7 +1894,7 @@ fn t6j03_civil_disorder_two_armies_with_different_distance() {
         .with_occupier("war", "GER")
         .with_occupier("mos", "GER")
         .with_occupier("sev", "TUR")
-        .with_unit("RUS: A fin")
+        .with_unit("RUS: A lvn")
         .with_unit("RUS: A pru");
     let (_, civil_disorder) = judge_build!(world);
     assert_eq!(civil_disorder, once((UnitType::Army, reg("pru"))).collect());
@@ -1933,10 +1915,6 @@ fn t6j04_civil_disorder_two_armies_with_equal_distance() {
     assert_eq!(civil_disorder, once((UnitType::Army, reg("lvn"))).collect());
 }
 
-/// This test had to be modified, as it ignores the 2023 change
-/// where disband distances are measured from owned supply centers,
-/// rather than home supply centers.
-///
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.5
 #[test]
 fn t6j05_civil_disorder_two_fleets_with_different_distance() {
@@ -2008,13 +1986,20 @@ fn t6j08_civil_disorder_a_fleet_with_shorter_distance_then_the_army() {
     assert_eq!(civil_disorder, once((UnitType::Army, reg("tyr"))).collect());
 }
 
-/// The location of the disbanded army was moved from Greece to
-/// Albania, as this test was not updated to the 2023 rule to use
-/// owned supply centers rather than home supply centers.
-///
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.9
 #[test]
 fn t6j09_civil_disorder_must_be_counted_from_both_coasts() {
+    let world = TestWorld::empty()
+        .with_occupier("war", "GER")
+        .with_occupier("mos", "ENG")
+        .with_unit("RUS: A alb")
+        .with_unit("RUS: A sev")
+        .with_unit("RUS: F bal");
+
+    let (_, civil_disorder) = judge_build!(world);
+
+    assert_eq!(civil_disorder, once((UnitType::Army, reg("alb"))).collect());
+
     let world = TestWorld::empty()
         .with_occupier("war", "GER")
         .with_occupier("mos", "ENG")
