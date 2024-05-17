@@ -819,12 +819,12 @@ fn t6e08_no_self_dislodgement_with_beleaguered_garrison_and_head_to_head_battle(
 #[test]
 fn t6e09_almost_self_dislodgement_with_beleaguered_garrison() {
     judge! {
-       "ENG: F nth -> nwg",
+       "ENG: F nth -> nwg": Succeeds,
        "ENG: F yor Supports F nwy -> nth",
        "GER: F hol Supports F hel -> nth",
-       "GER: F hel -> nth",
+       "GER: F hel -> nth": Fails,
        "RUS: F ska Supports F nwy -> nth",
-       "RUS: F nwy -> nth",
+       "RUS: F nwy -> nth": Succeeds,
     };
 }
 
@@ -847,12 +847,12 @@ fn t6e10_almost_circular_movement_with_no_self_dislodgement_with_beleaguered_gar
 fn t6e11_no_self_dislodgement_with_beleaguered_garrison_unit_swap_with_adjacent_convoying_and_two_coasts(
 ) {
     judge! {
-       "FRA: A spa -> por via Convoy",
+       "FRA: A spa -> por via Convoy": Succeeds,
        "FRA: F mao convoys spa -> por",
        "FRA: F lyo Supports F por -> spa(nc)",
        "GER: A mar Supports A gas -> spa",
-       "GER: A gas -> spa",
-       "ITA: F por -> spa(nc)",
+       "GER: A gas -> spa": Fails,
+       "ITA: F por -> spa(nc)": Succeeds,
        "ITA: F wes Supports F por -> spa(nc)",
     };
 }
@@ -970,11 +970,11 @@ fn t6f06_dislodged_convoy_does_not_cut_support() {
     judge! {
        "ENG: F nth convoys lon -> hol",
        "ENG: A lon -> hol",
-       "GER: A hol Supports A bel",
+       "GER: A hol Supports A bel": Succeeds,
        "GER: A bel Supports A hol",
        "GER: F hel Supports F ska -> nth",
        "GER: F ska -> nth",
-       "FRA: A pic -> bel",
+       "FRA: A pic -> bel": Fails,
        "FRA: A bur Supports A pic -> bel",
     };
 }
@@ -1008,9 +1008,9 @@ fn t6f09_dislodge_of_multi_route_convoy() {
     judge! {
        "ENG: F eng convoys lon -> bel",
        "ENG: F nth convoys lon -> bel",
-       "ENG: A lon -> bel",
+       "ENG: A lon -> bel": Succeeds,
        "FRA: F bre Supports F mao -> eng",
-       "FRA: F mao -> eng",
+       "FRA: F mao -> eng": Succeeds,
     };
 }
 
@@ -1019,10 +1019,10 @@ fn t6f09_dislodge_of_multi_route_convoy() {
 fn t6f10_dislodge_of_multi_route_convoy_with_foreign_fleet() {
     judge! {
        "ENG: F nth convoys lon -> bel",
-       "ENG: A lon -> bel",
+       "ENG: A lon -> bel": Succeeds,
        "GER: F eng convoys lon -> bel",
        "FRA: F bre Supports F mao -> eng",
-       "FRA: F mao -> eng",
+       "FRA: F mao -> eng": Succeeds,
     };
 }
 
@@ -1030,11 +1030,11 @@ fn t6f10_dislodge_of_multi_route_convoy_with_foreign_fleet() {
 #[test]
 fn t6f11_dislodge_of_multi_route_convoy_with_only_foreign_fleets() {
     judge! {
-       "ENG: A lon -> bel",
+       "ENG: A lon -> bel": Succeeds,
        "GER: F eng convoys lon -> bel",
        "RUS: F nth convoys lon -> bel",
        "FRA: F bre Supports F mao -> eng",
-       "FRA: F mao -> eng",
+       "FRA: F mao -> eng": Succeeds,
     };
 }
 
@@ -1054,11 +1054,11 @@ fn t6f12_dislodged_convoying_fleet_not_on_route() {
 #[test]
 fn t6f13_the_unwanted_alternative() {
     judge! {
-       "ENG: A lon -> bel",
+       "ENG: A lon -> bel": Succeeds,
        "ENG: F nth convoys lon -> bel",
        "FRA: F eng convoys lon -> bel",
        "GER: F hol Supports F den -> nth",
-       "GER: F den -> nth",
+       "GER: F den -> nth": Succeeds,
     };
 }
 
