@@ -7,7 +7,8 @@ mod util;
 #[path = "./world.rs"]
 mod world;
 
-use diplomacy::geo::RegionKey;
+use std::iter::once;
+
 use diplomacy::judge::OrderState::{Fails, Succeeds};
 use diplomacy::judge::{retreat::DestStatus, InvalidOrder, OrderOutcome, Rulebook};
 use diplomacy::{geo, Nation, UnitType};
@@ -1917,10 +1918,7 @@ fn t6j03_civil_disorder_two_armies_with_different_distance() {
         .with_unit("RUS: A fin")
         .with_unit("RUS: A pru");
     let (_, civil_disorder) = judge_build!(world);
-    assert_eq!(
-        civil_disorder,
-        std::iter::once((UnitType::Army, RegionKey::new("pru", None))).collect()
-    );
+    assert_eq!(civil_disorder, once((UnitType::Army, reg("pru"))).collect());
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.4
@@ -1935,10 +1933,7 @@ fn t6j04_civil_disorder_two_armies_with_equal_distance() {
 
     let (_, civil_disorder) = judge_build!(world);
 
-    assert_eq!(
-        civil_disorder,
-        std::iter::once((UnitType::Army, RegionKey::new("lvn", None))).collect()
-    );
+    assert_eq!(civil_disorder, once((UnitType::Army, reg("lvn"))).collect());
 }
 
 /// This test had to be modified, as it ignores the 2023 change
@@ -1959,7 +1954,7 @@ fn t6j05_civil_disorder_two_fleets_with_different_distance() {
 
     assert_eq!(
         civil_disorder,
-        std::iter::once((UnitType::Fleet, RegionKey::new("nao", None))).collect()
+        once((UnitType::Fleet, reg("nao"))).collect()
     );
 }
 
@@ -1979,7 +1974,7 @@ fn t6j06_civil_disorder_two_fleets_with_equal_distance() {
 
     assert_eq!(
         civil_disorder,
-        std::iter::once((UnitType::Fleet, RegionKey::new("bot", None))).collect()
+        once((UnitType::Fleet, reg("bot"))).collect()
     );
 }
 
@@ -1997,7 +1992,7 @@ fn t6j07_civil_disorder_two_fleets_and_army_with_equal_distance() {
 
     assert_eq!(
         civil_disorder,
-        std::iter::once((UnitType::Fleet, RegionKey::new("nth", None))).collect()
+        once((UnitType::Fleet, reg("nth"))).collect()
     );
 }
 
@@ -2013,10 +2008,7 @@ fn t6j08_civil_disorder_a_fleet_with_shorter_distance_then_the_army() {
 
     let (_, civil_disorder) = judge_build!(world);
 
-    assert_eq!(
-        civil_disorder,
-        std::iter::once((UnitType::Army, RegionKey::new("tyr", None))).collect()
-    );
+    assert_eq!(civil_disorder, once((UnitType::Army, reg("tyr"))).collect());
 }
 
 /// The location of the disbanded army was moved from Greece to
@@ -2035,10 +2027,7 @@ fn t6j09_civil_disorder_must_be_counted_from_both_coasts() {
 
     let (_, civil_disorder) = judge_build!(world);
 
-    assert_eq!(
-        civil_disorder,
-        std::iter::once((UnitType::Army, RegionKey::new("alb", None))).collect()
-    );
+    assert_eq!(civil_disorder, once((UnitType::Army, reg("alb"))).collect());
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.10
@@ -2052,10 +2041,7 @@ fn t6j10_civil_disorder_counting_convoying_distance() {
 
     let (_, civil_disorder) = judge_build!(world);
 
-    assert_eq!(
-        civil_disorder,
-        std::iter::once((UnitType::Army, RegionKey::new("pie", None))).collect()
-    );
+    assert_eq!(civil_disorder, once((UnitType::Army, reg("pie"))).collect());
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.11
@@ -2070,8 +2056,5 @@ fn t6j11_distance_to_owned_supply_center() {
 
     let (_, civil_disorder) = judge_build!(world);
 
-    assert_eq!(
-        civil_disorder,
-        std::iter::once((UnitType::Army, RegionKey::new("tus", None))).collect()
-    );
+    assert_eq!(civil_disorder, once((UnitType::Army, reg("tus"))).collect());
 }
