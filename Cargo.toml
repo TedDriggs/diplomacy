@@ -1,4 +1,3 @@
 [workspace]
-members = [
-    "diplomacy"
-]
+members = ["diplomacy"]
+resolver = "2"
