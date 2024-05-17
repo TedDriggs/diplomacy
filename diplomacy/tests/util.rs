@@ -182,7 +182,7 @@ pub fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
 
     let out = ctx.adjudicate(geo::standard_map(), Rulebook);
     for o in ctx.submitted_orders() {
-        println!("{:?}: {:?}", o, out.get(&o).unwrap());
+        println!("{:?}: {:?}", o, out.get(o).unwrap());
     }
 
     out.into()

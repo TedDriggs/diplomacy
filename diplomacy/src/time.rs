@@ -183,7 +183,7 @@ mod test {
 
     #[test]
     fn cmp() {
-        let turns = vec!["S1901M", "S1901R", "F1901M", "F1901R", "F1901B", "W1901B"];
+        let turns = ["S1901M", "S1901R", "F1901M", "F1901R", "F1901B", "W1901B"];
 
         let parsed = turns
             .iter()
