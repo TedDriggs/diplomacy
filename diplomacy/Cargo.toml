@@ -1,10 +1,10 @@
 [package]
 name = "diplomacy"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Ted Driggs <ted.driggs@outlook.com>"]
 edition = "2021"
 description = "Adjudication library for the board game Diplomacy"
-documentation = "https://docs.rs/diplomacy/0.1.1"
+documentation = "https://docs.rs/diplomacy/0.1.2"
 repository = "https://github.com/TedDriggs/diplomacy"
 license = "MIT"
 
