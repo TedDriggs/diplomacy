@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use super::{Border, Province, ProvinceKey, Region, RegionKey};
+use petgraph::graphmap::UnGraphMap;
+
+use super::{Border, Province, ProvinceKey, Region, RegionKey, Terrain};
 use crate::geo::builder::BorderRegistry;
 
 /// A collection of provinces, their constituent regions, and the interconnecting borders.
@@ -16,6 +18,12 @@ impl Map {
     /// but order is unspecified.
     pub fn provinces(&self) -> impl Iterator<Item = &Province> {
         self.provinces.values()
+    }
+
+    /// Iterate through the regions in the map. Each region will be returned exactly once,
+    /// but order is unspecified.
+    pub fn regions(&self) -> impl Iterator<Item = &Region> {
+        self.regions.values()
     }
 
     /// Find a region by its canonical short name.
@@ -46,6 +54,25 @@ impl Map {
     /// Used for support and convoy cases.
     pub fn find_borders_between<'a>(&'a self, r1: &RegionKey, p2: &ProvinceKey) -> Vec<&Border> {
         self.borders.iter().filter(|b| b.connects(r1, p2)).collect()
+    }
+
+    pub fn to_graph(&self) -> UnGraphMap<&Region, Terrain> {
+        let mut graph = UnGraphMap::new();
+        let node_index = self
+            .regions()
+            .map(|r| (RegionKey::from(r), graph.add_node(r)))
+            .collect::<HashMap<_, _>>();
+
+        for border in &self.borders {
+            let (a, b) = border.sides();
+            graph.add_edge(
+                *node_index.get(a).expect("Region should be registered"),
+                *node_index.get(b).expect("Region should be registered"),
+                border.terrain(),
+            );
+        }
+
+        graph
     }
 }
 

@@ -11,6 +11,7 @@ license = "MIT"
 [dependencies]
 from_variants = "0.4.0"
 lazy_static = "1.4.0"
+petgraph = "0.6.5"
 serde = { version = "1.0.112", features = [ "derive" ], optional = true }
 
 [features]

@@ -43,7 +43,7 @@ impl FromStr for Coast {
 
 /// The type of environment (land, sea, coast). Armies cannot operate at sea, and
 /// fleets cannot operate on land.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Terrain {
     Land,
@@ -52,7 +52,7 @@ pub enum Terrain {
 }
 
 /// A space to which a unit can move. Provinces are made up of 1 or more regions.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Region(ProvinceKey, Option<Coast>, Terrain);
 
