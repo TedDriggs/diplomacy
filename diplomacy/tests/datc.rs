@@ -1429,7 +1429,7 @@ fn t6g15_bounce_and_dislodge_with_double_convoy() {
     judge! {
        "ENG: F nth convoys lon -> bel",
        "ENG: A hol Supports A lon -> bel",
-       "ENG: A yor -> lon",
+       "ENG: A yor -> lon": Fails,
        "ENG: A lon -> bel via Convoy",
        "FRA: F eng convoys bel -> lon",
        "FRA: A bel -> lon via Convoy",
