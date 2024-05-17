@@ -9,10 +9,10 @@ repository = "https://github.com/TedDriggs/diplomacy"
 license = "MIT"
 
 [dependencies]
-from_variants = "0.4.0"
+from_variants = "1.0.2"
 lazy_static = "1.4.0"
 petgraph = "0.6.5"
-serde = { version = "1.0.112", features = [ "derive" ], optional = true }
+serde = { version = "1.0.112", features = ["derive"], optional = true }
 
 [features]
 dependency-graph = []
