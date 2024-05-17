@@ -17,7 +17,7 @@ pub use self::state_type::OrderState;
 pub use self::convoy::ConvoyOutcome;
 pub use self::rulebook::AttackOutcome;
 pub use self::rulebook::HoldOutcome;
-pub(self) use self::strength::Prevent;
+use self::strength::Prevent;
 pub use self::support::SupportOutcome;
 
 pub use self::resolver::{Context, ResolverState, Submission};

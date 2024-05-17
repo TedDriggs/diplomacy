@@ -32,13 +32,13 @@ impl Map {
     }
 
     /// Get all borders with a region.
-    pub fn borders_containing<'a, L: PartialEq<RegionKey>>(&'a self, r: &L) -> Vec<&Border> {
+    pub fn borders_containing<L: PartialEq<RegionKey>>(&self, r: &L) -> Vec<&Border> {
         self.borders.iter().filter(|b| b.contains(r)).collect()
     }
 
     /// Gets the set of regions which connect to the specified region. If `terrain`
     /// is provided, only borders matching that terrain will be provided.
-    pub fn find_bordering<'a>(&'a self, region: &impl PartialEq<RegionKey>) -> Vec<&RegionKey> {
+    pub fn find_bordering(&self, region: &impl PartialEq<RegionKey>) -> Vec<&RegionKey> {
         self.borders_containing(region)
             .iter()
             .filter_map(|b| b.dest_from(region))
@@ -52,7 +52,7 @@ impl Map {
 
     /// Finds all borders connecting a region to a given province.
     /// Used for support and convoy cases.
-    pub fn find_borders_between<'a>(&'a self, r1: &RegionKey, p2: &ProvinceKey) -> Vec<&Border> {
+    pub fn find_borders_between(&self, r1: &RegionKey, p2: &ProvinceKey) -> Vec<&Border> {
         self.borders.iter().filter(|b| b.connects(r1, p2)).collect()
     }
 

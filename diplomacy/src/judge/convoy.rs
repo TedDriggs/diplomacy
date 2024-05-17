@@ -66,9 +66,9 @@ fn route_steps<'a>(
         let mut paths = vec![];
         for convoy in convoys {
             // move to adjacent, and don't allow backtracking/cycles
-            if !working_path.contains(&convoy) && adjacent_regions.contains(&&convoy.region) {
+            if !working_path.contains(convoy) && adjacent_regions.contains(&&convoy.region) {
                 let mut next_path = working_path.clone();
-                next_path.push(&convoy);
+                next_path.push(convoy);
                 let mut steps =
                     route_steps(map, convoys, convoy.region.province(), dest, next_path);
                 if !steps.is_empty() {

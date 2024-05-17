@@ -217,7 +217,7 @@ impl<'a> Resolution<'a> {
 
                 self.final_units
                     .entry(&order.nation)
-                    .or_insert_with(HashSet::new)
+                    .or_default()
                     .insert((order.unit_type, order.region.clone()));
 
                 self.resolve_as(order, Succeeds)
@@ -231,7 +231,7 @@ impl<'a> Resolution<'a> {
 
                 self.final_units
                     .entry(&order.nation)
-                    .or_insert_with(HashSet::new)
+                    .or_default()
                     .remove(&(order.unit_type, order.region.clone()));
 
                 self.resolve_as(order, Succeeds)
@@ -300,7 +300,7 @@ impl<'a> Resolution<'a> {
                             // difference shouldn't matter.
                             petgraph::algo::dijkstra(
                                 &world_graph,
-                                &unit_region,
+                                unit_region,
                                 Some(sc_region),
                                 // Per DATC test 6.J.6, terrain is ingored in this
                                 // calculation. This is a deviation from older versions

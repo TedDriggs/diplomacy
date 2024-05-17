@@ -34,10 +34,7 @@ impl<L: Location> Command<L> for MainCommand<L> {
     }
 
     fn is_move(&self) -> bool {
-        match *self {
-            MainCommand::Move(..) => true,
-            _ => false,
-        }
+        matches!(*self, MainCommand::Move(_))
     }
 }
 

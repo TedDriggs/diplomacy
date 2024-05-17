@@ -74,7 +74,7 @@ pub fn is_order_cut<'a>(
     support_order: &MappedMainOrder,
 ) -> bool {
     ctx.orders()
-        .any(|order| order_cuts(ctx, resolver, support_order, &order))
+        .any(|order| order_cuts(ctx, resolver, support_order, order))
 }
 
 pub fn is_supporting_self(support_order: &MappedMainOrder) -> bool {
@@ -135,7 +135,7 @@ pub fn is_successful<'a>(
         is_legal(support_order)
             && beneficiary.is_legal()
             && beneficiary == supported
-            && can_reach(&ctx.world_map, support_order)
+            && can_reach(ctx.world_map, support_order)
             && resolver.resolve(ctx, support_order).into()
     } else {
         false

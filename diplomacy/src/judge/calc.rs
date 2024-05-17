@@ -112,7 +112,7 @@ pub fn max_prevent_result<'a>(
             if is_head_to_head(context, resolver, order, preventing)
                 && resolver.resolve(context, order).into()
             {
-                if best_prevent == None {
+                if best_prevent.is_none() {
                     best_prevent = Some(Prevent::LostHeadToHead);
                 }
                 continue;

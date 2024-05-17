@@ -223,7 +223,7 @@ where
     }
 
     fn find_province_occupier(&self, province: &L::Province) -> Option<UnitPosition<'_, &L>> {
-        self.get(&province).cloned()
+        self.get(province).cloned()
     }
 
     fn find_region_occupier(&self, region: &L) -> Option<Unit<'_>> {

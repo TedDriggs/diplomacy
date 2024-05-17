@@ -94,10 +94,7 @@ impl Rulebook {
                         // Supports to a foreign unit can not be used to dislodge an own unit.
                         // Therefore, we remove any move supports from the nation whose unit
                         // is resisting the move.
-                        atk_supports = atk_supports
-                            .into_iter()
-                            .filter(|sup| sup.nation != occupier.nation)
-                            .collect();
+                        atk_supports.retain(|sup| sup.nation != occupier.nation);
                         atk_strength = 1 + atk_supports.len();
 
                         if atk_strength <= resistance {

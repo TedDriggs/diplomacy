@@ -327,11 +327,7 @@ impl<'a> ResolverState<'a> {
     }
 
     fn knows_outcome_of(&self, order: &MappedMainOrder) -> bool {
-        if let Some(ResolutionState::Known(_)) = self.state.get(order) {
-            true
-        } else {
-            false
-        }
+        matches!(self.state.get(order), Some(ResolutionState::Known(_)))
     }
 
     pub(crate) fn order_in_paradox(&self, order: &'a MappedMainOrder) -> bool {
