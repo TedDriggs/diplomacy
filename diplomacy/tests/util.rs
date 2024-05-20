@@ -27,12 +27,13 @@ macro_rules! submit_main_phase {
     };
     ($($rule:tt $(: $outcome:expr)?,)+) => {
         {
+            let map = diplomacy::geo::standard_map();
             use ::diplomacy::judge::{MappedMainOrder, Submission};
             let orders = vec![$($rule),*].into_iter().map(ord).collect::<Vec<_>>();
             let expectations: ::std::collections::HashMap<MappedMainOrder, _> = vec![$($((ord($rule), $outcome),)?)*]
                 .into_iter()
                 .collect();
-            (Submission::with_inferred_state(orders), expectations)
+            (Submission::with_inferred_state(&map, orders), expectations)
         }
     };
 }
@@ -40,10 +41,7 @@ macro_rules! submit_main_phase {
 #[macro_export]
 macro_rules! resolve_main {
     ($context:expr, $expectation:expr) => {{
-        let outcome = $context.adjudicate(
-            ::diplomacy::geo::standard_map(),
-            ::diplomacy::judge::Rulebook,
-        );
+        let outcome = $context.adjudicate(::diplomacy::judge::Rulebook);
 
         // We refer back to the submitted orders to ensure we visit orders in the same
         // order across test runs. This makes output diffing easier.
@@ -173,9 +171,9 @@ pub fn build_ord(s: &str) -> MappedBuildOrder {
 
 pub fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
     let parsed = orders.into_iter().map(ord).collect::<Vec<_>>();
-    let ctx = diplomacy::judge::Submission::with_inferred_state(parsed);
+    let ctx = diplomacy::judge::Submission::with_inferred_state(geo::standard_map(), parsed);
 
-    let out = ctx.adjudicate(geo::standard_map(), Rulebook);
+    let out = ctx.adjudicate(Rulebook);
     for o in ctx.submitted_orders() {
         println!("{:?}: {:?}", o, out.get(o).unwrap());
     }

@@ -1,4 +1,4 @@
-use super::{Adjudicate, InvalidOrder, MappedMainOrder, OrderState, Outcome, Rulebook};
+use super::{convoy, Adjudicate, InvalidOrder, MappedMainOrder, OrderState, Outcome, Rulebook};
 use crate::geo::{Map, ProvinceKey, RegionKey};
 use crate::order::{Command, MainCommand, Order};
 use crate::{Unit, UnitPosition, UnitPositions};
@@ -6,7 +6,8 @@ use std::collections::{HashMap, HashSet};
 #[cfg(feature = "dependency-graph")]
 use std::{cell::RefCell, collections::BTreeSet, rc::Rc};
 
-pub struct Submission {
+pub struct Submission<'a> {
+    world_map: &'a Map,
     submitted_orders: Vec<MappedMainOrder>,
     civil_disorder_orders: Vec<MappedMainOrder>,
     /// A map of indexes in `submitted_orders` to the reason those orders are invalid.
@@ -14,26 +15,29 @@ pub struct Submission {
     invalid_orders: HashMap<usize, InvalidOrder>,
 }
 
-impl Submission {
+impl<'a> Submission<'a> {
     /// Start a new adjudication by submitting orders against a given starting
     /// state. This will identify and resolve invalid orders, and generate hold orders
     /// for any units that lack valid orders.
     pub fn new(
+        world_map: &'a Map,
         starting_state: &impl UnitPositions<RegionKey>,
         orders: Vec<MappedMainOrder>,
     ) -> Self {
-        Submission::new_internal(Some(starting_state), orders)
+        Submission::new_internal(world_map, Some(starting_state), orders)
     }
 
-    pub fn with_inferred_state(orders: Vec<MappedMainOrder>) -> Self {
-        Submission::new_internal(None::<&Vec<MappedMainOrder>>, orders)
+    pub fn with_inferred_state(world_map: &'a Map, orders: Vec<MappedMainOrder>) -> Self {
+        Submission::new_internal(world_map, None::<&Vec<MappedMainOrder>>, orders)
     }
 
     fn new_internal(
+        world_map: &'a Map,
         start: Option<&impl UnitPositions<RegionKey>>,
         orders: Vec<MappedMainOrder>,
     ) -> Self {
         let mut temp = Submission {
+            world_map,
             submitted_orders: orders,
             civil_disorder_orders: vec![],
             invalid_orders: HashMap::new(),
@@ -51,7 +55,7 @@ impl Submission {
     }
 
     /// Adjudicate the submission using the provided map and rules
-    pub fn adjudicate<'a, A: Adjudicate>(&'a self, world: &'a Map, rules: A) -> Outcome<'a, A> {
+    pub fn adjudicate<A: Adjudicate>(&self, rules: A) -> Outcome<A> {
         let invalid_orders = self
             .invalid_orders
             .iter()
@@ -59,7 +63,7 @@ impl Submission {
             .collect::<HashMap<_, _>>();
 
         let mut context = Context::new(
-            world,
+            self.world_map,
             rules,
             self.submitted_orders
                 .iter()
@@ -118,6 +122,20 @@ impl Submission {
                 } else {
                     invalid_orders.insert(index, InvalidOrder::NoUnit);
                 }
+            }
+            // From DATC v3.0, section 3:
+            // - A legal order is an order that, not knowing any other orders yet,
+            //   is possible. An impossible order, like "A Bohemia - Edinburgh", is illegal.
+            // - Illegal orders are completely ignored and do not have any influence.
+            else if order.is_move()
+                && !(order
+                    .move_dest()
+                    .and_then(|d| self.world_map.find_border_between(&order.region, d))
+                    .map(|b| b.is_passable_by(order.unit_type))
+                    .unwrap_or(false)
+                    || convoy::route_may_exist(self.world_map, positions.iter().cloned(), order))
+            {
+                invalid_orders.insert(index, InvalidOrder::UnreachableDestination);
             } else if !ordered_units.insert(order) {
                 invalid_orders.insert(index, InvalidOrder::MultipleToSameUnit);
             }
@@ -150,7 +168,7 @@ impl Submission {
 }
 
 /// Unit positions at the start of the turn.
-impl UnitPositions<RegionKey> for Submission {
+impl UnitPositions<RegionKey> for Submission<'_> {
     fn unit_positions(&self) -> Vec<UnitPosition<'_>> {
         self.adjudicated_orders()
             .map(|ord| ord.unit_position())

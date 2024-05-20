@@ -19,38 +19,41 @@ fn dipmath_figure9() {
     let ger = Nation::from("ger");
     let rus = Nation::from("rus");
 
-    let orders = Submission::with_inferred_state(vec![
-        Order::new(
-            eng,
-            UnitType::Fleet,
-            reg("nwg"),
-            MoveCommand::new(reg("nth")).into(),
-        ),
-        Order::new(
-            ger.clone(),
-            UnitType::Fleet,
-            reg("nth"),
-            MoveCommand::new(reg("nwy")).into(),
-        ),
-        Order::new(
-            rus,
-            UnitType::Fleet,
-            reg("nwy"),
-            MoveCommand::new(reg("nwg")).into(),
-        ),
-        Order::new(
-            ger,
-            UnitType::Fleet,
-            reg("ska"),
-            MainCommand::Support(SupportedOrder::Move(
+    let orders = Submission::with_inferred_state(
+        geo::standard_map(),
+        vec![
+            Order::new(
+                eng,
+                UnitType::Fleet,
+                reg("nwg"),
+                MoveCommand::new(reg("nth")).into(),
+            ),
+            Order::new(
+                ger.clone(),
                 UnitType::Fleet,
                 reg("nth"),
+                MoveCommand::new(reg("nwy")).into(),
+            ),
+            Order::new(
+                rus,
+                UnitType::Fleet,
                 reg("nwy"),
-            )),
-        ),
-    ]);
+                MoveCommand::new(reg("nwg")).into(),
+            ),
+            Order::new(
+                ger,
+                UnitType::Fleet,
+                reg("ska"),
+                MainCommand::Support(SupportedOrder::Move(
+                    UnitType::Fleet,
+                    reg("nth"),
+                    reg("nwy"),
+                )),
+            ),
+        ],
+    );
 
-    let result = orders.adjudicate(geo::standard_map(), Rulebook);
+    let result = orders.adjudicate(Rulebook);
 
     for order in orders.submitted_orders() {
         assert_eq!(result.get(order).unwrap(), &OrderState::Succeeds);
@@ -63,32 +66,35 @@ fn dipmath_figure6() {
     let ger = Nation::from("ger");
     let rus = Nation::from("rus");
 
-    let orders = Submission::with_inferred_state(vec![
-        Order::new(
-            ger.clone(),
-            UnitType::Army,
-            reg("ber"),
-            MoveCommand::new(reg("sil")).into(),
-        ),
-        Order::new(
-            ger.clone(),
-            UnitType::Army,
-            reg("mun"),
-            MainCommand::Support(SupportedOrder::Move(UnitType::Army, reg("ber"), reg("sil"))),
-        ),
-        Order::new(
-            rus,
-            UnitType::Army,
-            reg("war"),
-            MoveCommand::new(reg("sil")).into(),
-        ),
-        Order::new(
-            aus,
-            UnitType::Army,
-            reg("boh"),
-            MoveCommand::new(reg("sil")).into(),
-        ),
-    ]);
+    let orders = Submission::with_inferred_state(
+        geo::standard_map(),
+        vec![
+            Order::new(
+                ger.clone(),
+                UnitType::Army,
+                reg("ber"),
+                MoveCommand::new(reg("sil")).into(),
+            ),
+            Order::new(
+                ger.clone(),
+                UnitType::Army,
+                reg("mun"),
+                MainCommand::Support(SupportedOrder::Move(UnitType::Army, reg("ber"), reg("sil"))),
+            ),
+            Order::new(
+                rus,
+                UnitType::Army,
+                reg("war"),
+                MoveCommand::new(reg("sil")).into(),
+            ),
+            Order::new(
+                aus,
+                UnitType::Army,
+                reg("boh"),
+                MoveCommand::new(reg("sil")).into(),
+            ),
+        ],
+    );
 
     assert!(geo::standard_map()
         .find_border_between(&reg("ber"), &reg("sil"))
@@ -100,7 +106,7 @@ fn dipmath_figure6() {
         .find_border_between(&reg("sil"), &reg("boh"))
         .is_some());
 
-    let result = orders.adjudicate(geo::standard_map(), Rulebook);
+    let result = orders.adjudicate(Rulebook);
     for o in orders.submitted_orders() {
         assert_eq!(
             result.get(o).unwrap(),
@@ -121,40 +127,43 @@ fn dipmath_figure16() {
     let aus = Nation::from("aus");
     let ita = Nation::from("ita");
 
-    let orders = Submission::with_inferred_state(vec![
-        Order::new(
-            tur.clone(),
-            Fleet,
-            reg("aeg"),
-            MoveCommand::new(reg("ion")).into(),
-        ),
-        Order::new(
-            tur,
-            Fleet,
-            reg("gre"),
-            SupportedOrder::Move(UnitType::Fleet, reg("aeg"), reg("ion")).into(),
-        ),
-        Order::new(
-            aus,
-            Fleet,
-            reg("alb"),
-            SupportedOrder::Move(UnitType::Fleet, reg("aeg"), reg("ion")).into(),
-        ),
-        Order::new(
-            ita.clone(),
-            Army,
-            reg("tun"),
-            MoveCommand::new(reg("gre")).into(),
-        ),
-        Order::new(
-            ita.clone(),
-            Fleet,
-            reg("ion"),
-            ConvoyedMove::new(reg("tun"), reg("gre")).into(),
-        ),
-    ]);
+    let orders = Submission::with_inferred_state(
+        geo::standard_map(),
+        vec![
+            Order::new(
+                tur.clone(),
+                Fleet,
+                reg("aeg"),
+                MoveCommand::new(reg("ion")).into(),
+            ),
+            Order::new(
+                tur,
+                Fleet,
+                reg("gre"),
+                SupportedOrder::Move(UnitType::Fleet, reg("aeg"), reg("ion")).into(),
+            ),
+            Order::new(
+                aus,
+                Fleet,
+                reg("alb"),
+                SupportedOrder::Move(UnitType::Fleet, reg("aeg"), reg("ion")).into(),
+            ),
+            Order::new(
+                ita.clone(),
+                Army,
+                reg("tun"),
+                MoveCommand::new(reg("gre")).into(),
+            ),
+            Order::new(
+                ita.clone(),
+                Fleet,
+                reg("ion"),
+                ConvoyedMove::new(reg("tun"), reg("gre")).into(),
+            ),
+        ],
+    );
 
-    let result = orders.adjudicate(geo::standard_map(), Rulebook);
+    let result = orders.adjudicate(Rulebook);
     for o in orders.submitted_orders() {
         assert_eq!(
             result.get(o).unwrap(),
