@@ -1,7 +1,7 @@
 use super::{Adjudicate, Context, MappedMainOrder, OrderState, ResolverState};
-use crate::geo::{Map, ProvinceKey};
+use crate::geo::{Map, ProvinceKey, RegionKey, Terrain};
 use crate::order::{Command, MainCommand};
-use crate::UnitType;
+use crate::{UnitPosition, UnitType};
 
 /// Failure cases for convoy route lookup.
 pub enum ConvoyRouteError {
@@ -49,14 +49,30 @@ fn is_convoy_for(convoy: &MappedMainOrder, mv_ord: &MappedMainOrder) -> bool {
     }
 }
 
+trait RouteStep: Eq + Clone {
+    fn region(&self) -> &RegionKey;
+}
+
+impl<'a> RouteStep for &'a MappedMainOrder {
+    fn region(&self) -> &RegionKey {
+        &self.region
+    }
+}
+
+impl<'a> RouteStep for UnitPosition<'a> {
+    fn region(&self) -> &RegionKey {
+        self.region
+    }
+}
+
 /// Find all routes from `origin` to `dest` given a set of valid convoys.
-fn route_steps<'a>(
+fn route_steps<R: RouteStep>(
     map: &Map,
-    convoys: &[&'a MappedMainOrder],
+    convoys: &[R],
     origin: &ProvinceKey,
     dest: &ProvinceKey,
-    working_path: Vec<&'a MappedMainOrder>,
-) -> Vec<Vec<&'a MappedMainOrder>> {
+    working_path: Vec<R>,
+) -> Vec<Vec<R>> {
     let adjacent_regions = map.find_bordering(origin);
     // if we've got a convoy going and there is one hop to the destination,
     // we've found a valid solution.
@@ -66,11 +82,11 @@ fn route_steps<'a>(
         let mut paths = vec![];
         for convoy in convoys {
             // move to adjacent, and don't allow backtracking/cycles
-            if !working_path.contains(convoy) && adjacent_regions.contains(&&convoy.region) {
+            if !working_path.contains(convoy) && adjacent_regions.contains(&convoy.region()) {
                 let mut next_path = working_path.clone();
-                next_path.push(convoy);
+                next_path.push(convoy.clone());
                 let mut steps =
-                    route_steps(map, convoys, convoy.region.province(), dest, next_path);
+                    route_steps(map, convoys, convoy.region().province(), dest, next_path);
                 if !steps.is_empty() {
                     paths.append(&mut steps);
                 }
@@ -122,6 +138,46 @@ pub fn route_exists<'a>(
     routes(ctx, state, mv_ord)
         .map(|r| !r.is_empty())
         .unwrap_or(false)
+}
+
+/// Checks if a convoy route may exist for an order, based on the positions
+/// of fleets, the move order's source region, and the destination region.
+///
+/// This is used before adjudication to identify illegal orders, so it does
+/// not take in a full context.
+pub fn route_may_exist<'a>(
+    map: &'a Map,
+    unit_positions: impl IntoIterator<Item = UnitPosition<'a>>,
+    mv_ord: &MappedMainOrder,
+) -> bool {
+    if mv_ord.unit_type == UnitType::Fleet {
+        return false;
+    }
+
+    let Some(dst) = mv_ord.move_dest() else {
+        return false;
+    };
+
+    let fleets = unit_positions
+        .into_iter()
+        .filter(|u| {
+            u.unit.unit_type() == UnitType::Fleet
+                && map
+                    .find_region(&u.region.to_string())
+                    .map(|r| r.terrain() == Terrain::Sea)
+                    .unwrap_or(false)
+        })
+        .collect::<Vec<_>>();
+
+    let steps = route_steps(
+        map,
+        &fleets,
+        mv_ord.region.province(),
+        dst.province(),
+        vec![],
+    );
+
+    !steps.is_empty()
 }
 
 #[cfg(test)]

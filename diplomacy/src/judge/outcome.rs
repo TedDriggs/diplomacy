@@ -64,6 +64,9 @@ pub enum InvalidOrder {
     /// The owning nation issued multiple orders to the same unit, and this order was discarded
     /// as a result.
     MultipleToSameUnit,
+    /// There is no path for the unit to follow, even assuming all existing fleets are ordered
+    /// to convoy the unit from its current location to its destination.
+    UnreachableDestination,
 }
 
 impl From<&'_ InvalidOrder> for OrderState {
@@ -145,8 +148,7 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
 impl<A: Adjudicate> From<Outcome<'_, A>> for HashMap<MappedMainOrder, OrderState> {
     fn from(other: Outcome<'_, A>) -> Self {
         other
-            .context
-            .orders()
+            .all_orders()
             .map(|ord| {
                 (
                     ord.clone(),
