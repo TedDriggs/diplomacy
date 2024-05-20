@@ -86,11 +86,6 @@ macro_rules! judge {
         {
             let results = $resolver(vec![$($rule),*]);
 
-            // XXX in the case where no outcomes are asserted, clippy gets unhappy.
-            // We use this temporary variable to make it happy since we can't suppress
-            // the warning with an attribute.
-            let _foo = &results;
-
             $(
                 $(assert_state!(results, $rule, $outcome);)*
             )*
