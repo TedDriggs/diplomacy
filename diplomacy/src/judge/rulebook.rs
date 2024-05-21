@@ -53,7 +53,10 @@ impl Rulebook {
                     // no convoy is available to help one of the units move around the other.
                     let is_head_to_head = is_head_to_head(ctx, rslv, ord, occupier);
 
-                    let resistance = if !occupier.command.is_move() || is_head_to_head {
+                    // Separately compute the resistance and the head-to-head strengths,
+                    // to take into account nuances about which support orders participate
+                    // in which stages.
+                    let (resistance, h2h) = if !occupier.command.is_move() || is_head_to_head {
                         // DEFEND and HOLD strengths include supports that may seek to thwart
                         // other orders from the same nation.
 
@@ -76,14 +79,25 @@ impl Rulebook {
                         // DEFEND STRENGTH contains all supports and is therefore two. Still this DEFEND STRENGTH
                         // is insufficient in the head to head battle, since the French army in Burgundy has an
                         // ATTACK STRENGTH of three.
-                        1 + support::find_for(ctx, rslv, occupier).len()
+                        let mut resisting_supports = support::find_for(ctx, rslv, occupier);
+
+                        let resistance = 1 + resisting_supports.len();
+
+                        if is_head_to_head {
+                            // Make sure the head-to-head opponent is not getting head-to-head support that would result in
+                            // `ord` losing from `ord`'s own nation.
+                            resisting_supports.retain(|support| support.nation != ord.nation);
+                            (resistance, 1 + resisting_supports.len())
+                        } else {
+                            (resistance, 0)
+                        }
                     }
                     // failed exits resist with strength 1 (the unit trapped in the province)
                     else if rslv.resolve(ctx, occupier) == OrderState::Fails {
-                        1
+                        (1, 0)
                     // successful exits mount no resistance
                     } else {
-                        0
+                        (0, 0)
                     };
 
                     // A unit can not dislodge a unit of the same player.
@@ -91,18 +105,28 @@ impl Rulebook {
                     if resistance > 0 && ord.nation == occupier.nation {
                         return AttackOutcome::FriendlyFire;
                     } else if resistance > 0 {
+                        let self_defend_strength = atk_strength;
+
                         // Supports to a foreign unit can not be used to dislodge an own unit.
                         // Therefore, we remove any move supports from the nation whose unit
                         // is resisting the move.
                         atk_supports.retain(|sup| sup.nation != occupier.nation);
                         atk_strength = 1 + atk_supports.len();
 
+                        // Re-check if the attack strength is sufficient to overcome prevent
+                        // strength now that friendly-fire support is ignored; see 6.E.7
+                        if atk_strength <= prevent.strength() {
+                            return AttackOutcome::Prevented(prevent.unwrap());
+                        }
+
+                        // Only lose a head-to-head if the head-to-head opponent's attack strength
+                        // is higher than our defend strength.
+                        if self_defend_strength < h2h {
+                            return AttackOutcome::LostHeadToHead;
+                        }
+
                         if atk_strength <= resistance {
-                            if is_head_to_head {
-                                return AttackOutcome::LostHeadToHead;
-                            } else {
-                                return AttackOutcome::OccupierDefended;
-                            }
+                            return AttackOutcome::OccupierDefended;
                         }
                     }
                 }
