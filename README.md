@@ -3,8 +3,6 @@
 [![Build Status](https://github.com/TedDriggs/diplomacy/workflows/CI/badge.svg)](https://github.com/TedDriggs/diplomacy/actions)
 [![Latest Version](https://img.shields.io/crates/v/diplomacy.svg)](https://crates.io/crates/diplomacy)
 
-**This is a work in progress.**
-
 The `diplomacy` crate provides a [DATC-compliant](https://webdiplomacy.net/doc/DATC_v3_0.html) adjudicator for the game Diplomacy.
 In Diplomacy, players secretly submit orders to a central judge, and all orders are resolved simultaneously.
 Order outcomes depend on one another, making correct adjudication difficult to implement.
