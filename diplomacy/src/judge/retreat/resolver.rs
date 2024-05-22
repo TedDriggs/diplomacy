@@ -62,13 +62,13 @@ impl<'a> Context<'a> {
 /// The result of a retreat phase adjudication, and unit positions after the retreat phase
 /// and its preceding main phase.
 pub struct Outcome<'a> {
-    by_order: HashMap<&'a MappedRetreatOrder, OrderOutcome<'a>>,
+    by_order: HashMap<&'a MappedRetreatOrder, OrderOutcome<&'a MappedRetreatOrder>>,
     unit_positions: HashMap<&'a ProvinceKey, UnitPosition<'a>>,
 }
 
 impl<'a> Outcome<'a> {
     fn new(
-        by_order: HashMap<&'a MappedRetreatOrder, OrderOutcome<'a>>,
+        by_order: HashMap<&'a MappedRetreatOrder, OrderOutcome<&'a MappedRetreatOrder>>,
         retreat_start_positions: HashMap<&'a ProvinceKey, UnitPosition<'a>>,
     ) -> Self {
         let mut unit_positions = retreat_start_positions;
@@ -87,12 +87,17 @@ impl<'a> Outcome<'a> {
         }
     }
 
-    pub fn get(&'a self, order: &MappedRetreatOrder) -> Option<&'a OrderOutcome<'a>> {
+    pub fn get(
+        &'a self,
+        order: &MappedRetreatOrder,
+    ) -> Option<&'a OrderOutcome<&'a MappedRetreatOrder>> {
         self.by_order.get(order)
     }
 
     /// Iterate over the outcomes for each retreat order.
-    pub fn order_outcomes(&self) -> impl Iterator<Item = (&MappedRetreatOrder, &OrderOutcome)> {
+    pub fn order_outcomes(
+        &self,
+    ) -> impl Iterator<Item = (&MappedRetreatOrder, &OrderOutcome<&'a MappedRetreatOrder>)> {
         self.by_order.iter().map(|(k, v)| (*k, v))
     }
 }
@@ -113,9 +118,9 @@ impl UnitPositions<RegionKey> for Outcome<'_> {
 
 /// The outcome of a specific retreat phase order.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum OrderOutcome<'a> {
+pub enum OrderOutcome<O> {
     /// The order was prevented by one or more other retreat orders.
-    Prevented(&'a MappedRetreatOrder),
+    Prevented(O),
     /// The order destination was invalid. The `DestStatus` provides information on why
     /// the destination was invalid.
     InvalidDestination(DestStatus),
@@ -129,17 +134,20 @@ pub enum OrderOutcome<'a> {
     DisbandsAsOrdered,
 }
 
-impl OrderOutcome<'_> {
+impl<O> OrderOutcome<O> {
     /// Check if the ordered unit disbanded at the conclusion of the retreat phase.
     pub fn did_disband(&self) -> bool {
-        *self != OrderOutcome::Moves && *self != OrderOutcome::InvalidRecipient
+        match self {
+            Self::Moves | Self::InvalidRecipient => false,
+            Self::Prevented(_) | Self::InvalidDestination(_) | Self::DisbandsAsOrdered => true,
+        }
     }
 }
 
 /// Most `DestStatus` values block a retreat-phase move order from succeeding or exerting
 /// influence on the move destination. These values can appear in the `InvalidDestination`
 /// variant of `OrderOutcome`. Note that `DestStatus::Available` will never equal an order outcome.
-impl PartialEq<DestStatus> for OrderOutcome<'_> {
+impl<O> PartialEq<DestStatus> for OrderOutcome<O> {
     fn eq(&self, other: &DestStatus) -> bool {
         if let OrderOutcome::InvalidDestination(status) = self {
             *other != DestStatus::Available && status == other

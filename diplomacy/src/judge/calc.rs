@@ -59,7 +59,7 @@ fn prevent_result<'a>(
     context: &Context<'a, impl Adjudicate>,
     resolver: &mut ResolverState<'a>,
     order: &'a MappedMainOrder,
-) -> Option<Prevent<'a>> {
+) -> Option<Prevent<&'a MappedMainOrder>> {
     if order.is_move() {
         if !path_exists(context, resolver, order) {
             Some(Prevent::NoPath)
@@ -89,7 +89,7 @@ pub fn prevent_results<'a>(
     context: &Context<'a, impl Adjudicate>,
     resolver: &mut ResolverState<'a>,
     province: &ProvinceKey,
-) -> Vec<Prevent<'a>> {
+) -> Vec<Prevent<&'a MappedMainOrder>> {
     context
         .orders()
         .filter(|ord| ord.is_move_to_province(province))
@@ -101,7 +101,7 @@ pub fn max_prevent_result<'a>(
     context: &Context<'a, impl Adjudicate>,
     resolver: &mut ResolverState<'a>,
     preventing: &MappedMainOrder,
-) -> Option<Prevent<'a>> {
+) -> Option<Prevent<&'a MappedMainOrder>> {
     preventing.move_dest().and_then(|dst| {
         let mut best_prevent = None;
         let mut best_prevent_strength = 0;

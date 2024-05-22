@@ -45,7 +45,7 @@ pub trait Adjudicate: Sized {
         context: &Context<'a, Self>,
         resolver: &mut ResolverState<'a>,
         order: &'a MappedMainOrder,
-    ) -> OrderOutcome<'a>;
+    ) -> OrderOutcome<&'a MappedMainOrder>;
 }
 
 impl Border {

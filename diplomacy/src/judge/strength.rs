@@ -1,18 +1,16 @@
-use super::MappedMainOrder;
-
 pub trait Strength {
     /// Compute the strength of an action from its result.
     fn strength(&self) -> usize;
 }
 
 /// A collection of orders which support a specific order; used in strength calculations.
-pub type Supporters<'a> = Vec<&'a MappedMainOrder>;
+pub type Supporters<O> = Vec<O>;
 
 /// The intermediate state for a prevent strength calculation. Prevent strength
 /// determines how much force is applied to stop any other units from entering the
 /// destination province.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Prevent<'a> {
+pub enum Prevent<O> {
     /// The preventing unit cannot reach its destination.
     NoPath,
 
@@ -21,10 +19,10 @@ pub enum Prevent<'a> {
     LostHeadToHead,
 
     /// The order attempts to prevent others from moving to the destination province with support.
-    Prevents(&'a MappedMainOrder, Supporters<'a>),
+    Prevents(O, Supporters<O>),
 }
 
-impl<'a> Strength for Prevent<'a> {
+impl<O> Strength for Prevent<O> {
     fn strength(&self) -> usize {
         use self::Prevent::*;
         match *self {

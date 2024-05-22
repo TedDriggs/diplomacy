@@ -154,25 +154,25 @@ pub fn find_for<'a>(
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum SupportOutcome<'a> {
+pub enum SupportOutcome<O> {
     NotDisrupted,
     SupportingSelf,
     /// The support order can't reach the province where assistance is required.
     ///
     /// Support cannot be convoyed, so reachability is a simple border check.
     CantReach,
-    CutBy(&'a MappedMainOrder),
+    CutBy(O),
 }
 
-impl<'a> SupportOutcome<'a> {
+impl<O> SupportOutcome<O> {
     pub fn is_successful(&self) -> bool {
-        *self == SupportOutcome::NotDisrupted
+        matches!(self, SupportOutcome::NotDisrupted)
     }
 }
 
-impl From<&'_ SupportOutcome<'_>> for OrderState {
-    fn from(so: &SupportOutcome) -> Self {
-        if so == &SupportOutcome::NotDisrupted {
+impl<O> From<&'_ SupportOutcome<O>> for OrderState {
+    fn from(so: &SupportOutcome<O>) -> Self {
+        if matches!(so, SupportOutcome::NotDisrupted) {
             OrderState::Succeeds
         } else {
             OrderState::Fails
@@ -180,8 +180,8 @@ impl From<&'_ SupportOutcome<'_>> for OrderState {
     }
 }
 
-impl<'a> From<SupportOutcome<'a>> for OrderState {
-    fn from(so: SupportOutcome<'a>) -> Self {
+impl<O> From<SupportOutcome<O>> for OrderState {
+    fn from(so: SupportOutcome<O>) -> Self {
         (&so).into()
     }
 }

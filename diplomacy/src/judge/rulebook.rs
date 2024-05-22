@@ -18,7 +18,7 @@ impl Rulebook {
         ctx: &Context<'a, Self>,
         rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
-    ) -> HoldOutcome<'a> {
+    ) -> HoldOutcome<&'a MappedMainOrder> {
         dislodger_of(ctx, rslv, ord)
             .map(HoldOutcome::Dislodged)
             .unwrap_or(HoldOutcome::Succeeds)
@@ -29,7 +29,7 @@ impl Rulebook {
         ctx: &Context<'a, Self>,
         rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
-    ) -> AttackOutcome<'a> {
+    ) -> AttackOutcome<&'a MappedMainOrder> {
         if ord.command.move_dest() == Some(&ord.region) {
             AttackOutcome::MoveToSelf
         } else if !path_exists(ctx, rslv, ord) {
@@ -142,7 +142,7 @@ impl Rulebook {
         ctx: &Context<'a, Self>,
         rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
-    ) -> SupportOutcome<'a> {
+    ) -> SupportOutcome<&'a MappedMainOrder> {
         if support::is_supporting_self(ord) {
             SupportOutcome::SupportingSelf
         } else if !support::can_reach(ctx.world_map, ord) {
@@ -159,7 +159,7 @@ impl Rulebook {
         ctx: &Context<'a, Self>,
         rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
-    ) -> ConvoyOutcome<'a> {
+    ) -> ConvoyOutcome<&'a MappedMainOrder> {
         // Test case 6.F.1: Fleets cannot convoy in coastal areas
         //
         // Note: We explicitly check that "coast" is none because explicit-coast
@@ -203,7 +203,7 @@ impl Adjudicate for Rulebook {
         context: &Context<'a, Self>,
         resolver: &mut ResolverState<'a>,
         order: &'a MappedMainOrder,
-    ) -> OrderOutcome<'a> {
+    ) -> OrderOutcome<&'a MappedMainOrder> {
         use crate::order::MainCommand::*;
 
         if let Some(reason) = resolver.invalid_orders.get(order) {
@@ -229,16 +229,16 @@ impl Adjudicate for Rulebook {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum HoldOutcome<'a> {
+pub enum HoldOutcome<O> {
     /// The unit remains in its current region
     Succeeds,
     /// The unit is dislodged by the specified order
-    Dislodged(&'a MappedMainOrder),
+    Dislodged(O),
 }
 
-impl From<&'_ HoldOutcome<'_>> for OrderState {
-    fn from(other: &HoldOutcome<'_>) -> Self {
-        if other == &HoldOutcome::Succeeds {
+impl<O> From<&'_ HoldOutcome<O>> for OrderState {
+    fn from(other: &HoldOutcome<O>) -> Self {
+        if matches!(other, HoldOutcome::Succeeds) {
             OrderState::Succeeds
         } else {
             OrderState::Fails
@@ -246,18 +246,18 @@ impl From<&'_ HoldOutcome<'_>> for OrderState {
     }
 }
 
-impl From<HoldOutcome<'_>> for OrderState {
-    fn from(other: HoldOutcome<'_>) -> Self {
+impl<O> From<HoldOutcome<O>> for OrderState {
+    fn from(other: HoldOutcome<O>) -> Self {
         (&other).into()
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum AttackOutcome<'a> {
+pub enum AttackOutcome<O> {
     MoveToSelf,
     NoPath,
     FriendlyFire,
-    Prevented(Prevent<'a>),
+    Prevented(Prevent<O>),
     /// The intended victim of the attack instead dislodged the attacker and did not use a convoy.
     ///
     /// A unit that loses a head-to-head battle is dislodged, cannot retreat to the province from
@@ -270,9 +270,9 @@ pub enum AttackOutcome<'a> {
     Succeeds,
 }
 
-impl From<&'_ AttackOutcome<'_>> for OrderState {
-    fn from(ao: &AttackOutcome) -> Self {
-        if ao == &AttackOutcome::Succeeds {
+impl<O> From<&'_ AttackOutcome<O>> for OrderState {
+    fn from(ao: &AttackOutcome<O>) -> Self {
+        if matches!(ao, AttackOutcome::Succeeds) {
             OrderState::Succeeds
         } else {
             OrderState::Fails
@@ -280,19 +280,19 @@ impl From<&'_ AttackOutcome<'_>> for OrderState {
     }
 }
 
-impl From<AttackOutcome<'_>> for OrderState {
-    fn from(ao: AttackOutcome) -> Self {
+impl<O> From<AttackOutcome<O>> for OrderState {
+    fn from(ao: AttackOutcome<O>) -> Self {
         (&ao).into()
     }
 }
 
-impl<'a> From<AttackOutcome<'a>> for bool {
-    fn from(ao: AttackOutcome) -> Self {
+impl<O> From<AttackOutcome<O>> for bool {
+    fn from(ao: AttackOutcome<O>) -> Self {
         OrderState::from(ao).into()
     }
 }
 
-impl PartialEq<OrderState> for AttackOutcome<'_> {
+impl<O> PartialEq<OrderState> for AttackOutcome<O> {
     fn eq(&self, os: &OrderState) -> bool {
         OrderState::from(self) == *os
     }

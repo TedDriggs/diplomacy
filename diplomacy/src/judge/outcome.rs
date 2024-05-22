@@ -9,16 +9,16 @@ use std::fmt;
 /// The outcome of a specific order. The variant of the outcome will match the issued order
 /// type.
 #[derive(FromVariants, PartialEq, Eq)]
-pub enum OrderOutcome<'a> {
+pub enum OrderOutcome<O> {
     Invalid(InvalidOrder),
-    Hold(HoldOutcome<'a>),
-    Move(AttackOutcome<'a>),
-    Support(SupportOutcome<'a>),
-    Convoy(ConvoyOutcome<'a>),
+    Hold(HoldOutcome<O>),
+    Move(AttackOutcome<O>),
+    Support(SupportOutcome<O>),
+    Convoy(ConvoyOutcome<O>),
 }
 
-impl From<&'_ OrderOutcome<'_>> for OrderState {
-    fn from(other: &OrderOutcome<'_>) -> Self {
+impl<O> From<&'_ OrderOutcome<O>> for OrderState {
+    fn from(other: &OrderOutcome<O>) -> Self {
         match other {
             OrderOutcome::Invalid(i) => i.into(),
             OrderOutcome::Hold(h) => h.into(),
@@ -29,13 +29,13 @@ impl From<&'_ OrderOutcome<'_>> for OrderState {
     }
 }
 
-impl From<OrderOutcome<'_>> for OrderState {
-    fn from(other: OrderOutcome<'_>) -> Self {
+impl<O> From<OrderOutcome<O>> for OrderState {
+    fn from(other: OrderOutcome<O>) -> Self {
         (&other).into()
     }
 }
 
-impl fmt::Debug for OrderOutcome<'_> {
+impl<O: fmt::Debug> fmt::Debug for OrderOutcome<O> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             OrderOutcome::Invalid(oo) => oo.fmt(f),
@@ -47,7 +47,7 @@ impl fmt::Debug for OrderOutcome<'_> {
     }
 }
 
-impl PartialEq<OrderState> for OrderOutcome<'_> {
+impl<O> PartialEq<OrderState> for OrderOutcome<O> {
     fn eq(&self, other: &OrderState) -> bool {
         OrderState::from(self) == *other
     }
@@ -80,7 +80,7 @@ impl From<&'_ InvalidOrder> for OrderState {
 pub struct Outcome<'a, A> {
     pub(in crate::judge) context: Context<'a, A>,
     pub(in crate::judge) resolver: ResolverState<'a>,
-    pub(in crate::judge) orders: HashMap<&'a MappedMainOrder, OrderOutcome<'a>>,
+    pub(in crate::judge) orders: HashMap<&'a MappedMainOrder, OrderOutcome<&'a MappedMainOrder>>,
 }
 
 impl<'a, A: Adjudicate> Outcome<'a, A> {
@@ -116,7 +116,10 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
         self.orders.keys().copied()
     }
 
-    pub fn get(&'a self, order: &'a MappedMainOrder) -> Option<&'a OrderOutcome<'a>> {
+    pub fn get(
+        &'a self,
+        order: &'a MappedMainOrder,
+    ) -> Option<&'a OrderOutcome<&'a MappedMainOrder>> {
         self.orders.get(order)
     }
 

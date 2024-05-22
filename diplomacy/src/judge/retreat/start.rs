@@ -209,8 +209,8 @@ pub enum DestStatus {
     Contested,
 }
 
-impl PartialEq<retreat::OrderOutcome<'_>> for DestStatus {
-    fn eq(&self, other: &retreat::OrderOutcome) -> bool {
+impl<O> PartialEq<retreat::OrderOutcome<O>> for DestStatus {
+    fn eq(&self, other: &retreat::OrderOutcome<O>) -> bool {
         other == self
     }
 }

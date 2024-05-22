@@ -13,20 +13,20 @@ pub enum ConvoyRouteError {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ConvoyOutcome<'a> {
+pub enum ConvoyOutcome<O> {
     /// The convoy order is invalid because the convoying unit is not at sea.
     NotAtSea,
     /// The convoying unit was dislodged by another move
-    Dislodged(&'a MappedMainOrder),
+    Dislodged(O),
     /// The convoy was failed to resolve a paradox
     Paradox,
     /// The convoy was not disrupted. This doesn't mean the move necessarily succeeded.
     NotDisrupted,
 }
 
-impl From<&'_ ConvoyOutcome<'_>> for OrderState {
-    fn from(other: &ConvoyOutcome<'_>) -> Self {
-        if other == &ConvoyOutcome::NotDisrupted {
+impl<O> From<&'_ ConvoyOutcome<O>> for OrderState {
+    fn from(other: &ConvoyOutcome<O>) -> Self {
+        if matches!(other, ConvoyOutcome::NotDisrupted) {
             OrderState::Succeeds
         } else {
             OrderState::Fails
@@ -34,8 +34,8 @@ impl From<&'_ ConvoyOutcome<'_>> for OrderState {
     }
 }
 
-impl From<ConvoyOutcome<'_>> for OrderState {
-    fn from(other: ConvoyOutcome<'_>) -> Self {
+impl<O> From<ConvoyOutcome<O>> for OrderState {
+    fn from(other: ConvoyOutcome<O>) -> Self {
         (&other).into()
     }
 }
