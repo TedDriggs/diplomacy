@@ -171,47 +171,75 @@ fn t6b06_support_can_be_cut_with_other_coast() {
     };
 }
 
+/// This implementation of the adjudicator deems correction of orders such
+/// as this one to be the responsibility of the caller, and will execute received
+/// orders with region-level precision.
+///
+/// Relevant DATC excerpt:
+///
+/// > I prefer that the support succeeds and the Italian fleet in the Western Mediterranean bounces.
+/// > However, if orders are checked on submission (such as in webbased play),
+/// > support without coast should not be given as an option.
+///
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.7
 #[test]
-#[ignore]
+#[should_panic]
 fn t6b07_supporting_with_unspecified_coast() {
     judge! {
        "FRA: F por Supports F mao -> spa",
-       "FRA: F mao -> spa(nc)",
+       "FRA: F mao -> spa(nc)": Fails,
        "ITA: F lyo Supports F wes -> spa(sc)",
-       "ITA: F wes -> spa(sc)",
+       "ITA: F wes -> spa(sc)": Fails,
     };
 }
 
+/// This implementation of the adjudicator deems correction of orders such
+/// as this one to be the responsibility of the caller, and will execute received
+/// orders with region-level precision.
+///
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.8
 #[test]
-#[ignore]
+#[should_panic]
 fn t6b08_supporting_with_unspecified_coast_when_only_one_coast_is_possible() {
     judge! {
        "FRA: F por Supports F gas -> spa",
-       "FRA: F gas -> spa(nc)",
+       "FRA: F gas -> spa(nc)": Fails,
        "ITA: F lyo Supports F wes -> spa(sc)",
-       "ITA: F wes -> spa(sc)",
+       "ITA: F wes -> spa(sc)": Fails,
     };
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.9
 #[test]
-#[ignore]
 fn t6b09_supporting_with_wrong_coast() {
     judge! {
        "FRA: F por Supports F mao -> spa(nc)",
-       "FRA: F mao -> spa(sc)",
+       "FRA: F mao -> spa(sc)": Fails,
        "ITA: F lyo Supports F wes -> spa(sc)",
-       "ITA: F wes -> spa(sc)",
+       "ITA: F wes -> spa(sc)": Succeeds,
     };
 }
 
+/// This implementation of the adjudicator deems correction of orders such
+/// as this one to be the responsibility of the caller, and will execute received
+/// orders with region-level precision.
+///
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.10
 #[test]
-#[ignore]
+#[should_panic]
 fn t6b10_unit_ordered_with_wrong_coast() {
-    judge! { "FRA: F spa(nc) -> lyo" };
+    let order = ord("FRA: F spa(nc) -> lyo");
+    let submission = diplomacy::judge::Submission::new(
+        geo::standard_map(),
+        &vec![unit_pos("FRA: F spa(sc)")],
+        vec![order.clone()],
+    );
+    let outcome = submission.adjudicate(Rulebook);
+    dbg!(outcome.get(&order));
+    assert_eq!(
+        outcome.get(&order).expect("Order should have outcome"),
+        &OrderOutcome::Move(diplomacy::judge::AttackOutcome::Succeeds),
+    );
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.11
@@ -231,11 +259,13 @@ fn t6b11_coast_can_not_be_ordered_to_change() {
     );
 }
 
+/// This sort of order correction is the responsibility of this library's caller.
+///
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.12
 #[test]
-#[ignore]
+#[should_panic]
 fn t6b12_army_movement_with_coastal_specification() {
-    judge! { "FRA: A gas -> spa(nc)" };
+    judge! { "FRA: A gas -> spa(nc)": Succeeds };
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.13
