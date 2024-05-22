@@ -9,9 +9,17 @@ mod world;
 
 use std::iter::once;
 
-use diplomacy::judge::OrderState::{Fails, Succeeds};
-use diplomacy::judge::{retreat::DestStatus, InvalidOrder, OrderOutcome, Rulebook};
-use diplomacy::{geo, Nation, UnitType};
+use diplomacy::{
+    geo,
+    judge::{
+        self,
+        retreat::DestStatus,
+        AttackOutcome, InvalidOrder, OrderOutcome,
+        OrderState::{Fails, Succeeds},
+        Rulebook, Submission,
+    },
+    Nation, UnitType,
+};
 use util::*;
 use world::TestWorld;
 
@@ -55,7 +63,7 @@ fn t6a05_move_to_own_sector_with_convoy() {
 #[test]
 fn t6a06_ordering_a_unit_of_another_country() {
     let order = ord("GER: F lon -> nth");
-    let submission = diplomacy::judge::Submission::new(
+    let submission = Submission::new(
         geo::standard_map(),
         &vec![unit_pos("ENG: F lon")],
         vec![order.clone()],
@@ -229,7 +237,7 @@ fn t6b09_supporting_with_wrong_coast() {
 #[should_panic]
 fn t6b10_unit_ordered_with_wrong_coast() {
     let order = ord("FRA: F spa(nc) -> lyo");
-    let submission = diplomacy::judge::Submission::new(
+    let submission = Submission::new(
         geo::standard_map(),
         &vec![unit_pos("FRA: F spa(sc)")],
         vec![order.clone()],
@@ -238,7 +246,7 @@ fn t6b10_unit_ordered_with_wrong_coast() {
     dbg!(outcome.get(&order));
     assert_eq!(
         outcome.get(&order).expect("Order should have outcome"),
-        &OrderOutcome::Move(diplomacy::judge::AttackOutcome::Succeeds),
+        &OrderOutcome::Move(AttackOutcome::Succeeds),
     );
 }
 
@@ -246,7 +254,7 @@ fn t6b10_unit_ordered_with_wrong_coast() {
 #[test]
 fn t6b11_coast_can_not_be_ordered_to_change() {
     let order = ord("FRA: F spa(sc) -> lyo");
-    let submission = diplomacy::judge::Submission::new(
+    let submission = Submission::new(
         geo::standard_map(),
         &vec![unit_pos("FRA: F spa(nc)")],
         vec![order.clone()],
@@ -280,7 +288,7 @@ fn t6b13_coastal_crawl_not_allowed() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.14
 #[test]
 fn t6b14_building_with_unspecified_coast() {
-    use diplomacy::judge::build::OrderOutcome::*;
+    use judge::build::OrderOutcome::*;
     judge_build! {
         TestWorld::empty(),
         "RUS: F stp build": InvalidTerrain
@@ -1618,7 +1626,7 @@ fn t6g20_explicit_convoy_to_adjacent_province_disrupted() {
 #[test]
 fn t6h01_no_supports_during_retreat() {
     "AUS: A ser supports F tri -> alb"
-        .parse::<diplomacy::judge::MappedRetreatOrder>()
+        .parse::<judge::MappedRetreatOrder>()
         .expect_err("Support commands are not allowed in the retreat phase");
 }
 
@@ -1645,14 +1653,14 @@ fn t6h02_no_supports_from_retreating_unit() {
 #[test]
 fn t6h03_no_convoy_during_retreat() {
     "ENG: F nth convoys hol -> yor"
-        .parse::<diplomacy::judge::MappedRetreatOrder>()
+        .parse::<judge::MappedRetreatOrder>()
         .expect_err("Convoy commands are not allowed in the retreat phase");
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.4
 #[test]
 fn t6h04_no_other_moves_during_retreat() {
-    use diplomacy::judge::retreat::OrderOutcome::*;
+    use judge::retreat::OrderOutcome::*;
 
     let (submission, expected) = submit_main_phase! {
        "ENG: F nth Hold": Succeeds,
@@ -1709,7 +1717,7 @@ fn t6h06_unit_may_not_retreat_to_a_contested_area() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.7
 #[test]
 fn t6h07_multiple_retreat_to_same_area_will_disband_units() {
-    use diplomacy::judge::retreat::OrderOutcome::*;
+    use judge::retreat::OrderOutcome::*;
 
     let (submission, expected) = submit_main_phase! {
        "AUS: A bud Supports A tri -> vie",
@@ -1732,7 +1740,7 @@ fn t6h07_multiple_retreat_to_same_area_will_disband_units() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.8
 #[test]
 fn t6h08_triple_retreat_to_same_area_will_disband_units() {
-    use diplomacy::judge::retreat::OrderOutcome::*;
+    use judge::retreat::OrderOutcome::*;
 
     let (submission, expected) = submit_main_phase! {
        "ENG: A lvp -> edi": Succeeds,
@@ -1760,7 +1768,7 @@ fn t6h08_triple_retreat_to_same_area_will_disband_units() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.9
 #[test]
 fn t6h09_dislodged_unit_will_not_make_attackers_area_contested() {
-    use diplomacy::judge::retreat::OrderOutcome::*;
+    use judge::retreat::OrderOutcome::*;
 
     let (submission, expected) = submit_main_phase! {
        "ENG: F hel -> kie": Succeeds,
@@ -1782,7 +1790,7 @@ fn t6h09_dislodged_unit_will_not_make_attackers_area_contested() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.10
 #[test]
 fn t6h10_not_retreating_to_attacker_does_not_mean_contested() {
-    use diplomacy::judge::retreat::OrderOutcome::*;
+    use judge::retreat::OrderOutcome::*;
 
     let (submission, expected) = submit_main_phase! {
        "ENG: A kie Hold": Fails,
@@ -1805,7 +1813,7 @@ fn t6h10_not_retreating_to_attacker_does_not_mean_contested() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.11
 #[test]
 fn t6h11_retreat_when_dislodged_by_adjacent_convoy() {
-    use diplomacy::judge::retreat::OrderOutcome::*;
+    use judge::retreat::OrderOutcome::*;
 
     let (submission, expected) = submit_main_phase! {
        "FRA: A gas -> mar via Convoy": Succeeds,
@@ -1827,7 +1835,7 @@ fn t6h11_retreat_when_dislodged_by_adjacent_convoy() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.12
 #[test]
 fn t6h12_retreat_when_dislodged_by_adjacent_convoy_while_trying_to_do_the_same() {
-    use diplomacy::judge::retreat::OrderOutcome::*;
+    use judge::retreat::OrderOutcome::*;
 
     let (submission, expected) = submit_main_phase! {
        "ENG: A lvp -> edi via Convoy": Fails,
@@ -1871,7 +1879,7 @@ fn t6h13_no_retreat_with_convoy_in_main_phase() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.14
 #[test]
 fn t6h14_no_retreat_with_support_in_main_phase() {
-    use diplomacy::judge::retreat::OrderOutcome::*;
+    use judge::retreat::OrderOutcome::*;
 
     let (submission, expected) = submit_main_phase! {
        "ENG: A pic Hold": Fails,
@@ -1931,7 +1939,7 @@ fn t6h16_contested_for_both_coasts() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.I.1
 #[test]
 fn t6i01_too_many_build_orders() {
-    use diplomacy::judge::build::OrderOutcome::*;
+    use judge::build::OrderOutcome::*;
     let world = TestWorld::empty()
         .with_unit("GER: F den")
         .with_unit("GER: A ruh")
@@ -1946,7 +1954,7 @@ fn t6i01_too_many_build_orders() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.I.2
 #[test]
 fn t6i02_fleets_can_not_be_build_in_land_areas() {
-    use diplomacy::judge::build::OrderOutcome::*;
+    use judge::build::OrderOutcome::*;
     let world = TestWorld::empty();
     judge_build! { world,
         "RUS: F mos build": InvalidTerrain
@@ -1956,7 +1964,7 @@ fn t6i02_fleets_can_not_be_build_in_land_areas() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.I.3
 #[test]
 fn t6i03_supply_center_must_be_empty_for_building() {
-    use diplomacy::judge::build::OrderOutcome::*;
+    use judge::build::OrderOutcome::*;
     let world = TestWorld::empty().with_unit("GER: A ber");
     judge_build! { world,
        "GER: A ber build": OccupiedProvince
@@ -1966,7 +1974,7 @@ fn t6i03_supply_center_must_be_empty_for_building() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.I.4
 #[test]
 fn t6i04_both_coasts_must_be_empty_for_building() {
-    use diplomacy::judge::build::OrderOutcome::*;
+    use judge::build::OrderOutcome::*;
     let world = TestWorld::empty().with_unit("RUS: F stp(sc)");
     judge_build! { world, "RUS: F stp(nc) build": OccupiedProvince };
 }
@@ -1974,7 +1982,7 @@ fn t6i04_both_coasts_must_be_empty_for_building() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.I.5
 #[test]
 fn t6i05_building_in_home_supply_center_that_is_not_owned() {
-    use diplomacy::judge::build::OrderOutcome::*;
+    use judge::build::OrderOutcome::*;
     let world = TestWorld::empty().with_occupier("ber", "RUS");
     judge_build! {
         world,
@@ -1985,7 +1993,7 @@ fn t6i05_building_in_home_supply_center_that_is_not_owned() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.I.6
 #[test]
 fn t6i06_building_in_owned_supply_center_that_is_not_a_home_supply_center() {
-    use diplomacy::judge::build::OrderOutcome::*;
+    use judge::build::OrderOutcome::*;
     let world = TestWorld::empty().with_occupier("war", "GER");
     judge_build! {
         world,
@@ -1996,7 +2004,7 @@ fn t6i06_building_in_owned_supply_center_that_is_not_a_home_supply_center() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.I.7
 #[test]
 fn t6i07_only_one_build_in_a_home_supply_center() {
-    use diplomacy::judge::build::OrderOutcome::*;
+    use judge::build::OrderOutcome::*;
     let world = TestWorld::empty()
         .with_unit("RUS: F sev")
         .with_unit("RUS: F stp(nc)");
@@ -2016,7 +2024,7 @@ fn t6i07_only_one_build_in_a_home_supply_center() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.1
 #[test]
 fn t6j01_too_many_remove_orders() {
-    use diplomacy::judge::build::OrderOutcome::*;
+    use judge::build::OrderOutcome::*;
     let world = TestWorld::empty()
         .with_occupier("bre", "ENG")
         .with_occupier("mar", "ITA")
@@ -2033,7 +2041,7 @@ fn t6j01_too_many_remove_orders() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.2
 #[test]
 fn t6j02_removing_the_same_unit_twice() {
-    use diplomacy::judge::build::OrderOutcome::*;
+    use judge::build::OrderOutcome::*;
     let world = TestWorld::empty()
         .with_unit("ENG: F bre")
         .with_unit("ITA: A mar")
