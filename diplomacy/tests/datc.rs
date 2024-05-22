@@ -1,5 +1,4 @@
 #![cfg(test)]
-#![allow(unused_variables, clippy::let_and_return)]
 
 #[path = "./util.rs"]
 mod util;
@@ -523,7 +522,7 @@ fn t6d08_failed_convoy_can_not_receive_hold_support() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.D.9
 #[test]
 fn t6d09_support_to_move_on_holding_unit_not_allowed() {
-    let results = judge! {
+    judge! {
        "ITA: A ven -> tri": Succeeds,
        "ITA: A tyr supports A ven -> tri",
        "AUS: A alb supports A tri -> ser",
