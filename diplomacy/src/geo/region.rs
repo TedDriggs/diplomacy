@@ -107,7 +107,14 @@ impl Location for Region {
 /// An identifier that references a region.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct RegionKey(ProvinceKey, Option<Coast>);
+pub struct RegionKey(
+    ProvinceKey,
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Option::is_none")
+    )]
+    Option<Coast>,
+);
 
 impl RegionKey {
     /// Creates a new region.

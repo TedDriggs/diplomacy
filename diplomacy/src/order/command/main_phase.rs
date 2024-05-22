@@ -50,11 +50,30 @@ impl<L: Location> fmt::Display for MainCommand<L> {
     }
 }
 
+/// Validate that the deserialized value is not `Some(false)`.
+#[cfg(feature = "serde")]
+fn deserialize_true<'de, D: serde::Deserializer<'de>>(de: D) -> Result<Option<bool>, D::Error> {
+    let value = <Option<bool> as serde::Deserialize>::deserialize(de)?;
+    if matches!(value, Some(false)) {
+        return Err(serde::de::Error::custom("field must be true or null"));
+    }
+
+    Ok(value)
+}
+
 /// A move command with a destination and an optional convoy specification.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MoveCommand<L> {
     dest: L,
+    #[cfg_attr(
+        feature = "serde",
+        serde(
+            default,
+            skip_serializing_if = "Option::is_none",
+            deserialize_with = "deserialize_true"
+        )
+    )]
     /// Whether the order required, forbade, or didn't specify convoy usage.
     ///
     /// Right now, the adjudicator doesn't handle the forbid case, so there's no way to construct
