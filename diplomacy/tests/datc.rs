@@ -57,19 +57,13 @@ fn t6a06_ordering_a_unit_of_another_country() {
     let order = ord("GER: F lon -> nth");
     let submission = diplomacy::judge::Submission::new(
         geo::standard_map(),
-        &vec![diplomacy::UnitPosition::new(
-            diplomacy::Unit::new(
-                std::borrow::Cow::Owned(diplomacy::Nation::from("ENG")),
-                diplomacy::UnitType::Fleet,
-            ),
-            reg("lon"),
-        )],
+        &vec![unit_pos("ENG: F lon")],
         vec![order.clone()],
     );
     let outcome = submission.adjudicate(Rulebook);
     assert_eq!(
-        outcome.get(&order),
-        Some(&OrderOutcome::Invalid(InvalidOrder::ForeignUnit))
+        outcome.get(&order).unwrap(),
+        &OrderOutcome::Invalid(InvalidOrder::ForeignUnit)
     );
 }
 

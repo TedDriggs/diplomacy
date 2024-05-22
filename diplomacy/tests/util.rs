@@ -4,7 +4,7 @@
 use diplomacy::{
     geo::{self, Coast, ProvinceKey, RegionKey},
     judge::{MappedBuildOrder, MappedMainOrder, MappedRetreatOrder, OrderState, Rulebook},
-    Nation,
+    Nation, UnitPosition,
 };
 use std::collections::HashMap;
 
@@ -18,6 +18,10 @@ pub fn reg(s: &str) -> RegionKey {
 
 pub fn reg_coast(s: &str, c: impl Into<Option<Coast>>) -> RegionKey {
     RegionKey::new(prov(s), c)
+}
+
+pub fn unit_pos(p: &str) -> UnitPosition<'static, RegionKey> {
+    p.parse().unwrap()
 }
 
 #[macro_export]
