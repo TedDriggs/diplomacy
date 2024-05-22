@@ -13,6 +13,7 @@ pub enum ConvoyRouteError {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ConvoyOutcome<O> {
     /// The convoy order is invalid because the convoying unit is not at sea.
     NotAtSea,

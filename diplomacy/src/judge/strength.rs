@@ -10,6 +10,7 @@ pub type Supporters<O> = Vec<O>;
 /// determines how much force is applied to stop any other units from entering the
 /// destination province.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Prevent<O> {
     /// The preventing unit cannot reach its destination.
     NoPath,

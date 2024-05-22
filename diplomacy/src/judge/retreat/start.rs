@@ -188,6 +188,7 @@ impl<'a> iter::FromIterator<(&'a RegionKey, DestStatus)> for Destinations<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum DestStatus {
     /// The region is a viable retreat destination.
     Available,

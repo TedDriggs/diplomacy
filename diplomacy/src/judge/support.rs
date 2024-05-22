@@ -154,6 +154,7 @@ pub fn find_for<'a>(
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SupportOutcome<O> {
     NotDisrupted,
     SupportingSelf,

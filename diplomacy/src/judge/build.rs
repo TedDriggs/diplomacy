@@ -9,6 +9,7 @@ use std::convert::TryInto;
 
 /// The outcome of a build-turn order.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OrderOutcome {
     /// The build or disband order was successful, resulting in a change in units
     /// in the world.

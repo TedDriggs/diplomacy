@@ -9,6 +9,7 @@ use std::fmt;
 /// The outcome of a specific order. The variant of the outcome will match the issued order
 /// type.
 #[derive(FromVariants, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OrderOutcome<O> {
     Invalid(InvalidOrder),
     Hold(HoldOutcome<O>),
@@ -55,6 +56,7 @@ impl<O> PartialEq<OrderState> for OrderOutcome<O> {
 
 /// Outcome for an order that was invalid and not considered during adjudication.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidOrder {
     /// There is no unit in position to act on the order.
     NoUnit,
@@ -114,6 +116,12 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
     /// orders generated to ensure all units had an order during adjudication.
     pub fn all_orders(&self) -> impl Iterator<Item = &MappedMainOrder> {
         self.orders.keys().copied()
+    }
+
+    pub fn all_orders_with_outcomes(
+        &self,
+    ) -> impl Iterator<Item = (&MappedMainOrder, &OrderOutcome<&MappedMainOrder>)> {
+        self.orders.iter().map(|(ord, outcome)| (*ord, outcome))
     }
 
     pub fn get(

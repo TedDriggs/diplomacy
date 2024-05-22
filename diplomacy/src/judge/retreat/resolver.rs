@@ -118,6 +118,7 @@ impl UnitPositions<RegionKey> for Outcome<'_> {
 
 /// The outcome of a specific retreat phase order.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OrderOutcome<O> {
     /// The order was prevented by one or more other retreat orders.
     Prevented(O),

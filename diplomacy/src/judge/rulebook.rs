@@ -229,6 +229,7 @@ impl Adjudicate for Rulebook {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum HoldOutcome<O> {
     /// The unit remains in its current region
     Succeeds,
@@ -253,6 +254,7 @@ impl<O> From<HoldOutcome<O>> for OrderState {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AttackOutcome<O> {
     MoveToSelf,
     NoPath,
