@@ -287,6 +287,30 @@ fn t6b14_building_with_unspecified_coast() {
     };
 }
 
+/// This implementation of the adjudicator deems correction of orders such
+/// as this one to be the responsibility of the caller, and will execute received
+/// orders with region-level precision.
+///
+/// The DATC notes that opinions on this case differ:
+///
+/// > Although the move to the north coast of Spain might be a surprise for France,
+/// > it is hard to believe that England somehow tricked France. Therefore, I prefer
+/// > that the support succeeds and the Italian fleet in the Western Mediterranean
+/// > bounces. However, if orders are checked on submission (such as in webbased play),
+/// > support without coast should not be given as an option.
+///
+/// https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.15
+#[test]
+#[should_panic]
+fn t6b15_supporting_foreign_unit_with_unspecified_coast() {
+    judge! {
+        "FRA: F por supports F mao -> spa",
+        "ENG: F mao -> spa(nc)": Fails,
+        "ITA: F lyo supports F wes -> spa(sc)",
+        "F wes -> spa(sc)": Fails,
+    };
+}
+
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.C.1
 #[test]
 fn t6c01_three_army_circular_movement_succeeds() {
@@ -368,6 +392,30 @@ fn t6c07_disrupted_unit_swap() {
        "FRA: F eng convoys bel -> lon",
        "FRA: A bel -> lon": Fails,
        "FRA: A bur -> bel": Fails,
+    };
+}
+
+/// https://webdiplomacy.net/doc/DATC_v3_0.html#6.C.8
+#[test]
+fn t6c08_no_self_dislodgement_in_disrupted_circular_movement() {
+    judge! {
+        "TUR: F con -> bla": Fails,
+        "TUR: A bul -> con": Fails,
+        "TUR: A smy supports A bul -> con",
+        "RUS: F bla -> bul(ec)": Fails,
+        "AUS: A ser -> bul": Fails,
+    };
+}
+
+/// https://webdiplomacy.net/doc/DATC_v3_0.html#6.C.9
+#[test]
+fn t6c09_no_help_in_dislodgement_of_own_unit_in_disrupted_circular_movement() {
+    judge! {
+        "TUR: F con -> bla": Fails,
+        "TUR: A smy supports A bul -> con",
+        "RUS: F bla -> bul(ec)": Fails,
+        "AUS: A ser -> bul": Fails,
+        "AUS: A bul -> con": Fails,
     };
 }
 
@@ -1534,31 +1582,71 @@ fn t6g18_the_two_unit_in_one_area_bug_with_double_convoy() {
     };
 }
 
+/// I'm not sure I agree with the DATC on this one; the French fleet is capable
+/// of participating in a convoy, so the fact that it's not strictly necessary feels
+/// like an unnecessary complication for establishing convoy intent.
+///
+/// > In case the 1971 rules are used, the intent is not important and the units in Marseilles and Spain swap.
+/// > The point of interest is that there is a convoy route from Marseilles, Gulf of Lyon, Western Mediterranean to Spain. However, the fleet in Western Mediterranean is not necessary for this convoy and not necessary for any other convoy route. Therefore, this order should be considered illegal. Webbased adjudicators should not give this order as an option.
+/// > With the 2023 rules (which I prefer) illegal orders are ignored. The fleet in Gulf of Lyon is foreign and foreign units cannot express intent. With this, there is no intent to convoy and the units in Marseilles and Spain fail to move.
+///
+/// https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.19
+#[test]
+#[should_panic]
+fn t6g19_swapping_with_intent_of_unnecessary_convoy() {
+    judge! {
+        "FRA: A mar -> spa": Fails,
+        "FRA: F wes convoys mar -> spa",
+        "ITA: F lyo convoys mar -> spa",
+        "ITA: A spa -> mar": Fails,
+    };
+}
+
+/// https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.19
+#[test]
+fn t6g20_explicit_convoy_to_adjacent_province_disrupted() {
+    judge! {
+        "FRA: F bre -> eng": Succeeds,
+        "FRA: A pic -> bel via convoy": Fails,
+        "FRA: A bur supports A pic -> bel",
+        "FRA: F mao supports F bre -> eng",
+        "ENG: F eng convoys pic -> bel"
+    };
+}
+
+/// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.1
+#[test]
+fn t6h01_no_supports_during_retreat() {
+    "AUS: A ser supports F tri -> alb"
+        .parse::<diplomacy::judge::MappedRetreatOrder>()
+        .expect_err("Support commands are not allowed in the retreat phase");
+}
+
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.2
 #[test]
 fn t6h02_no_supports_from_retreating_unit() {
     judge! {
        "ENG: A lvp -> edi",
        "ENG: F yor Supports A lvp -> edi",
-       "ENG: F nwy Hold",
+       "ENG: F nwy Hold": Fails,
        "GER: A kie Supports A ruh -> hol",
        "GER: A ruh -> hol",
-       "RUS: F edi Hold",
+       "RUS: F edi Hold": Fails,
        "RUS: A swe Supports A fin -> nwy",
        "RUS: A fin -> nwy",
-       "RUS: F hol Hold",
+       "RUS: F hol Hold": Fails,
     };
+
+    // Note: This implementation cannot express support in the retreat
+    // phase, so it's impossible to test that the order is considered illegal.
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.3
 #[test]
 fn t6h03_no_convoy_during_retreat() {
-    judge! {
-       "ENG: F nth Hold",
-       "ENG: A hol Hold",
-       "GER: F kie Supports A ruh -> hol",
-       "GER: A ruh -> hol",
-    };
+    "ENG: F nth convoys hol -> yor"
+        .parse::<diplomacy::judge::MappedRetreatOrder>()
+        .expect_err("Convoy commands are not allowed in the retreat phase");
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.4
@@ -1739,17 +1827,26 @@ fn t6h11_retreat_when_dislodged_by_adjacent_convoy() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.12
 #[test]
 fn t6h12_retreat_when_dislodged_by_adjacent_convoy_while_trying_to_do_the_same() {
-    judge! {
-       "ENG: A lvp -> edi via Convoy",
+    use diplomacy::judge::retreat::OrderOutcome::*;
+
+    let (submission, expected) = submit_main_phase! {
+       "ENG: A lvp -> edi via Convoy": Fails,
        "ENG: F iri convoys lvp -> edi",
        "ENG: F eng convoys lvp -> edi",
        "ENG: F nth convoys lvp -> edi",
        "FRA: F bre -> eng",
        "FRA: F mao Supports F bre -> eng",
-       "RUS: A edi -> lvp via Convoy",
+       "RUS: A edi -> lvp via Convoy": Succeeds,
        "RUS: F nwg convoys edi -> lvp",
        "RUS: F nao convoys edi -> lvp",
        "RUS: A cly Supports A edi -> lvp",
+    };
+
+    let outcome = resolve_main!(submission, expected);
+
+    judge_retreat! {
+        outcome,
+        "ENG: A lvp -> edi": Moves
     };
 }
 
