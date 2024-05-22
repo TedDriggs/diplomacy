@@ -117,7 +117,7 @@ impl<'a> Submission<'a> {
         // the resolution process.
         for (index, order) in self.submitted_orders.iter().enumerate() {
             if !positions.contains(&order.unit_position()) {
-                if self.find_region_occupier(&order.region).is_some() {
+                if start.find_region_occupier(&order.region).is_some() {
                     invalid_orders.insert(index, InvalidOrder::ForeignUnit);
                 } else {
                     invalid_orders.insert(index, InvalidOrder::NoUnit);

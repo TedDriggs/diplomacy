@@ -216,9 +216,19 @@ fn t6b10_unit_ordered_with_wrong_coast() {
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.11
 #[test]
-#[ignore]
 fn t6b11_coast_can_not_be_ordered_to_change() {
-    judge! { "FRA: F spa(sc) -> lyo" };
+    let order = ord("FRA: F spa(sc) -> lyo");
+    let submission = diplomacy::judge::Submission::new(
+        geo::standard_map(),
+        &vec![unit_pos("FRA: F spa(nc)")],
+        vec![order.clone()],
+    );
+    let outcome = submission.adjudicate(Rulebook);
+    dbg!(outcome.get(&order));
+    assert_eq!(
+        outcome.get(&order).expect("Order should have outcome"),
+        &OrderOutcome::Invalid(InvalidOrder::NoUnit),
+    );
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.12
