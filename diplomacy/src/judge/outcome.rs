@@ -8,7 +8,7 @@ use std::fmt;
 
 /// The outcome of a specific order. The variant of the outcome will match the issued order
 /// type.
-#[derive(FromVariants, PartialEq, Eq)]
+#[derive(FromVariants, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OrderOutcome<O> {
     Invalid(InvalidOrder),
