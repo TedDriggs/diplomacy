@@ -269,18 +269,30 @@ impl<'a> From<Context<'a, Rulebook>> for HashMap<MappedMainOrder, OrderState> {
     }
 }
 
-impl<'a> From<&'a ResolutionState> for OrderState {
-    fn from(rs: &'a ResolutionState) -> Self {
-        match *rs {
-            ResolutionState::Guessing(os) | ResolutionState::Known(os) => os,
-        }
-    }
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+struct ResolutionState {
+    order_state: OrderState,
+    is_certain: bool,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
-enum ResolutionState {
-    Guessing(OrderState),
-    Known(OrderState),
+impl ResolutionState {
+    pub fn guessing(order_state: OrderState) -> Self {
+        Self {
+            order_state,
+            is_certain: false,
+        }
+    }
+
+    pub fn known(order_state: OrderState) -> Self {
+        Self {
+            order_state,
+            is_certain: true,
+        }
+    }
+
+    pub fn is_guess(&self) -> bool {
+        !self.is_certain
+    }
 }
 
 impl std::fmt::Debug for ResolutionState {
@@ -288,11 +300,8 @@ impl std::fmt::Debug for ResolutionState {
         write!(
             f,
             "{}({:?})",
-            match self {
-                ResolutionState::Guessing(..) => "Guessing",
-                ResolutionState::Known(..) => "Known",
-            },
-            OrderState::from(self)
+            if self.is_certain { "Known" } else { "Guessing" },
+            self.order_state
         )
     }
 }
@@ -353,7 +362,10 @@ impl<'a> ResolverState<'a> {
     }
 
     fn knows_outcome_of(&self, order: &MappedMainOrder) -> bool {
-        matches!(self.state.get(order), Some(ResolutionState::Known(_)))
+        self.state
+            .get(order)
+            .map(|state| !state.is_guess())
+            .unwrap_or(false)
     }
 
     pub(crate) fn order_in_paradox(&self, order: &'a MappedMainOrder) -> bool {
@@ -378,7 +390,7 @@ impl<'a> ResolverState<'a> {
             guesser.greedy_chain.push(order);
         }
 
-        guesser.set_state(order, ResolutionState::Guessing(guess));
+        guesser.set_state(order, ResolutionState::guessing(guess));
         let result = context.rules.adjudicate(context, &mut guesser, order);
         (guesser, result)
     }
@@ -399,13 +411,12 @@ impl<'a> ResolverState<'a> {
 
     /// When a dependency cycle is detected, attempt to resolve all orders in the cycle.
     fn resolve_dependency_cycle(&mut self, cycle: &[&'a MappedMainOrder]) {
-        use self::ResolutionState::*;
         use super::OrderState::*;
 
         // if every order in the cycle is a move, then this is a circular move
         if cycle.iter().all(|o| o.is_move()) {
             for o in cycle {
-                self.set_state(o, Known(Succeeds));
+                self.set_state(o, ResolutionState::known(Succeeds));
             }
         } else {
             for o in cycle {
@@ -416,7 +427,7 @@ impl<'a> ResolverState<'a> {
 
                 if let MainCommand::Convoy(_) = o.command {
                     self.paradoxical_orders.insert(o);
-                    self.set_state(o, ResolutionState::Known(OrderState::Fails));
+                    self.set_state(o, ResolutionState::known(OrderState::Fails));
                 } else {
                     self.clear_state(o);
                 }
@@ -431,7 +442,6 @@ impl<'a> ResolverState<'a> {
         context: &Context<'a, impl Adjudicate>,
         order: &'a MappedMainOrder,
     ) -> OrderState {
-        use self::ResolutionState::*;
         use super::OrderState::*;
 
         #[cfg(feature = "dependency-graph")]
@@ -444,58 +454,55 @@ impl<'a> ResolverState<'a> {
             }
         }
 
-        match self.state.get(order) {
-            Some(&Known(order_state)) => order_state,
-            Some(&Guessing(order_state)) => {
+        if let Some(state) = self.state.get(order) {
+            if state.is_guess() {
                 // In recursive cases, we accumulate dependencies
                 if !self.dependency_chain.contains(&order) {
                     self.dependency_chain.push(order)
                 }
-
-                order_state
             }
-            None => {
-                // checkpoint the resolver and tell it to assume the order fails.
-                // get the order state based on that assumption.
-                let (first_resolver, first_result) = self.with_guess(context, order, Fails);
 
-                // If we found no new dependencies then this is a valid resolution!
-                // We now snap to the resolver state from the assumption so that we can
-                // reuse it in future calculations.
-                if first_resolver.dependency_chain.len() == self.dependency_chain.len() {
-                    self.snap_to(first_resolver);
-                    self.set_state(order, Known(first_result));
+            return state.order_state;
+        }
+
+        // checkpoint the resolver and tell it to assume the order fails.
+        // get the order state based on that assumption.
+        let (first_resolver, first_result) = self.with_guess(context, order, Fails);
+
+        // If we found no new dependencies then this is a valid resolution!
+        // We now snap to the resolver state from the assumption so that we can
+        // reuse it in future calculations.
+        if first_resolver.dependency_chain.len() == self.dependency_chain.len() {
+            self.snap_to(first_resolver);
+            self.set_state(order, ResolutionState::known(first_result));
+            first_result
+        } else {
+            let next_dep = first_resolver.dependency_chain[self.dependency_chain.len()];
+
+            // if we depend on some new guess but we haven't hit a cycle,
+            // then we cautiously proceed. We update state to match what we've learned
+            // from the hypothetical and proceed with our guesses.
+            if next_dep != order {
+                self.snap_to(first_resolver);
+                self.set_state(order, ResolutionState::guessing(first_result));
+                self.dependency_chain.push(order);
+                first_result
+            }
+            // if the next dependency is the one we're already depending on, we're stuck.
+            else {
+                let (_second_resolver, second_result) = self.with_guess(context, order, Succeeds);
+
+                // If there's a paradox but the outcome doesn't depend on this order,
+                // then all we've learned is the state of this one order.
+                if first_result == second_result {
+                    self.set_state(order, ResolutionState::known(first_result));
                     first_result
                 } else {
-                    let next_dep = first_resolver.dependency_chain[self.dependency_chain.len()];
+                    let tail_start = self.dependency_chain.len();
+                    let tail = &first_resolver.dependency_chain[tail_start..];
 
-                    // if we depend on some new guess but we haven't hit a cycle,
-                    // then we cautiously proceed. We update state to match what we've learned
-                    // from the hypothetical and proceed with our guesses.
-                    if next_dep != order {
-                        self.snap_to(first_resolver);
-                        self.set_state(order, Guessing(first_result));
-                        self.dependency_chain.push(order);
-                        first_result
-                    }
-                    // if the next dependency is the one we're already depending on, we're stuck.
-                    else {
-                        let (_second_resolver, second_result) =
-                            self.with_guess(context, order, Succeeds);
-
-                        // If there's a paradox but the outcome doesn't depend on this order,
-                        // then all we've learned is the state of this one order.
-                        if first_result == second_result {
-                            self.set_state(order, Known(first_result));
-                            first_result
-                        } else {
-                            let tail_start = self.dependency_chain.len();
-                            let tail = &first_resolver.dependency_chain[tail_start..];
-
-                            self.resolve_dependency_cycle(tail);
-                            self.resolve(context, order)
-                        }
-                    }
+                    self.resolve_dependency_cycle(tail);
+                    self.resolve(context, order)
                 }
             }
         }
@@ -520,11 +527,7 @@ impl<'a> From<ResolverState<'a>> for HashMap<MappedMainOrder, OrderState> {
         let mut out_map = HashMap::with_capacity(state.state.len());
 
         for (order, order_state) in state.state {
-            let order_state = match order_state {
-                ResolutionState::Known(os) | ResolutionState::Guessing(os) => os,
-            };
-
-            out_map.insert(order.clone(), order_state);
+            out_map.insert(order.clone(), order_state.order_state);
         }
 
         out_map
