@@ -227,13 +227,12 @@ where
     }
 
     fn find_region_occupier(&self, region: &L) -> Option<Unit<'_>> {
-        self.get(region.province()).and_then(|up| {
-            if up.region == region {
-                Some(up.unit.clone())
-            } else {
-                None
-            }
-        })
+        let up = self.get(region.province())?;
+        if up.region == region {
+            Some(up.unit.clone())
+        } else {
+            None
+        }
     }
 }
 

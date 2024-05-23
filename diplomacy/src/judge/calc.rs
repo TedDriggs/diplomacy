@@ -102,31 +102,31 @@ pub fn max_prevent_result<'a>(
     resolver: &mut ResolverState<'a>,
     preventing: &MappedMainOrder,
 ) -> Option<Prevent<&'a MappedMainOrder>> {
-    preventing.move_dest().and_then(|dst| {
-        let mut best_prevent = None;
-        let mut best_prevent_strength = 0;
-        for order in context
-            .orders()
-            .filter(|ord| ord != &preventing && ord.is_move_to_province(dst.into()))
+    let dst = preventing.move_dest()?;
+
+    let mut best_prevent = None;
+    let mut best_prevent_strength = 0;
+    for order in context
+        .orders()
+        .filter(|ord| ord != &preventing && ord.is_move_to_province(dst.into()))
+    {
+        if is_head_to_head(context, resolver, order, preventing)
+            && resolver.resolve(context, order).into()
         {
-            if is_head_to_head(context, resolver, order, preventing)
-                && resolver.resolve(context, order).into()
-            {
-                if best_prevent.is_none() {
-                    best_prevent = Some(Prevent::LostHeadToHead);
-                }
-                continue;
-            } else if let Some(prev) = prevent_result(context, resolver, order) {
-                let nxt_str = prev.strength();
-                if nxt_str >= best_prevent_strength {
-                    best_prevent_strength = nxt_str;
-                    best_prevent = Some(prev);
-                }
+            if best_prevent.is_none() {
+                best_prevent = Some(Prevent::LostHeadToHead);
+            }
+            continue;
+        } else if let Some(prev) = prevent_result(context, resolver, order) {
+            let nxt_str = prev.strength();
+            if nxt_str >= best_prevent_strength {
+                best_prevent_strength = nxt_str;
+                best_prevent = Some(prev);
             }
         }
+    }
 
-        best_prevent
-    })
+    best_prevent
 }
 
 /// Get the order that dislodges the provided order, if one exists.
