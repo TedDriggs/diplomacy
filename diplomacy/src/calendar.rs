@@ -6,6 +6,7 @@
 use crate::time::{Phase, Season, Time};
 use std::collections::BTreeSet;
 
+/// Identifier of a specific turn in a game.
 pub type Month = (Season, Phase);
 
 #[derive(Debug)]

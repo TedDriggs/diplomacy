@@ -6,6 +6,11 @@ use std::collections::{HashMap, HashSet};
 #[cfg(feature = "dependency-graph")]
 use std::{cell::RefCell, collections::BTreeSet, rc::Rc};
 
+/// A list of orders submitted for adjudication against a given world map.
+///
+/// The submission identifies and removes illegal orders prior to adjudication, and
+/// generates hold orders for units without orders, whether that's due to civil disorder
+/// or receiving illegal orders.
 pub struct Submission<'a> {
     world_map: &'a Map,
     submitted_orders: Vec<MappedMainOrder>,
@@ -27,6 +32,9 @@ impl<'a> Submission<'a> {
         Submission::new_internal(world_map, Some(starting_state), orders)
     }
 
+    /// Start a new adjudication by submitting orders and inferring the state of the world
+    /// from those orders. All ordered units are presumed to exist at the location of their
+    /// order, and no other units are presumed to exist.
     pub fn with_inferred_state(world_map: &'a Map, orders: Vec<MappedMainOrder>) -> Self {
         Submission::new_internal(world_map, None::<&Vec<MappedMainOrder>>, orders)
     }
@@ -54,7 +62,7 @@ impl<'a> Submission<'a> {
         temp
     }
 
-    /// Adjudicate the submission using the provided map and rules
+    /// Adjudicate the submission using the provided rules.
     pub fn adjudicate<A: Adjudicate>(&self, rules: A) -> Outcome<A> {
         let invalid_orders = self
             .invalid_orders
@@ -196,7 +204,7 @@ impl UnitPositions<RegionKey> for Submission<'_> {
 ///
 /// The struct is internally created by `diplomacy::judge::Submission::adjudicate`.
 pub struct Context<'a, A> {
-    /// Set of orders which were issued during this turn.
+    /// Set of legal orders for this turn, including generated hold orders.
     orders: Vec<&'a MappedMainOrder>,
 
     pub rules: A,
@@ -426,10 +434,6 @@ impl<'a> ResolverState<'a> {
         use self::ResolutionState::*;
         use super::OrderState::*;
 
-        // The Rust debugger doesn't use fmt::Debug when showing values, so we create
-        // this string to give us a better way to see which order we're resolving.
-        let _order = format!("{}", order);
-
         #[cfg(feature = "dependency-graph")]
         {
             if !self.greedy_chain.is_empty() {
@@ -439,11 +443,6 @@ impl<'a> ResolverState<'a> {
                 ));
             }
         }
-
-        // dbg!(order);
-        // dbg!(&self.state);
-        // dbg!(&self.dependency_chain);
-        // eprintln!("");
 
         match self.state.get(order) {
             Some(&Known(order_state)) => order_state,

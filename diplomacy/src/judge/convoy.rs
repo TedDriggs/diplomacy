@@ -12,6 +12,7 @@ pub enum ConvoyRouteError {
     CanOnlyConvoyMove,
 }
 
+/// The outcome of a convoy order.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ConvoyOutcome<O> {

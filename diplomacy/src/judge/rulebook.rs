@@ -228,6 +228,7 @@ impl Adjudicate for Rulebook {
     }
 }
 
+/// The outcome of a main-phase hold order.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum HoldOutcome<O> {
@@ -253,12 +254,22 @@ impl<O> From<HoldOutcome<O>> for OrderState {
     }
 }
 
+/// The outcome of a main-phase move order.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AttackOutcome<O> {
+    /// The order was a move to the unit's current location.
     MoveToSelf,
+    /// There was no way for the unit to reach the specified destination.
+    ///
+    /// This usually indicates that a convoy was possible but either disrupted
+    /// or not ordered, as routes where there is no possibility of a path are
+    /// instead deemed illegal.
     NoPath,
+    /// The unit tried to move into a province occupied by another unit of the
+    /// same nation.
     FriendlyFire,
+    /// The unit was prevented from entering the province by the specified order.
     Prevented(Prevent<O>),
     /// The intended victim of the attack instead dislodged the attacker and did not use a convoy.
     ///
@@ -269,6 +280,7 @@ pub enum AttackOutcome<O> {
     /// The intended victim of the attack fended off the attacker, possibly with support from
     /// other units.
     OccupierDefended,
+    /// The unit successfully moved to its destination.
     Succeeds,
 }
 
