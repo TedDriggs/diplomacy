@@ -11,7 +11,7 @@ mod state_type;
 mod strength;
 pub mod support;
 
-pub use self::outcome::{InvalidOrder, OrderOutcome, Outcome};
+pub use self::outcome::{IllegalOrder, OrderOutcome, Outcome};
 pub use self::state_type::OrderState;
 
 pub use self::convoy::ConvoyOutcome;

@@ -11,7 +11,7 @@ use std::fmt;
 #[derive(FromVariants, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OrderOutcome<O> {
-    Invalid(InvalidOrder),
+    Illegal(IllegalOrder),
     Hold(HoldOutcome<O>),
     Move(AttackOutcome<O>),
     Support(SupportOutcome<O>),
@@ -23,7 +23,7 @@ impl<O> OrderOutcome<O> {
     pub fn map_order<U>(self, map_fn: impl Fn(O) -> U) -> OrderOutcome<U> {
         use OrderOutcome::*;
         match self {
-            Invalid(oo) => Invalid(oo),
+            Illegal(oo) => Illegal(oo),
             Hold(oo) => Hold(oo.map_order(map_fn)),
             Move(oo) => Move(oo.map_order(map_fn)),
             Support(oo) => Support(oo.map_order(map_fn)),
@@ -35,7 +35,7 @@ impl<O> OrderOutcome<O> {
 impl<O> From<&'_ OrderOutcome<O>> for OrderState {
     fn from(other: &OrderOutcome<O>) -> Self {
         match other {
-            OrderOutcome::Invalid(i) => i.into(),
+            OrderOutcome::Illegal(i) => i.into(),
             OrderOutcome::Hold(h) => h.into(),
             OrderOutcome::Move(m) => m.into(),
             OrderOutcome::Support(s) => s.into(),
@@ -53,7 +53,7 @@ impl<O> From<OrderOutcome<O>> for OrderState {
 impl<O: fmt::Debug> fmt::Debug for OrderOutcome<O> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            OrderOutcome::Invalid(oo) => oo.fmt(f),
+            OrderOutcome::Illegal(oo) => oo.fmt(f),
             OrderOutcome::Hold(oo) => oo.fmt(f),
             OrderOutcome::Move(oo) => oo.fmt(f),
             OrderOutcome::Support(oo) => oo.fmt(f),
@@ -62,10 +62,10 @@ impl<O: fmt::Debug> fmt::Debug for OrderOutcome<O> {
     }
 }
 
-/// Outcome for an order that was invalid and not considered during adjudication.
+/// Outcome for an order that was illegal and not considered during adjudication.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum InvalidOrder {
+pub enum IllegalOrder {
     /// There is no unit in position to act on the order.
     NoUnit,
     /// There is a unit in the region to which the order is addressed, but it belongs to a nation
@@ -79,8 +79,8 @@ pub enum InvalidOrder {
     UnreachableDestination,
 }
 
-impl From<&'_ InvalidOrder> for OrderState {
-    fn from(_: &InvalidOrder) -> Self {
+impl From<&'_ IllegalOrder> for OrderState {
+    fn from(_: &IllegalOrder) -> Self {
         OrderState::Fails
     }
 }
@@ -101,7 +101,7 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
             .map(|ord| (ord, context.rules.explain(&context, &mut state, ord)))
             .chain(
                 context
-                    .invalid_orders
+                    .illegal_orders
                     .iter()
                     .map(|(&ord, &reason)| (ord, reason.into())),
             )
@@ -115,12 +115,12 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
     }
 
     /// The orders that participated in resolution, in the order they were provided. This does not
-    /// include invalid orders.
+    /// include illegal orders.
     pub fn orders(&self) -> impl Iterator<Item = &MappedMainOrder> {
         self.context.orders()
     }
 
-    /// The union of all orders known to the outcome. This will include any invalid orders and the hold
+    /// The union of all orders known to the outcome. This will include any illegal orders and the hold
     /// orders generated to ensure all units had an order during adjudication.
     pub fn all_orders(&self) -> impl Iterator<Item = &MappedMainOrder> {
         self.orders.keys().copied()

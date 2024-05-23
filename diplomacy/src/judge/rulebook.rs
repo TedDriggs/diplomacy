@@ -206,8 +206,8 @@ impl Adjudicate for Rulebook {
     ) -> OrderOutcome<&'a MappedMainOrder> {
         use crate::order::MainCommand::*;
 
-        if let Some(reason) = resolver.invalid_orders.get(order) {
-            return OrderOutcome::Invalid(*reason);
+        if let Some(&reason) = resolver.illegal_orders.get(order) {
+            return reason.into();
         }
 
         match order.command {

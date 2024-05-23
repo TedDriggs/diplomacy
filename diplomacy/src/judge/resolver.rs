@@ -1,4 +1,4 @@
-use super::{convoy, Adjudicate, InvalidOrder, MappedMainOrder, OrderState, Outcome, Rulebook};
+use super::{convoy, Adjudicate, IllegalOrder, MappedMainOrder, OrderState, Outcome, Rulebook};
 use crate::geo::{Map, ProvinceKey, RegionKey};
 use crate::order::{Command, MainCommand, Order};
 use crate::{Unit, UnitPosition, UnitPositions};
@@ -15,14 +15,14 @@ pub struct Submission<'a> {
     world_map: &'a Map,
     submitted_orders: Vec<MappedMainOrder>,
     civil_disorder_orders: Vec<MappedMainOrder>,
-    /// A map of indexes in `submitted_orders` to the reason those orders are invalid.
+    /// A map of indexes in `submitted_orders` to the reason those orders are illegal.
     // This uses indices because Rust doesn't support self-referential structs.
-    invalid_orders: HashMap<usize, InvalidOrder>,
+    illegal_orders: HashMap<usize, IllegalOrder>,
 }
 
 impl<'a> Submission<'a> {
     /// Start a new adjudication by submitting orders against a given starting
-    /// state. This will identify and resolve invalid orders, and generate hold orders
+    /// state. This will identify and resolve illegal orders, and generate hold orders
     /// for any units that lack valid orders.
     pub fn new(
         world_map: &'a Map,
@@ -48,15 +48,15 @@ impl<'a> Submission<'a> {
             world_map,
             submitted_orders: orders,
             civil_disorder_orders: vec![],
-            invalid_orders: HashMap::new(),
+            illegal_orders: HashMap::new(),
         };
 
-        let (invalid_orders, missing_orders) = if let Some(start) = start {
+        let (illegal_orders, missing_orders) = if let Some(start) = start {
             temp.finish_creation(start)
         } else {
             temp.finish_creation(&temp.submitted_orders)
         };
-        temp.invalid_orders = invalid_orders;
+        temp.illegal_orders = illegal_orders;
         temp.civil_disorder_orders = missing_orders;
 
         temp
@@ -64,8 +64,8 @@ impl<'a> Submission<'a> {
 
     /// Adjudicate the submission using the provided rules.
     pub fn adjudicate<A: Adjudicate>(&self, rules: A) -> Outcome<A> {
-        let invalid_orders = self
-            .invalid_orders
+        let illegal_orders = self
+            .illegal_orders
             .iter()
             .map(|(idx, reason)| (&self.submitted_orders[*idx], *reason))
             .collect::<HashMap<_, _>>();
@@ -75,16 +75,16 @@ impl<'a> Submission<'a> {
             rules,
             self.submitted_orders
                 .iter()
-                .filter(|o| !invalid_orders.contains_key(o))
+                .filter(|o| !illegal_orders.contains_key(o))
                 .chain(&self.civil_disorder_orders),
         );
 
-        context.invalid_orders = invalid_orders;
+        context.illegal_orders = illegal_orders;
 
         context.resolve()
     }
 
-    /// The exact orders that were provided at submission time, including invalid orders and
+    /// The exact orders that were provided at submission time, including illegal orders and
     /// excluding orders generated due to civil disorder.
     pub fn submitted_orders(&self) -> impl Iterator<Item = &MappedMainOrder> {
         self.submitted_orders.iter()
@@ -98,37 +98,37 @@ impl<'a> Submission<'a> {
     /// The orders that are used for the remainder of adjudication. This contains exactly one
     /// well-formed order for each unit in play.
     pub fn adjudicated_orders(&self) -> impl Iterator<Item = &MappedMainOrder> {
-        let invalid = self
-            .invalid_orders
+        let illegal = self
+            .illegal_orders
             .keys()
             .map(|idx| &self.submitted_orders[*idx])
             .collect::<HashSet<_>>();
 
         self.submitted_orders()
-            .filter(move |ord| !invalid.contains(ord))
+            .filter(move |ord| !illegal.contains(ord))
             .chain(&self.civil_disorder_orders)
     }
 
     /// After we create the struct we have to finish up the creation process by removing
-    /// invalid orders and injecting holds for units that are missing orders.
+    /// illegal orders and injecting holds for units that are missing orders.
     fn finish_creation(
         &self,
         start: &impl UnitPositions<RegionKey>,
-    ) -> (HashMap<usize, InvalidOrder>, Vec<MappedMainOrder>) {
-        let mut invalid_orders = HashMap::new();
+    ) -> (HashMap<usize, IllegalOrder>, Vec<MappedMainOrder>) {
+        let mut illegal_orders = HashMap::new();
         let mut inserted_orders = vec![];
 
         let positions = start.unit_positions().into_iter().collect::<HashSet<_>>();
         let mut ordered_units = HashSet::new();
 
-        // Reject any invalid orders to prevent them being considered for the rest of
+        // Reject any illegal orders to prevent them being considered for the rest of
         // the resolution process.
         for (index, order) in self.submitted_orders.iter().enumerate() {
             if !positions.contains(&order.unit_position()) {
                 if start.find_region_occupier(&order.region).is_some() {
-                    invalid_orders.insert(index, InvalidOrder::ForeignUnit);
+                    illegal_orders.insert(index, IllegalOrder::ForeignUnit);
                 } else {
-                    invalid_orders.insert(index, InvalidOrder::NoUnit);
+                    illegal_orders.insert(index, IllegalOrder::NoUnit);
                 }
             }
             // From DATC v3.0, section 3:
@@ -143,21 +143,21 @@ impl<'a> Submission<'a> {
                     .unwrap_or(false)
                     || convoy::route_may_exist(self.world_map, positions.iter().cloned(), order))
             {
-                invalid_orders.insert(index, InvalidOrder::UnreachableDestination);
+                illegal_orders.insert(index, IllegalOrder::UnreachableDestination);
             } else if !ordered_units.insert(order) {
-                invalid_orders.insert(index, InvalidOrder::MultipleToSameUnit);
+                illegal_orders.insert(index, IllegalOrder::MultipleToSameUnit);
             }
         }
 
-        let invalids = invalid_orders
+        let illegals = illegal_orders
             .keys()
             .map(|idx| &self.submitted_orders[*idx])
             .collect::<HashSet<_>>();
 
-        // Having rejected invalid orders, we figure out which positions still
+        // Having rejected illegal orders, we figure out which positions still
         let positions_with_valid_orders = self
             .submitted_orders()
-            .filter(|o| !invalids.contains(o))
+            .filter(|o| !illegals.contains(o))
             .map(|o| o.unit_position())
             .collect::<HashSet<_>>();
 
@@ -171,7 +171,7 @@ impl<'a> Submission<'a> {
             ));
         }
 
-        (invalid_orders, inserted_orders)
+        (illegal_orders, inserted_orders)
     }
 }
 
@@ -212,7 +212,7 @@ pub struct Context<'a, A> {
     /// The map against which orders were issued.
     pub world_map: &'a Map,
 
-    pub(in crate::judge) invalid_orders: HashMap<&'a MappedMainOrder, InvalidOrder>,
+    pub(in crate::judge) illegal_orders: HashMap<&'a MappedMainOrder, IllegalOrder>,
 }
 
 impl<'a, A: Adjudicate> Context<'a, A> {
@@ -226,7 +226,7 @@ impl<'a, A: Adjudicate> Context<'a, A> {
             world_map,
             rules,
             orders: orders.into_iter().collect(),
-            invalid_orders: HashMap::new(),
+            illegal_orders: HashMap::new(),
         }
     }
 
@@ -246,8 +246,8 @@ impl<'a, A: Adjudicate> Context<'a, A> {
     pub fn resolve(self) -> Outcome<'a, A> {
         let mut rs = ResolverState::new();
 
-        for (order, reason) in &self.invalid_orders {
-            rs.invalid_orders.insert(order, *reason);
+        for (order, reason) in &self.illegal_orders {
+            rs.illegal_orders.insert(order, *reason);
         }
 
         for order in self.orders() {
@@ -324,7 +324,7 @@ pub struct ResolverState<'a> {
     /// guesses that have been visited twice, indicating that a cycle has been found.
     dependency_chain: Vec<&'a MappedMainOrder>,
 
-    pub(in crate::judge) invalid_orders: HashMap<&'a MappedMainOrder, InvalidOrder>,
+    pub(in crate::judge) illegal_orders: HashMap<&'a MappedMainOrder, IllegalOrder>,
 }
 
 impl<'a> ResolverState<'a> {
@@ -338,7 +338,7 @@ impl<'a> ResolverState<'a> {
                 greedy_chain: vec![],
                 dependency_chain: vec![],
                 paradoxical_orders: HashSet::new(),
-                invalid_orders: HashMap::new(),
+                illegal_orders: HashMap::new(),
             }
         }
 
@@ -348,7 +348,7 @@ impl<'a> ResolverState<'a> {
                 state: HashMap::new(),
                 dependency_chain: vec![],
                 paradoxical_orders: HashSet::new(),
-                invalid_orders: HashMap::new(),
+                illegal_orders: HashMap::new(),
             }
         }
     }

@@ -11,7 +11,7 @@ use std::iter::once;
 use diplomacy::{
     geo,
     judge::{
-        self, AttackOutcome, InvalidOrder, OrderOutcome,
+        self, AttackOutcome, IllegalOrder, OrderOutcome,
         OrderState::{Fails, Succeeds},
         Rulebook, Submission,
     },
@@ -68,7 +68,7 @@ fn t6a06_ordering_a_unit_of_another_country() {
     let outcome = submission.adjudicate(Rulebook);
     assert_eq!(
         outcome.get(&order).unwrap(),
-        &OrderOutcome::Invalid(InvalidOrder::ForeignUnit)
+        &OrderOutcome::Illegal(IllegalOrder::ForeignUnit)
     );
 }
 
@@ -260,7 +260,7 @@ fn t6b11_coast_can_not_be_ordered_to_change() {
     dbg!(outcome.get(&order));
     assert_eq!(
         outcome.get(&order).expect("Order should have outcome"),
-        &OrderOutcome::Invalid(InvalidOrder::NoUnit),
+        &OrderOutcome::Illegal(IllegalOrder::NoUnit),
     );
 }
 
