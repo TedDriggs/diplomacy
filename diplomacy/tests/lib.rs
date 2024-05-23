@@ -56,7 +56,7 @@ fn dipmath_figure9() {
     let result = orders.adjudicate(Rulebook);
 
     for order in orders.submitted_orders() {
-        assert_eq!(result.get(order).unwrap(), &OrderState::Succeeds);
+        assert_eq!(OrderState::Succeeds, result.get(order).unwrap().into());
     }
 }
 
@@ -109,12 +109,12 @@ fn dipmath_figure6() {
     let result = orders.adjudicate(Rulebook);
     for o in orders.submitted_orders() {
         assert_eq!(
-            result.get(o).unwrap(),
             if o.nation == ger {
-                &OrderState::Succeeds
+                OrderState::Succeeds
             } else {
-                &OrderState::Fails
-            }
+                OrderState::Fails
+            },
+            result.get(o).unwrap().into(),
         );
     }
 }
@@ -166,12 +166,12 @@ fn dipmath_figure16() {
     let result = orders.adjudicate(Rulebook);
     for o in orders.submitted_orders() {
         assert_eq!(
-            result.get(o).unwrap(),
             if o.nation != ita {
-                &OrderState::Succeeds
+                OrderState::Succeeds
             } else {
-                &OrderState::Fails
-            }
+                OrderState::Fails
+            },
+            result.get(o).unwrap().into()
         );
     }
 }

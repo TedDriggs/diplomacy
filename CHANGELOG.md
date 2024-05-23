@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## Unreleased
+
+-   **Breaking:** Remove `PartialEq` impls between outcomes and `judge::OrderState`. These did not uphold the Rust rules of `PartialEq`.
+
 ## v0.1.3 (2024-05-22)
 
 -   Fix adjudicator handling of PREVENT, DEFEND, and ATTACK strengths to avoid self-dislodgement.

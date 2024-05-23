@@ -11,9 +11,7 @@ use std::iter::once;
 use diplomacy::{
     geo,
     judge::{
-        self,
-        retreat::DestStatus,
-        AttackOutcome, InvalidOrder, OrderOutcome,
+        self, AttackOutcome, InvalidOrder, OrderOutcome,
         OrderState::{Fails, Succeeds},
         Rulebook, Submission,
     },
@@ -1680,6 +1678,8 @@ fn t6h04_no_other_moves_during_retreat() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.5
 #[test]
 fn t6h05_a_unit_may_not_retreat_to_the_area_from_which_it_is_attacked() {
+    use judge::retreat::{DestStatus::*, OrderOutcome::*};
+
     let (submission, expected) = submit_main_phase! {
        "RUS: F con Supports F bla -> ank",
        "RUS: F bla -> ank": Succeeds,
@@ -1690,13 +1690,15 @@ fn t6h05_a_unit_may_not_retreat_to_the_area_from_which_it_is_attacked() {
 
     judge_retreat! {
         outcome,
-        "TUR: F ank -> bla": DestStatus::BlockedByDislodger,
+        "TUR: F ank -> bla": InvalidDestination(BlockedByDislodger),
     };
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.6
 #[test]
 fn t6h06_unit_may_not_retreat_to_a_contested_area() {
+    use judge::retreat::{DestStatus::*, OrderOutcome::*};
+
     let (submission, expected) = submit_main_phase! {
        "AUS: A bud Supports A tri -> vie",
        "AUS: A tri -> vie": Succeeds,
@@ -1709,7 +1711,7 @@ fn t6h06_unit_may_not_retreat_to_a_contested_area() {
 
     judge_retreat! {
         outcome,
-        "ITA: A vie -> boh": DestStatus::Contested,
+        "ITA: A vie -> boh": InvalidDestination(Contested),
     };
 }
 
@@ -1789,7 +1791,7 @@ fn t6h09_dislodged_unit_will_not_make_attackers_area_contested() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.10
 #[test]
 fn t6h10_not_retreating_to_attacker_does_not_mean_contested() {
-    use judge::retreat::OrderOutcome::*;
+    use judge::retreat::{DestStatus::*, OrderOutcome::*};
 
     let (submission, expected) = submit_main_phase! {
        "ENG: A kie Hold": Fails,
@@ -1804,7 +1806,7 @@ fn t6h10_not_retreating_to_attacker_does_not_mean_contested() {
 
     judge_retreat! {
         outcome,
-        "ENG: A kie -> ber": DestStatus::BlockedByDislodger,
+        "ENG: A kie -> ber": InvalidDestination(BlockedByDislodger),
         "GER: A pru -> ber": Moves,
     };
 }
@@ -1860,6 +1862,8 @@ fn t6h12_retreat_when_dislodged_by_adjacent_convoy_while_trying_to_do_the_same()
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.13
 #[test]
 fn t6h13_no_retreat_with_convoy_in_main_phase() {
+    use judge::retreat::{DestStatus::*, OrderOutcome::*};
+
     let (submission, expected) = submit_main_phase! {
        "ENG: A pic Hold": Fails,
        "ENG: F eng convoys pic -> lon",
@@ -1871,7 +1875,7 @@ fn t6h13_no_retreat_with_convoy_in_main_phase() {
 
     judge_retreat! {
         outcome,
-        "ENG: A pic -> lon": DestStatus::Unreachable,
+        "ENG: A pic -> lon": InvalidDestination(Unreachable),
     };
 }
 
@@ -1902,6 +1906,7 @@ fn t6h14_no_retreat_with_support_in_main_phase() {
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.15
 #[test]
 fn t6h15_no_coastal_crawl_in_retreat() {
+    use judge::retreat::{DestStatus::*, OrderOutcome::*};
     let (submission, expected) = submit_main_phase! {
        "ENG: F por Hold": Fails,
        "FRA: F spa(sc) -> por": Succeeds,
@@ -1912,13 +1917,15 @@ fn t6h15_no_coastal_crawl_in_retreat() {
 
     judge_retreat! {
         outcome,
-        "ENG: F por -> spa(nc)": DestStatus::BlockedByDislodger,
+        "ENG: F por -> spa(nc)": InvalidDestination(BlockedByDislodger),
     };
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.16
 #[test]
 fn t6h16_contested_for_both_coasts() {
+    use judge::retreat::{DestStatus::*, OrderOutcome::*};
+
     let (submission, expected) = submit_main_phase! {
        "FRA: F mao -> spa(nc)": Fails,
        "FRA: F gas -> spa(nc)": Fails,
@@ -1931,7 +1938,7 @@ fn t6h16_contested_for_both_coasts() {
 
     judge_retreat! {
         outcome,
-        "FRA: F wes -> spa(sc)": DestStatus::Contested,
+        "FRA: F wes -> spa(sc)": InvalidDestination(Contested),
     };
 }
 

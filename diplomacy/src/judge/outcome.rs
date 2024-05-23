@@ -48,12 +48,6 @@ impl<O: fmt::Debug> fmt::Debug for OrderOutcome<O> {
     }
 }
 
-impl<O> PartialEq<OrderState> for OrderOutcome<O> {
-    fn eq(&self, other: &OrderState) -> bool {
-        OrderState::from(self) == *other
-    }
-}
-
 /// Outcome for an order that was invalid and not considered during adjudication.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

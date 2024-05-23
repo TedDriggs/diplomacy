@@ -1,7 +1,7 @@
 use crate::geo::{Border, ProvinceKey, RegionKey};
 use crate::judge::{
-    calc::dislodger_of, calc::prevent_results, convoy, retreat, Adjudicate, Context,
-    MappedMainOrder, OrderState, Outcome, Prevent, ResolverState,
+    calc::dislodger_of, calc::prevent_results, convoy, Adjudicate, Context, MappedMainOrder,
+    OrderState, Outcome, Prevent, ResolverState,
 };
 use crate::{order::Command, Unit, UnitPosition, UnitPositions};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -210,12 +210,6 @@ pub enum DestStatus {
     Contested,
 }
 
-impl<O> PartialEq<retreat::OrderOutcome<O>> for DestStatus {
-    fn eq(&self, other: &retreat::OrderOutcome<O>) -> bool {
-        other == self
-    }
-}
-
 /// The state of the world between the main phase and retreat phases of a season, ignoring
 /// dislodged units.
 ///
@@ -238,7 +232,7 @@ fn non_dislodged_positions<'a, A>(
             continue;
         }
 
-        if order.is_move() && *result == OrderState::Succeeds {
+        if order.is_move() && OrderState::from(result) == OrderState::Succeeds {
             let new_position = order.move_dest().unwrap();
             positions.insert(
                 new_position.province(),
