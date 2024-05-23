@@ -153,7 +153,7 @@ pub fn find_for<'a>(
         .collect()
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SupportOutcome<O> {
     NotDisrupted,
@@ -168,6 +168,17 @@ pub enum SupportOutcome<O> {
 impl<O> SupportOutcome<O> {
     pub fn is_successful(&self) -> bool {
         matches!(self, SupportOutcome::NotDisrupted)
+    }
+
+    /// Apply a function to any orders referenced by `self`, returning a new outcome.
+    pub fn map_order<U>(self, map_fn: impl Fn(O) -> U) -> SupportOutcome<U> {
+        use SupportOutcome::*;
+        match self {
+            NotDisrupted => NotDisrupted,
+            SupportingSelf => SupportingSelf,
+            CantReach => CantReach,
+            CutBy(atk) => CutBy(map_fn(atk)),
+        }
     }
 }
 

@@ -13,7 +13,7 @@ pub enum ConvoyRouteError {
 }
 
 /// The outcome of a convoy order.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ConvoyOutcome<O> {
     /// The convoy order is invalid because the convoying unit is not at sea.
@@ -24,6 +24,19 @@ pub enum ConvoyOutcome<O> {
     Paradox,
     /// The convoy was not disrupted. This doesn't mean the move necessarily succeeded.
     NotDisrupted,
+}
+
+impl<O> ConvoyOutcome<O> {
+    /// Apply a function to any orders referenced by `self`, returning a new outcome.
+    pub fn map_order<U>(self, map_fn: impl Fn(O) -> U) -> ConvoyOutcome<U> {
+        use ConvoyOutcome::*;
+        match self {
+            NotAtSea => NotAtSea,
+            Dislodged(by) => Dislodged(map_fn(by)),
+            Paradox => Paradox,
+            NotDisrupted => NotDisrupted,
+        }
+    }
 }
 
 impl<O> From<&'_ ConvoyOutcome<O>> for OrderState {

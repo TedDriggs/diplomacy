@@ -117,7 +117,7 @@ impl UnitPositions<RegionKey> for Outcome<'_> {
 }
 
 /// The outcome of a specific retreat phase order.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OrderOutcome<O> {
     /// The order was prevented by one or more other retreat orders.
@@ -136,6 +136,18 @@ pub enum OrderOutcome<O> {
 }
 
 impl<O> OrderOutcome<O> {
+    /// Apply a function to any orders referenced by `self`, returning a new outcome.
+    pub fn map_order<U>(self, map_fn: impl Fn(O) -> U) -> OrderOutcome<U> {
+        use OrderOutcome::*;
+        match self {
+            Prevented(o) => Prevented(map_fn(o)),
+            InvalidDestination(status) => InvalidDestination(status),
+            InvalidRecipient => InvalidRecipient,
+            Moves => Moves,
+            DisbandsAsOrdered => DisbandsAsOrdered,
+        }
+    }
+
     /// Check if the ordered unit disbanded at the conclusion of the retreat phase.
     pub fn did_disband(&self) -> bool {
         match self {

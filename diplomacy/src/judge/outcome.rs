@@ -8,7 +8,7 @@ use std::fmt;
 
 /// The outcome of a specific order. The variant of the outcome will match the issued order
 /// type.
-#[derive(FromVariants, Clone, PartialEq, Eq)]
+#[derive(FromVariants, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OrderOutcome<O> {
     Invalid(InvalidOrder),
@@ -16,6 +16,20 @@ pub enum OrderOutcome<O> {
     Move(AttackOutcome<O>),
     Support(SupportOutcome<O>),
     Convoy(ConvoyOutcome<O>),
+}
+
+impl<O> OrderOutcome<O> {
+    /// Apply a function to any orders referenced by `self`, returning a new outcome.
+    pub fn map_order<U>(self, map_fn: impl Fn(O) -> U) -> OrderOutcome<U> {
+        use OrderOutcome::*;
+        match self {
+            Invalid(oo) => Invalid(oo),
+            Hold(oo) => Hold(oo.map_order(map_fn)),
+            Move(oo) => Move(oo.map_order(map_fn)),
+            Support(oo) => Support(oo.map_order(map_fn)),
+            Convoy(oo) => Convoy(oo.map_order(map_fn)),
+        }
+    }
 }
 
 impl<O> From<&'_ OrderOutcome<O>> for OrderState {

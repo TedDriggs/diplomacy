@@ -3,6 +3,9 @@
 ## Unreleased
 
 -   **Breaking:** Remove `PartialEq` impls between outcomes and `judge::OrderState`. These did not uphold the Rust rules of `PartialEq`.
+-   Make all `OrderOutcome` enums derive `Copy`
+-   Only expose the preventing order in `AttackOutcome::Prevented` - exposing the supports was unnecessary complexity, and allowed for some confusing cases where the provided Prevent value couldn't have caused a failed move
+-   Add `map_order` function to outcomes, which runs a mapping function over any orders referenced in the outcome. This makes it possible to convert order outcomes to be owned, for example.
 
 ## v0.1.3 (2024-05-22)
 

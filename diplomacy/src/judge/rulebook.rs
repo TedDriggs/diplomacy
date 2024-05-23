@@ -4,7 +4,7 @@ use super::resolver::{Context, ResolverState};
 use super::support::{self, SupportOutcome};
 use super::{Adjudicate, MappedMainOrder, OrderOutcome, OrderState};
 use crate::geo::Terrain;
-use crate::judge::strength::{Prevent, Strength};
+use crate::judge::strength::Strength;
 use crate::order::Command;
 use crate::ShortName;
 
@@ -44,7 +44,7 @@ impl Rulebook {
             // immediately report the failure. This avoids breaking test case
             // 6.C.03 Three army circular movement bounces.
             if atk_strength <= prevent.strength() {
-                AttackOutcome::Prevented(prevent.unwrap())
+                AttackOutcome::Prevented(prevent.unwrap().unwrap_order())
             } else {
                 if let Some(occupier) =
                     ctx.find_order_to_province(ord.command.move_dest().unwrap().into())
@@ -116,7 +116,7 @@ impl Rulebook {
                         // Re-check if the attack strength is sufficient to overcome prevent
                         // strength now that friendly-fire support is ignored; see 6.E.7
                         if atk_strength <= prevent.strength() {
-                            return AttackOutcome::Prevented(prevent.unwrap());
+                            return AttackOutcome::Prevented(prevent.unwrap().unwrap_order());
                         }
 
                         // Only lose a head-to-head if the head-to-head opponent's attack strength
@@ -229,13 +229,25 @@ impl Adjudicate for Rulebook {
 }
 
 /// The outcome of a main-phase hold order.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum HoldOutcome<O> {
     /// The unit remains in its current region
     Succeeds,
     /// The unit is dislodged by the specified order
     Dislodged(O),
+}
+
+impl<O> HoldOutcome<O> {
+    /// Apply a function to any orders referenced by `self`, returning a new outcome.
+    pub fn map_order<U>(self, map_fn: impl Fn(O) -> U) -> HoldOutcome<U> {
+        use HoldOutcome::*;
+
+        match self {
+            Succeeds => Succeeds,
+            Dislodged(o) => Dislodged(map_fn(o)),
+        }
+    }
 }
 
 impl<O> From<&'_ HoldOutcome<O>> for OrderState {
@@ -255,7 +267,7 @@ impl<O> From<HoldOutcome<O>> for OrderState {
 }
 
 /// The outcome of a main-phase move order.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AttackOutcome<O> {
     /// The order was a move to the unit's current location.
@@ -270,7 +282,7 @@ pub enum AttackOutcome<O> {
     /// same nation.
     FriendlyFire,
     /// The unit was prevented from entering the province by the specified order.
-    Prevented(Prevent<O>),
+    Prevented(O),
     /// The intended victim of the attack instead dislodged the attacker and did not use a convoy.
     ///
     /// A unit that loses a head-to-head battle is dislodged, cannot retreat to the province from
@@ -282,6 +294,22 @@ pub enum AttackOutcome<O> {
     OccupierDefended,
     /// The unit successfully moved to its destination.
     Succeeds,
+}
+
+impl<O> AttackOutcome<O> {
+    /// Apply a function to any orders referenced by `self`, returning a new outcome.
+    pub fn map_order<U>(self, map_fn: impl Fn(O) -> U) -> AttackOutcome<U> {
+        use AttackOutcome::*;
+        match self {
+            MoveToSelf => MoveToSelf,
+            NoPath => NoPath,
+            FriendlyFire => FriendlyFire,
+            Prevented(p) => Prevented(map_fn(p)),
+            LostHeadToHead => LostHeadToHead,
+            OccupierDefended => OccupierDefended,
+            Succeeds => Succeeds,
+        }
+    }
 }
 
 impl<O> From<&'_ AttackOutcome<O>> for OrderState {
