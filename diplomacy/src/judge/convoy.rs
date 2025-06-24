@@ -68,7 +68,7 @@ trait RouteStep: Eq + Clone {
     fn region(&self) -> &RegionKey;
 }
 
-impl<'a> RouteStep for &'a MappedMainOrder {
+impl RouteStep for &MappedMainOrder {
     fn region(&self) -> &RegionKey {
         &self.region
     }

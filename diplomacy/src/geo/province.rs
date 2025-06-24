@@ -52,7 +52,7 @@ impl ProvinceKey {
     }
 }
 
-impl<'a> From<&'a Province> for ProvinceKey {
+impl From<&Province> for ProvinceKey {
     fn from(p: &Province) -> Self {
         ProvinceKey(p.short_name().into_owned())
     }
@@ -64,7 +64,7 @@ impl From<String> for ProvinceKey {
     }
 }
 
-impl<'a> From<&'a str> for ProvinceKey {
+impl From<&str> for ProvinceKey {
     fn from(s: &str) -> Self {
         ProvinceKey(String::from(s))
     }

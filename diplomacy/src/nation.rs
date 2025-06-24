@@ -19,7 +19,7 @@ impl fmt::Display for Nation {
     }
 }
 
-impl<'a> From<&'a str> for Nation {
+impl From<&str> for Nation {
     fn from(s: &str) -> Self {
         Nation(String::from(s))
     }
