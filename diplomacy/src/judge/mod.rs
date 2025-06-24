@@ -32,14 +32,23 @@ pub type MappedRetreatOrder = RetreatOrder<RegionKey>;
 
 /// A clonable container for a rulebook which can be used to adjudicate a turn.
 pub trait Adjudicate: Sized {
-    /// Determine the success of an order.
+    /// Determines and returns the success of an order.
+    ///
+    /// Calling this MUST leave the `resolver` in the same state as if [`Adjudicate::explain`] was called.
+    ///
+    /// Adjudicators MAY customize this method to be more memory-efficient by avoiding allocation of explanatory data.
     fn adjudicate<'a>(
         &self,
         context: &Context<'a, Self>,
         resolver: &mut ResolverState<'a>,
         order: &'a MappedMainOrder,
-    ) -> OrderState;
+    ) -> OrderState {
+        self.explain(context, resolver, order).into()
+    }
 
+    /// Determines and returns the outcome of an order.
+    ///
+    /// The outcome contains enough information to determine both _whether_ the order succeeds or fails and _why_ the order succeeds or fails.
     fn explain<'a>(
         &self,
         context: &Context<'a, Self>,
