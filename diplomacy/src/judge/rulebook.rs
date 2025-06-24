@@ -15,7 +15,7 @@ pub struct Rulebook;
 impl Rulebook {
     /// Apply rules to determine hold outcome.
     fn adjudicate_hold<'a>(
-        ctx: &Context<'a, Self>,
+        ctx: &Context<'a, impl Adjudicate>,
         rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
     ) -> HoldOutcome<&'a MappedMainOrder> {
@@ -26,7 +26,7 @@ impl Rulebook {
 
     /// Apply rules to determine move outcome.
     fn adjudicate_move<'a>(
-        ctx: &Context<'a, Self>,
+        ctx: &Context<'a, impl Adjudicate>,
         rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
     ) -> AttackOutcome<&'a MappedMainOrder> {
@@ -139,7 +139,7 @@ impl Rulebook {
     }
 
     fn adjudicate_support<'a>(
-        ctx: &Context<'a, Self>,
+        ctx: &Context<'a, impl Adjudicate>,
         rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
     ) -> SupportOutcome<&'a MappedMainOrder> {
@@ -156,7 +156,7 @@ impl Rulebook {
     }
 
     fn adjudicate_convoy<'a>(
-        ctx: &Context<'a, Self>,
+        ctx: &Context<'a, impl Adjudicate>,
         rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
     ) -> ConvoyOutcome<&'a MappedMainOrder> {
@@ -186,21 +186,9 @@ impl Rulebook {
             ConvoyOutcome::NotDisrupted
         }
     }
-}
-
-impl Adjudicate for Rulebook {
-    fn adjudicate<'a>(
-        &self,
-        context: &Context<'a, Self>,
-        resolver: &mut ResolverState<'a>,
-        order: &'a MappedMainOrder,
-    ) -> OrderState {
-        self.explain(context, resolver, order).into()
-    }
 
     fn explain<'a>(
-        &self,
-        context: &Context<'a, Self>,
+        context: &Context<'a, impl Adjudicate>,
         resolver: &mut ResolverState<'a>,
         order: &'a MappedMainOrder,
     ) -> OrderOutcome<&'a MappedMainOrder> {
@@ -225,6 +213,28 @@ impl Adjudicate for Rulebook {
             // a paradox.
             Convoy(..) => Rulebook::adjudicate_convoy(context, resolver, order).into(),
         }
+    }
+}
+
+impl Adjudicate for Rulebook {
+    fn explain<'a>(
+        &self,
+        context: &Context<'a, Self>,
+        resolver: &mut ResolverState<'a>,
+        order: &'a MappedMainOrder,
+    ) -> OrderOutcome<&'a MappedMainOrder> {
+        Rulebook::explain(context, resolver, order)
+    }
+}
+
+impl Adjudicate for &Rulebook {
+    fn explain<'a>(
+        &self,
+        context: &Context<'a, Self>,
+        resolver: &mut ResolverState<'a>,
+        order: &'a MappedMainOrder,
+    ) -> OrderOutcome<&'a MappedMainOrder> {
+        Rulebook::explain(context, resolver, order)
     }
 }
 
