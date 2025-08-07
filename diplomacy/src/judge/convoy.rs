@@ -60,7 +60,7 @@ impl<O> From<ConvoyOutcome<O>> for OrderState {
 /// its current location to the destination.
 fn is_convoy_for(convoy: &MappedMainOrder, mv_ord: &MappedMainOrder) -> bool {
     match &convoy.command {
-        MainCommand::Convoy(ref cm) => cm == mv_ord,
+        MainCommand::Convoy(cm) => cm == mv_ord,
         _ => false,
     }
 }
@@ -201,10 +201,10 @@ pub fn route_may_exist<'a>(
 
 #[cfg(test)]
 mod test {
+    use crate::UnitType;
     use crate::geo::{self, ProvinceKey, RegionKey};
     use crate::judge::MappedMainOrder;
     use crate::order::{ConvoyedMove, Order};
-    use crate::UnitType;
 
     fn convoy(l: &str, f: &str, t: &str) -> MappedMainOrder {
         Order::new(

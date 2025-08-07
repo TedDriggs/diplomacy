@@ -43,9 +43,9 @@ impl<L: Location> fmt::Display for MainCommand<L> {
         use self::MainCommand::*;
         match self {
             Hold => write!(f, "holds"),
-            Move(ref cmd) => write!(f, "-> {cmd}"),
-            Support(ref order) => write!(f, "supports {order}"),
-            Convoy(ref mv) => write!(f, "convoys {mv}"),
+            Move(cmd) => write!(f, "-> {cmd}"),
+            Support(order) => write!(f, "supports {order}"),
+            Convoy(mv) => write!(f, "convoys {mv}"),
         }
     }
 }
@@ -194,10 +194,10 @@ impl<L> From<SupportedOrder<L>> for MainCommand<L> {
 impl<L: Location> PartialEq<Order<L, MainCommand<L>>> for SupportedOrder<L> {
     fn eq(&self, other: &Order<L, MainCommand<L>>) -> bool {
         match self {
-            SupportedOrder::Hold(ref ut, ref loc) => {
+            SupportedOrder::Hold(ut, loc) => {
                 !other.command.is_move() && loc == &other.region && ut == &other.unit_type
             }
-            SupportedOrder::Move(ref ut, ref fr, ref to) => {
+            SupportedOrder::Move(ut, fr, to) => {
                 if let MainCommand::Move(ref cmd) = other.command {
                     ut == &other.unit_type && fr == &other.region && to == cmd.dest()
                 } else {
