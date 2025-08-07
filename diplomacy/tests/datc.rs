@@ -9,12 +9,13 @@ mod world;
 use std::iter::once;
 
 use diplomacy::{
-    Nation, UnitType, geo,
+    geo,
     judge::{
         self, AttackOutcome, IllegalOrder, OrderOutcome,
         OrderState::{Fails, Succeeds},
         Rulebook, Submission,
     },
+    Nation, UnitType,
 };
 use util::*;
 use world::TestWorld;
@@ -935,8 +936,8 @@ fn t6e10_almost_circular_movement_with_no_self_dislodgement_with_beleaguered_gar
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.E.11
 #[test]
-fn t6e11_no_self_dislodgement_with_beleaguered_garrison_unit_swap_with_adjacent_convoying_and_two_coasts()
- {
+fn t6e11_no_self_dislodgement_with_beleaguered_garrison_unit_swap_with_adjacent_convoying_and_two_coasts(
+) {
     judge! {
        "FRA: A spa -> por via Convoy": Succeeds,
        "FRA: F mao convoys spa -> por",
