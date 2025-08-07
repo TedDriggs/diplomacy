@@ -9,13 +9,12 @@ mod world;
 use std::iter::once;
 
 use diplomacy::{
-    geo,
+    Nation, UnitType, geo,
     judge::{
         self, AttackOutcome, IllegalOrder, OrderOutcome,
         OrderState::{Fails, Succeeds},
         Rulebook, Submission,
     },
-    Nation, UnitType,
 };
 use util::*;
 use world::TestWorld;
@@ -306,13 +305,13 @@ fn t6b14_building_with_unspecified_coast() {
 ///
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.15
 #[test]
-#[should_panic]
+#[should_panic(expected = "ITA: F wes -> spa(sc)")]
 fn t6b15_supporting_foreign_unit_with_unspecified_coast() {
     judge! {
         "FRA: F por supports F mao -> spa",
         "ENG: F mao -> spa(nc)": Fails,
         "ITA: F lyo supports F wes -> spa(sc)",
-        "F wes -> spa(sc)": Fails,
+        "ITA: F wes -> spa(sc)": Fails,
     };
 }
 
@@ -936,8 +935,8 @@ fn t6e10_almost_circular_movement_with_no_self_dislodgement_with_beleaguered_gar
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.E.11
 #[test]
-fn t6e11_no_self_dislodgement_with_beleaguered_garrison_unit_swap_with_adjacent_convoying_and_two_coasts(
-) {
+fn t6e11_no_self_dislodgement_with_beleaguered_garrison_unit_swap_with_adjacent_convoying_and_two_coasts()
+ {
     judge! {
        "FRA: A spa -> por via Convoy": Succeeds,
        "FRA: F mao convoys spa -> por",
