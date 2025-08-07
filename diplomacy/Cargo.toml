@@ -2,7 +2,7 @@
 name = "diplomacy"
 version = "0.1.3"
 authors = ["Ted Driggs <ted.driggs@outlook.com>"]
-edition = "2021"
+edition = "2024"
 description = "Adjudication library for the board game Diplomacy"
 documentation = "https://docs.rs/diplomacy/0.1.3"
 repository = "https://github.com/TedDriggs/diplomacy"
