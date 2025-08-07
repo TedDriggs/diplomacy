@@ -96,6 +96,16 @@ impl<'a, L> UnitPosition<'a, L> {
     }
 }
 
+impl<'a, 'b, L: Clone> UnitPosition<'a, &'b L> {
+    /// Returns a [`UnitPosition`] that converts the region to an owned value by cloning.
+    pub fn with_cloned_region(&self) -> UnitPosition<'a, L> {
+        UnitPosition {
+            unit: self.unit.clone(),
+            region: (*self.region).clone(),
+        }
+    }
+}
+
 impl<'a> FromStr for UnitPosition<'a, RegionKey> {
     type Err = Error;
 
