@@ -163,10 +163,8 @@ impl<'a> Submission<'a> {
 
         // Issue hold orders to any units that don't have orders.
         for position in positions.difference(&positions_with_valid_orders) {
-            inserted_orders.push(Order::new(
-                position.nation().clone(),
-                position.unit.unit_type(),
-                position.region.clone(),
+            inserted_orders.push(Order::new_from_position(
+                position.with_cloned_region(),
                 MainCommand::Hold,
             ));
         }

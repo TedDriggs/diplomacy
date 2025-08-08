@@ -2,7 +2,7 @@ use super::{DestStatus, Start};
 use crate::judge::MappedRetreatOrder;
 use crate::order::{Command, RetreatCommand};
 use crate::{geo::ProvinceKey, geo::RegionKey, Unit, UnitPosition, UnitPositions};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 /// The immutable parts of retreat phase adjudication.
 pub struct Context<'a> {
@@ -11,11 +11,34 @@ pub struct Context<'a> {
 }
 
 impl<'a> Context<'a> {
+    /// Returns a new retreat-phase adjudication context, which includes generated hold orders for
+    /// dislodged units that were not given a retreat order.
     pub fn new(start: &'a Start<'a>, orders: impl IntoIterator<Item = MappedRetreatOrder>) -> Self {
-        Self {
-            start,
-            orders: orders.into_iter().collect(),
-        }
+        let mut orders = orders.into_iter().collect::<Vec<_>>();
+        let ordered_units = orders
+            .iter()
+            .map(|ord| ord.unit_position())
+            .collect::<HashSet<_>>();
+
+        // Find dislodged unit positions that don't have orders, and generate hold orders for them.
+        let civil_disorder_orders = start
+            .dislodged()
+            .keys()
+            .map(|ord| ord.unit_position())
+            .filter(|unit| !ordered_units.contains(unit))
+            .map(|pos| {
+                MappedRetreatOrder::new(
+                    pos.nation().clone(),
+                    pos.unit.unit_type(),
+                    pos.region.clone(),
+                    RetreatCommand::Hold,
+                )
+            })
+            .collect::<Vec<_>>();
+
+        orders.extend(civil_disorder_orders);
+
+        Self { start, orders }
     }
 
     /// Adjudicate a retreat phase and determine which units move or are disbanded.
