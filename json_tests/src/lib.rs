@@ -4,6 +4,13 @@
 //! The main crate does not have any direct need for [`serde_json`], so these
 //! tests are kept separately.
 
+pub mod case;
+mod map_key;
+mod outcome_with_state;
+
+pub use map_key::{with_map_key, MapKey};
+pub use outcome_with_state::OrderOutcomeWithState;
+
 #[cfg(test)]
 mod tests {
     use std::{fmt::Display, str::FromStr};

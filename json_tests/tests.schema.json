@@ -1,0 +1,146 @@
+{
+    "$schema": "https://json-schema.org/draft-07/schema#",
+    "properties": {
+        "cases": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/testCase"
+            }
+        }
+    },
+    "definitions": {
+        "testCase": {
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            },
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/mainPhase"
+                },
+                {
+                    "$ref": "#/definitions/retreatPhase"
+                },
+                {
+                    "$ref": "#/definitions/buildPhase"
+                },
+                {
+                    "$ref": "#/definitions/todoCase"
+                }
+            ],
+            "required": ["name", "url"]
+        },
+        "mainPhase": {
+            "properties": {
+                "phase": {
+                    "enum": ["Main"]
+                },
+                "starting_state": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/unitPosition"
+                    }
+                },
+                "orders": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^[A-Z]{3}: [AF] .+$": {
+                            "enum": ["Succeeds", "Fails", null]
+                        }
+                    }
+                }
+            },
+            "required": ["phase", "orders"]
+        },
+        "retreatPhase": {
+            "properties": {
+                "phase": {
+                    "enum": ["Retreat"]
+                },
+                "preceding_main_phase": {
+                    "properties": {
+                        "starting_state": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/unitPosition"
+                            }
+                        },
+                        "orders": {
+                            "type": "object",
+                            "patternProperties": {
+                                "^[A-Z]{3}: [AF] .+$": {
+                                    "enum": ["Succeeds", "Fails", null]
+                                }
+                            }
+                        }
+                    },
+                    "required": ["orders"]
+                },
+                "orders": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^[A-Z]{3}: [AF] .+$": {
+                            "enum": ["Succeeds", "Fails", null]
+                        }
+                    }
+                }
+            },
+            "required": ["phase", "preceding_main_phase", "orders"]
+        },
+        "buildPhase": {
+            "properties": {
+                "phase": {
+                    "enum": ["Build"]
+                },
+                "civil_disorder": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/unitPosition"
+                    },
+                    "description": "A list of units that are expected to disband in civil disorder."
+                },
+                "occupiers": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^[a-z]{3}$": {
+                            "pattern": "^[A-Z]{3}$"
+                        }
+                    },
+                    "description": "A map of provinces to the nations that occupy them."
+                },
+                "starting_state": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/unitPosition"
+                    }
+                },
+                "orders": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^[A-Z]{3}: [AF] .+$": {
+                            "type": ["string", "null"]
+                        }
+                    }
+                }
+            },
+            "required": ["phase", "orders"]
+        },
+        "todoCase": {
+            "properties": {
+                "todo": {
+                    "type": "string",
+                    "description": "A description of the test case that is yet to be implemented."
+                }
+            },
+            "required": ["todo"]
+        },
+        "unitPosition": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}: [AF] [a-z()]+$"
+        }
+    }
+}
