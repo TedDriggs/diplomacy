@@ -1,5 +1,5 @@
 use super::{DestStatus, Start};
-use crate::judge::MappedRetreatOrder;
+use crate::judge::{MappedRetreatOrder, OrderState};
 use crate::order::{Command, RetreatCommand};
 use crate::{geo::ProvinceKey, geo::RegionKey, Unit, UnitPosition, UnitPositions};
 use std::collections::{HashMap, HashSet};
@@ -177,5 +177,23 @@ impl<O> OrderOutcome<O> {
             Self::Moves | Self::InvalidRecipient => false,
             Self::Prevented(_) | Self::InvalidDestination(_) | Self::DisbandsAsOrdered => true,
         }
+    }
+}
+
+impl<O> From<&'_ OrderOutcome<O>> for OrderState {
+    fn from(other: &OrderOutcome<O>) -> Self {
+        match other {
+            OrderOutcome::Prevented(_) => OrderState::Fails,
+            OrderOutcome::InvalidDestination(_) => OrderState::Fails,
+            OrderOutcome::InvalidRecipient => OrderState::Fails,
+            OrderOutcome::Moves => OrderState::Succeeds,
+            OrderOutcome::DisbandsAsOrdered => OrderState::Succeeds,
+        }
+    }
+}
+
+impl<O> From<OrderOutcome<O>> for OrderState {
+    fn from(other: OrderOutcome<O>) -> Self {
+        (&other).into()
     }
 }
