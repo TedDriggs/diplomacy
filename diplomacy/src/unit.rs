@@ -2,6 +2,7 @@ use crate::parser::{Error, ErrorKind};
 use crate::{geo::Location, geo::RegionKey, Command, Nation, Order, ShortName};
 use std::borrow::{Borrow, Cow};
 use std::collections::HashMap;
+use std::fmt;
 use std::hash::{BuildHasher, Hash};
 use std::str::FromStr;
 
@@ -133,6 +134,18 @@ impl<'a> FromStr for UnitPosition<'a, RegionKey> {
             Unit::new(Cow::Owned(nation), unit_type),
             region,
         ))
+    }
+}
+
+impl fmt::Display for UnitPosition<'_, RegionKey> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}: {} {}",
+            self.unit.nation().short_name(),
+            self.unit.unit_type().short_name(),
+            self.region.short_name()
+        )
     }
 }
 
