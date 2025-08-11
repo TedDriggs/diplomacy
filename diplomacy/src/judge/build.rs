@@ -361,6 +361,10 @@ impl<'a> Outcome<'a> {
     pub fn get(&self, order: &MappedBuildOrder) -> Option<&OrderOutcome> {
         self.orders.get(order)
     }
+
+    pub fn order_outcomes(&self) -> impl Iterator<Item = (&MappedBuildOrder, &OrderOutcome)> {
+        self.orders.iter().map(|(k, v)| (*k, v))
+    }
 }
 
 /// Rulebook function for build-phase adjudication. This function does not worry about order quantities,
