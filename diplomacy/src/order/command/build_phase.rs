@@ -3,7 +3,7 @@ use crate::geo::Location;
 use std::fmt;
 
 /// A command issued during the build/disband turn (typically "Winter").
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum BuildCommand {
     /// The recipient region is to spawn a new unit of the ordered type
