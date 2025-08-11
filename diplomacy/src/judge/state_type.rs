@@ -2,6 +2,7 @@
 /// The meaning of success and failure is contextually-dependent,
 /// and should be derived from the outcome map of a resolution cycle.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OrderState {
     /// For move commands, the order results in a move.
     /// For all other commands, the unit is not dislodged.
