@@ -37,13 +37,19 @@ pub enum OrderOutcome {
     AllDisbandsUsed,
 }
 
-impl From<OrderOutcome> for OrderState {
-    fn from(outcome: OrderOutcome) -> Self {
-        if outcome == OrderOutcome::Succeeds {
+impl From<&'_ OrderOutcome> for OrderState {
+    fn from(value: &'_ OrderOutcome) -> Self {
+        if value == &OrderOutcome::Succeeds {
             OrderState::Succeeds
         } else {
             OrderState::Fails
         }
+    }
+}
+
+impl From<OrderOutcome> for OrderState {
+    fn from(outcome: OrderOutcome) -> Self {
+        (&outcome).into()
     }
 }
 
