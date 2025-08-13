@@ -151,9 +151,10 @@ macro_rules! judge_build {
                 )*
             )*
 
+            let civil_disorder = outcome.to_civil_disorder();
             let final_units = outcome.final_units.into_iter().map(|(k, v)| (k.clone(), v)).collect::<std::collections::HashMap<_, _>>();
 
-            (final_units, outcome.civil_disorder)
+            (final_units, civil_disorder)
         }
     };
 }
