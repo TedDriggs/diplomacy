@@ -3,7 +3,8 @@
 use super::{MappedBuildOrder, OrderState};
 use crate::geo::{Map, ProvinceKey, RegionKey, SupplyCenter};
 use crate::order::BuildCommand;
-use crate::{Nation, ShortName, UnitType};
+use crate::{Nation, ShortName, Unit, UnitPosition, UnitType};
+use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
 
@@ -138,7 +139,7 @@ impl<'a, W: WorldState> Context<'a, W> {
 struct Resolution<'a> {
     deltas: HashMap<&'a Nation, (BuildCommand, i16)>,
     state: HashMap<&'a MappedBuildOrder, OrderOutcome>,
-    civil_disorder: HashSet<(UnitType, RegionKey)>,
+    civil_disorder: HashSet<UnitPosition<'a, RegionKey>>,
     final_units: HashMap<&'a Nation, HashSet<(UnitType, RegionKey)>>,
 }
 
@@ -273,7 +274,9 @@ impl<'a> Resolution<'a> {
             // supply centers (earlier editions had it based on distance from the home supply centers)
             let Some(owned_scs) = context.ownerships.get(*nation) else {
                 // If there are no owned supply centers, all units disband
-                self.civil_disorder.extend(units);
+                self.civil_disorder.extend(units.into_iter().map(|unit| {
+                    UnitPosition::new(Unit::new(Cow::Borrowed(*nation), unit.0), unit.1)
+                }));
                 continue;
             };
 
@@ -338,8 +341,11 @@ impl<'a> Resolution<'a> {
             });
 
             // Add units from the disband queue to the civil disorder output
-            self.civil_disorder
-                .extend(units_by_disband_priority.drain(0..usize_delta).map(|v| v.0));
+            self.civil_disorder.extend(
+                units_by_disband_priority
+                    .drain(0..usize_delta)
+                    .map(|v| UnitPosition::new(Unit::new(Cow::Borrowed(*nation), v.0 .0), v.0 .1)),
+            );
 
             // Add the remaining units to the map of units that survive the turn.
             self.final_units.insert(
@@ -353,7 +359,7 @@ impl<'a> Resolution<'a> {
 #[derive(Debug, Clone)]
 pub struct Outcome<'a> {
     pub orders: HashMap<&'a MappedBuildOrder, OrderOutcome>,
-    pub civil_disorder: HashSet<(UnitType, RegionKey)>,
+    pub civil_disorder: HashSet<UnitPosition<'a, RegionKey>>,
     pub final_units: HashMap<&'a Nation, HashSet<(UnitType, RegionKey)>>,
 }
 
@@ -364,6 +370,18 @@ impl<'a> Outcome<'a> {
 
     pub fn order_outcomes(&self) -> impl Iterator<Item = (&MappedBuildOrder, &OrderOutcome)> {
         self.orders.iter().map(|(k, v)| (*k, v))
+    }
+
+    pub fn to_civil_disorder(&self) -> HashSet<UnitPosition<'static, RegionKey>> {
+        self.civil_disorder
+            .iter()
+            .map(|pos| {
+                UnitPosition::new(
+                    Unit::new(Cow::Owned(pos.unit.nation().clone()), pos.unit.unit_type()),
+                    pos.region.clone(),
+                )
+            })
+            .collect()
     }
 }
 

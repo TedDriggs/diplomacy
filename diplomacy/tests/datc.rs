@@ -15,7 +15,7 @@ use diplomacy::{
         OrderState::{Fails, Succeeds},
         Rulebook, Submission,
     },
-    Nation, UnitType,
+    Nation,
 };
 use util::*;
 use world::TestWorld;
@@ -2074,7 +2074,7 @@ fn t6j03_civil_disorder_two_armies_with_different_distance() {
         .with_unit("RUS: A lvn")
         .with_unit("RUS: A pru");
     let (_, civil_disorder) = judge_build!(world);
-    assert_eq!(civil_disorder, once((UnitType::Army, reg("pru"))).collect());
+    assert_eq!(civil_disorder, once(unit_pos("RUS: A pru")).collect());
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.4
@@ -2089,7 +2089,7 @@ fn t6j04_civil_disorder_two_armies_with_equal_distance() {
 
     let (_, civil_disorder) = judge_build!(world);
 
-    assert_eq!(civil_disorder, once((UnitType::Army, reg("lvn"))).collect());
+    assert_eq!(civil_disorder, once(unit_pos("RUS: A lvn")).collect());
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.5
@@ -2104,10 +2104,7 @@ fn t6j05_civil_disorder_two_fleets_with_different_distance() {
 
     let (_, civil_disorder) = judge_build!(world);
 
-    assert_eq!(
-        civil_disorder,
-        once((UnitType::Fleet, reg("nao"))).collect()
-    );
+    assert_eq!(civil_disorder, once(unit_pos("RUS: F nao")).collect());
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.6
@@ -2124,10 +2121,7 @@ fn t6j06_civil_disorder_two_fleets_with_equal_distance() {
 
     let (_, civil_disorder) = judge_build!(world);
 
-    assert_eq!(
-        civil_disorder,
-        once((UnitType::Fleet, reg("bot"))).collect()
-    );
+    assert_eq!(civil_disorder, once(unit_pos("RUS: F bot")).collect());
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.7
@@ -2142,10 +2136,7 @@ fn t6j07_civil_disorder_two_fleets_and_army_with_equal_distance() {
 
     let (_, civil_disorder) = judge_build!(world);
 
-    assert_eq!(
-        civil_disorder,
-        once((UnitType::Fleet, reg("nth"))).collect()
-    );
+    assert_eq!(civil_disorder, once(unit_pos("RUS: F nth")).collect());
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.8
@@ -2160,7 +2151,7 @@ fn t6j08_civil_disorder_a_fleet_with_shorter_distance_then_the_army() {
 
     let (_, civil_disorder) = judge_build!(world);
 
-    assert_eq!(civil_disorder, once((UnitType::Army, reg("tyr"))).collect());
+    assert_eq!(civil_disorder, once(unit_pos("RUS: A tyr")).collect());
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.9
@@ -2175,7 +2166,7 @@ fn t6j09_civil_disorder_must_be_counted_from_both_coasts() {
 
     let (_, civil_disorder) = judge_build!(world);
 
-    assert_eq!(civil_disorder, once((UnitType::Army, reg("alb"))).collect());
+    assert_eq!(civil_disorder, once(unit_pos("RUS: A alb")).collect());
 
     let world = TestWorld::empty()
         .with_occupier("war", "GER")
@@ -2186,10 +2177,7 @@ fn t6j09_civil_disorder_must_be_counted_from_both_coasts() {
 
     let (_, civil_disorder) = judge_build!(world);
 
-    assert_eq!(
-        civil_disorder,
-        once((UnitType::Fleet, reg("ska"))).collect()
-    );
+    assert_eq!(civil_disorder, once(unit_pos("RUS: F ska")).collect());
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.10
@@ -2203,7 +2191,7 @@ fn t6j10_civil_disorder_counting_convoying_distance() {
 
     let (_, civil_disorder) = judge_build!(world);
 
-    assert_eq!(civil_disorder, once((UnitType::Army, reg("pie"))).collect());
+    assert_eq!(civil_disorder, once(unit_pos("ITA: A pie")).collect());
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.11
@@ -2218,5 +2206,5 @@ fn t6j11_distance_to_owned_supply_center() {
 
     let (_, civil_disorder) = judge_build!(world);
 
-    assert_eq!(civil_disorder, once((UnitType::Army, reg("tus"))).collect());
+    assert_eq!(civil_disorder, once(unit_pos("ITA: A tus")).collect());
 }
