@@ -43,9 +43,9 @@ impl<L: Location> fmt::Display for MainCommand<L> {
         use self::MainCommand::*;
         match self {
             Hold => write!(f, "holds"),
-            Move(ref cmd) => write!(f, "-> {}", cmd),
-            Support(ref order) => write!(f, "supports {}", order),
-            Convoy(ref mv) => write!(f, "convoys {}", mv),
+            Move(ref cmd) => write!(f, "-> {cmd}"),
+            Support(ref order) => write!(f, "supports {order}"),
+            Convoy(ref mv) => write!(f, "convoys {mv}"),
         }
     }
 }

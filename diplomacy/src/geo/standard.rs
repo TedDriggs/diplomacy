@@ -22,7 +22,7 @@ fn load_standard() -> Map {
                 .register(prov)
                 .expect("standard map shouldn't have issues");
         } else {
-            panic!("Failed registering province: {}", line)
+            panic!("Failed registering province: {line}")
         }
     }
 
@@ -32,7 +32,7 @@ fn load_standard() -> Map {
         if let Ok((prov, coast, terrain)) = region_from_line(line) {
             region_reg.register(prov, coast, terrain).unwrap();
         } else {
-            panic!("Failed registering region: {}", line)
+            panic!("Failed registering region: {line}")
         }
     }
 

@@ -26,7 +26,7 @@ pub(crate) enum Prevent<O> {
 impl<O: std::fmt::Debug + Copy> Prevent<O> {
     pub fn unwrap_order(&self) -> O {
         let Self::Prevents(order, _) = self else {
-            panic!("Attempted to unwrap {:?} value", self);
+            panic!("Attempted to unwrap {self:?} value");
         };
 
         *order

@@ -63,7 +63,7 @@ impl fmt::Display for ErrorKind {
             ErrorKind::MalformedSupport => write!(f, "Malformed support command"),
             ErrorKind::MalformedConvoy => write!(f, "Malformed convoy command"),
             ErrorKind::MalformedMove => write!(f, "Malformed move command"),
-            ErrorKind::TooFewWords(min) => write!(f, "Too few words, expected {}", min),
+            ErrorKind::TooFewWords(min) => write!(f, "Too few words, expected {min}"),
         }
     }
 }

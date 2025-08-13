@@ -97,7 +97,7 @@ impl<'a, L> UnitPosition<'a, L> {
     }
 }
 
-impl<'a, 'b, L: Clone> UnitPosition<'a, &'b L> {
+impl<'a, L: Clone> UnitPosition<'a, &L> {
     /// Returns a [`UnitPosition`] that converts the region to an owned value by cloning.
     pub fn with_cloned_region(&self) -> UnitPosition<'a, L> {
         UnitPosition {
