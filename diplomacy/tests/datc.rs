@@ -2186,7 +2186,10 @@ fn t6j09_civil_disorder_must_be_counted_from_both_coasts() {
 
     let (_, civil_disorder) = judge_build!(world);
 
-    assert_eq!(civil_disorder, once((UnitType::Army, reg("alb"))).collect());
+    assert_eq!(
+        civil_disorder,
+        once((UnitType::Fleet, reg("ska"))).collect()
+    );
 }
 
 /// https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.10
