@@ -81,7 +81,7 @@ impl WorldState for TestWorld {
     }
 }
 
-impl<'a> WorldState for &'a TestWorld {
+impl WorldState for &TestWorld {
     fn nations(&self) -> HashSet<&Nation> {
         self.nations.iter().collect()
     }
