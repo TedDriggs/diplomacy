@@ -95,7 +95,7 @@ impl ToTokens for retreat::TestCase {
 
             let outcome = resolve_main!(submission, expected);
 
-            judge_retreat_2! {
+            judge_retreat! {
                 outcome,
                 #(#orders),*
             };
@@ -125,12 +125,16 @@ impl ToTokens for build::TestCase {
             }
         });
 
+        // Keep this out of the judge_build! macro call so it's formatted properly.
+        tokens.append_all(quote! {
+            let world = TestWorld::empty()
+                #(#occupiers)*
+                #(#units)*;
+        });
+
         let judge_call = quote! {
-            judge_build_2! {
-                TestWorld::empty()
-                    #(#occupiers)*
-                    #(#units)*
-                ,
+            judge_build! {
+                world,
                 #(#orders),*
             };
         };
@@ -140,13 +144,29 @@ impl ToTokens for build::TestCase {
                 let pos = pos.to_string();
                 quote!(unit_pos(#pos))
             });
+
+            let inner_assertion = quote! {
+                assert!(civil_disorder.contains(&disbanded), "{disbanded} should have disbanded");
+            };
+
             tokens.append_all(quote! {
                 let (_, civil_disorder) = #judge_call;
-                #[allow(clippy::single_element_loop, reason = "don't want different code based on disband check quantity")]
-                for disbanded in [#(#civil_disorder),*] {
-                    assert!(civil_disorder.contains(&disbanded), "{disbanded} should have disbanded");
-                }
             });
+
+            let disband_check = if civil_disorder.len() == 1 {
+                quote! {
+                    let disbanded = #(#civil_disorder)*;
+                    #inner_assertion
+                }
+            } else {
+                quote! {
+                    for disbanded in [#(#civil_disorder),*] {
+                        #inner_assertion
+                    }
+                }
+            };
+
+            tokens.append_all(disband_check);
         } else {
             tokens.append_all(judge_call);
         }

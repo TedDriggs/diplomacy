@@ -197,8 +197,9 @@ fn t6b13_coastal_crawl_not_allowed() {
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.14
 #[test]
 fn t6b14_building_with_unspecified_coast() {
-    judge_build_2! {
-        TestWorld::empty(), "RUS: F stp build" : Fails
+    let world = TestWorld::empty();
+    judge_build! {
+        world, "RUS: F stp build" : Fails
     };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.15
@@ -1142,7 +1143,7 @@ fn t6h04_no_other_moves_during_retreat() {
         "GER: F kie supports A ruh -> hol", "GER: A ruh -> hol" : Succeeds,
     };
     let outcome = resolve_main!(submission, expected);
-    judge_retreat_2! {
+    judge_retreat! {
         outcome, "ENG: F nth -> nwg" : Fails, "ENG: A hol -> bel" : Succeeds
     };
 }
@@ -1154,7 +1155,7 @@ fn t6h05_a_unit_may_not_retreat_to_the_area_from_which_it_is_attacked() {
         "TUR: F ank holds" : Fails,
     };
     let outcome = resolve_main!(submission, expected);
-    judge_retreat_2! {
+    judge_retreat! {
         outcome, "TUR: F ank -> bla" : Fails
     };
 }
@@ -1167,7 +1168,7 @@ fn t6h06_unit_may_not_retreat_to_a_contested_area() {
         Fails,
     };
     let outcome = resolve_main!(submission, expected);
-    judge_retreat_2! {
+    judge_retreat! {
         outcome, "ITA: A vie -> boh" : Fails
     };
 }
@@ -1180,7 +1181,7 @@ fn t6h07_multiple_retreat_to_same_area_will_disband_units() {
         "ITA: A vie holds" : Fails, "ITA: A boh holds" : Fails,
     };
     let outcome = resolve_main!(submission, expected);
-    judge_retreat_2! {
+    judge_retreat! {
         outcome, "ITA: A vie -> tyr" : Fails, "ITA: A boh -> tyr" : Fails
     };
 }
@@ -1195,7 +1196,7 @@ fn t6h08_triple_retreat_to_same_area_will_disband_units() {
         "RUS: F hol holds" : Fails,
     };
     let outcome = resolve_main!(submission, expected);
-    judge_retreat_2! {
+    judge_retreat! {
         outcome, "ENG: F nwy -> nth" : Fails, "RUS: F edi -> nth" : Fails,
         "RUS: F hol -> nth" : Fails
     };
@@ -1209,7 +1210,7 @@ fn t6h09_dislodged_unit_will_not_make_attackers_area_contested() {
         "GER: A sil supports A ber -> pru", "RUS: A pru -> ber" : Fails,
     };
     let outcome = resolve_main!(submission, expected);
-    judge_retreat_2! {
+    judge_retreat! {
         outcome, "GER: F kie -> ber" : Succeeds
     };
 }
@@ -1222,7 +1223,7 @@ fn t6h10_not_retreating_to_attacker_does_not_mean_contested() {
         "RUS: A war -> pru" : Succeeds, "RUS: A sil supports A war -> pru",
     };
     let outcome = resolve_main!(submission, expected);
-    judge_retreat_2! {
+    judge_retreat! {
         outcome, "ENG: A kie -> ber" : Fails, "GER: A pru -> ber" : Succeeds
     };
 }
@@ -1235,7 +1236,7 @@ fn t6h11_retreat_when_dislodged_by_adjacent_convoy() {
         "FRA: F lyo convoys A gas -> mar", "ITA: A mar holds" : Fails,
     };
     let outcome = resolve_main!(submission, expected);
-    judge_retreat_2! {
+    judge_retreat! {
         outcome, "ITA: A mar -> gas" : Succeeds
     };
 }
@@ -1250,7 +1251,7 @@ fn t6h12_retreat_when_dislodged_by_adjacent_convoy_while_trying_to_do_the_same()
         "RUS: F nao convoys A edi -> lvp", "RUS: A cly supports A edi -> lvp",
     };
     let outcome = resolve_main!(submission, expected);
-    judge_retreat_2! {
+    judge_retreat! {
         outcome, "ENG: A lvp -> edi" : Succeeds
     };
 }
@@ -1262,7 +1263,7 @@ fn t6h13_no_retreat_with_convoy_in_main_phase() {
         "FRA: A par -> pic" : Succeeds, "FRA: A bre supports A par -> pic",
     };
     let outcome = resolve_main!(submission, expected);
-    judge_retreat_2! {
+    judge_retreat! {
         outcome, "ENG: A pic -> lon" : Fails
     };
 }
@@ -1276,7 +1277,7 @@ fn t6h14_no_retreat_with_support_in_main_phase() {
         "GER: A mar -> bur" : Succeeds,
     };
     let outcome = resolve_main!(submission, expected);
-    judge_retreat_2! {
+    judge_retreat! {
         outcome, "ENG: A pic -> bel" : Fails, "FRA: A bur -> bel" : Fails
     };
 }
@@ -1288,7 +1289,7 @@ fn t6h15_no_coastal_crawl_in_retreat() {
         "FRA: F mao supports F spa(sc) -> por",
     };
     let outcome = resolve_main!(submission, expected);
-    judge_retreat_2! {
+    judge_retreat! {
         outcome, "ENG: F por -> spa(nc)" : Fails
     };
 }
@@ -1301,258 +1302,276 @@ fn t6h16_contested_for_both_coasts() {
         "ITA: F tys -> wes" : Succeeds,
     };
     let outcome = resolve_main!(submission, expected);
-    judge_retreat_2! {
+    judge_retreat! {
         outcome, "FRA: F wes -> spa(sc)" : Fails
     };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.I.1
 #[test]
 fn t6i01_too_many_build_orders() {
-    judge_build_2! {
-        TestWorld::empty().with_unit("GER: F den").with_unit("GER: A ruh")
-        .with_unit("GER: A pru"), "GER: A war build" : Fails, "GER: A ber build" :
-        Succeeds, "GER: A mun build" : Fails
+    let world = TestWorld::empty()
+        .with_unit("GER: F den")
+        .with_unit("GER: A ruh")
+        .with_unit("GER: A pru");
+    judge_build! {
+        world, "GER: A war build" : Fails, "GER: A ber build" : Succeeds,
+        "GER: A mun build" : Fails
     };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.I.2
 #[test]
 fn t6i02_fleets_can_not_be_build_in_land_areas() {
-    judge_build_2! {
-        TestWorld::empty(), "RUS: F mos build" : Fails
+    let world = TestWorld::empty();
+    judge_build! {
+        world, "RUS: F mos build" : Fails
     };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.I.3
 #[test]
 fn t6i03_supply_center_must_be_empty_for_building() {
-    judge_build_2! {
-        TestWorld::empty().with_unit("GER: A ber"), "GER: A ber build" : Fails
+    let world = TestWorld::empty().with_unit("GER: A ber");
+    judge_build! {
+        world, "GER: A ber build" : Fails
     };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.I.4
 #[test]
 fn t6i04_both_coasts_must_be_empty_for_building() {
-    judge_build_2! {
-        TestWorld::empty().with_unit("RUS: F stp(sc)"), "RUS: F stp(nc) build" : Fails
+    let world = TestWorld::empty().with_unit("RUS: F stp(sc)");
+    judge_build! {
+        world, "RUS: F stp(nc) build" : Fails
     };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.I.5
 #[test]
 fn t6i05_building_in_home_supply_center_that_is_not_owned() {
-    judge_build_2! {
-        TestWorld::empty().with_occupier("ber", "RUS"), "GER: A ber build" : Fails
+    let world = TestWorld::empty().with_occupier("ber", "RUS");
+    judge_build! {
+        world, "GER: A ber build" : Fails
     };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.I.6
 #[test]
 fn t6i06_building_in_owned_supply_center_that_is_not_a_home_supply_center() {
-    judge_build_2! {
-        TestWorld::empty().with_occupier("war", "GER"), "GER: A war build" : Fails
+    let world = TestWorld::empty().with_occupier("war", "GER");
+    judge_build! {
+        world, "GER: A war build" : Fails
     };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.I.7
 #[test]
 fn t6i07_only_one_build_in_a_home_supply_center() {
-    judge_build_2! {
-        TestWorld::empty().with_unit("RUS: F sev").with_unit("RUS: F stp(nc)"),
-        "RUS: A mos build" : Succeeds, "RUS: A war build" : Succeeds
+    let world = TestWorld::empty()
+        .with_unit("RUS: F sev")
+        .with_unit("RUS: F stp(nc)");
+    judge_build! {
+        world, "RUS: A mos build" : Succeeds, "RUS: A war build" : Succeeds
     };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.1
 #[test]
 fn t6j01_too_many_remove_orders() {
-    judge_build_2! {
-        TestWorld::empty().with_occupier("bre", "ENG").with_occupier("mar", "ITA")
-        .with_unit("FRA: A pic").with_unit("FRA: A par"), "FRA: F lyo disband" : Fails,
-        "FRA: A pic disband" : Succeeds, "FRA: A par disband" : Fails
+    let world = TestWorld::empty()
+        .with_occupier("bre", "ENG")
+        .with_occupier("mar", "ITA")
+        .with_unit("FRA: A pic")
+        .with_unit("FRA: A par");
+    judge_build! {
+        world, "FRA: F lyo disband" : Fails, "FRA: A pic disband" : Succeeds,
+        "FRA: A par disband" : Fails
     };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.2
 #[test]
 fn t6j02_removing_the_same_unit_twice() {
-    judge_build_2! {
-        TestWorld::empty().with_unit("ENG: F bre").with_unit("ITA: A mar")
-        .with_unit("FRA: A par").with_unit("FRA: F lyo").with_unit("FRA: A ruh"),
-        "FRA: A par disband" : Succeeds
+    let world = TestWorld::empty()
+        .with_unit("ENG: F bre")
+        .with_unit("ITA: A mar")
+        .with_unit("FRA: A par")
+        .with_unit("FRA: F lyo")
+        .with_unit("FRA: A ruh");
+    judge_build! {
+        world, "FRA: A par disband" : Succeeds
     };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.3
 #[test]
 fn t6j03_civil_disorder_two_armies_with_different_distance() {
-    let (_, civil_disorder) = judge_build_2! {
-        TestWorld::empty().with_occupier("war", "GER").with_occupier("mos", "GER")
-        .with_occupier("sev", "TUR").with_unit("RUS: A lvn").with_unit("RUS: A pru"),
+    let world = TestWorld::empty()
+        .with_occupier("war", "GER")
+        .with_occupier("mos", "GER")
+        .with_occupier("sev", "TUR")
+        .with_unit("RUS: A lvn")
+        .with_unit("RUS: A pru");
+    let (_, civil_disorder) = judge_build! {
+        world,
     };
-    #[allow(
-        clippy::single_element_loop,
-        reason = "don't want different code based on disband check quantity"
-    )]
-    for disbanded in [unit_pos("RUS: A pru")] {
-        assert!(
-            civil_disorder.contains(&disbanded),
-            "{disbanded} should have disbanded"
-        );
-    }
+    let disbanded = unit_pos("RUS: A pru");
+    assert!(
+        civil_disorder.contains(&disbanded),
+        "{disbanded} should have disbanded"
+    );
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.4
 #[test]
 fn t6j04_civil_disorder_two_armies_with_equal_distance() {
-    let (_, civil_disorder) = judge_build_2! {
-        TestWorld::empty().with_occupier("stp", "ENG").with_occupier("war", "GER")
-        .with_occupier("sev", "TUR").with_unit("RUS: A lvn").with_unit("RUS: A ukr"),
+    let world = TestWorld::empty()
+        .with_occupier("stp", "ENG")
+        .with_occupier("war", "GER")
+        .with_occupier("sev", "TUR")
+        .with_unit("RUS: A lvn")
+        .with_unit("RUS: A ukr");
+    let (_, civil_disorder) = judge_build! {
+        world,
     };
-    #[allow(
-        clippy::single_element_loop,
-        reason = "don't want different code based on disband check quantity"
-    )]
-    for disbanded in [unit_pos("RUS: A lvn")] {
-        assert!(
-            civil_disorder.contains(&disbanded),
-            "{disbanded} should have disbanded"
-        );
-    }
+    let disbanded = unit_pos("RUS: A lvn");
+    assert!(
+        civil_disorder.contains(&disbanded),
+        "{disbanded} should have disbanded"
+    );
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.5
 #[test]
 fn t6j05_civil_disorder_two_fleets_with_different_distance() {
-    let (_, civil_disorder) = judge_build_2! {
-        TestWorld::empty().with_occupier("mos", "ENG").with_occupier("war", "GER")
-        .with_occupier("sev", "TUR").with_unit("RUS: F ska").with_unit("RUS: F nao"),
+    let world = TestWorld::empty()
+        .with_occupier("mos", "ENG")
+        .with_occupier("war", "GER")
+        .with_occupier("sev", "TUR")
+        .with_unit("RUS: F ska")
+        .with_unit("RUS: F nao");
+    let (_, civil_disorder) = judge_build! {
+        world,
     };
-    #[allow(
-        clippy::single_element_loop,
-        reason = "don't want different code based on disband check quantity"
-    )]
-    for disbanded in [unit_pos("RUS: F nao")] {
-        assert!(
-            civil_disorder.contains(&disbanded),
-            "{disbanded} should have disbanded"
-        );
-    }
+    let disbanded = unit_pos("RUS: F nao");
+    assert!(
+        civil_disorder.contains(&disbanded),
+        "{disbanded} should have disbanded"
+    );
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.6
 #[test]
 fn t6j06_civil_disorder_two_fleets_with_equal_distance() {
-    let (_, civil_disorder) = judge_build_2! {
-        TestWorld::empty().with_occupier("stp", "ENG").with_occupier("mos", "ENG")
-        .with_occupier("war", "GER").with_occupier("sev", "TUR").with_occupier("mun",
-        "RUS").with_unit("RUS: F bot").with_unit("RUS: F nth"),
+    let world = TestWorld::empty()
+        .with_occupier("stp", "ENG")
+        .with_occupier("mos", "ENG")
+        .with_occupier("war", "GER")
+        .with_occupier("sev", "TUR")
+        .with_occupier("mun", "RUS")
+        .with_unit("RUS: F bot")
+        .with_unit("RUS: F nth");
+    let (_, civil_disorder) = judge_build! {
+        world,
     };
-    #[allow(
-        clippy::single_element_loop,
-        reason = "don't want different code based on disband check quantity"
-    )]
-    for disbanded in [unit_pos("RUS: F bot")] {
-        assert!(
-            civil_disorder.contains(&disbanded),
-            "{disbanded} should have disbanded"
-        );
-    }
+    let disbanded = unit_pos("RUS: F bot");
+    assert!(
+        civil_disorder.contains(&disbanded),
+        "{disbanded} should have disbanded"
+    );
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.7
 #[test]
 fn t6j07_civil_disorder_two_fleets_and_army_with_equal_distance() {
-    let (_, civil_disorder) = judge_build_2! {
-        TestWorld::empty().with_occupier("mos", "ENG").with_occupier("sev", "TUR")
-        .with_unit("RUS: A boh").with_unit("RUS: F ska").with_unit("RUS: F nth"),
+    let world = TestWorld::empty()
+        .with_occupier("mos", "ENG")
+        .with_occupier("sev", "TUR")
+        .with_unit("RUS: A boh")
+        .with_unit("RUS: F ska")
+        .with_unit("RUS: F nth");
+    let (_, civil_disorder) = judge_build! {
+        world,
     };
-    #[allow(
-        clippy::single_element_loop,
-        reason = "don't want different code based on disband check quantity"
-    )]
-    for disbanded in [unit_pos("RUS: F nth")] {
-        assert!(
-            civil_disorder.contains(&disbanded),
-            "{disbanded} should have disbanded"
-        );
-    }
+    let disbanded = unit_pos("RUS: F nth");
+    assert!(
+        civil_disorder.contains(&disbanded),
+        "{disbanded} should have disbanded"
+    );
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.8
 #[test]
 fn t6j08_civil_disorder_a_fleet_with_shorter_distance_then_the_army() {
-    let (_, civil_disorder) = judge_build_2! {
-        TestWorld::empty().with_occupier("stp", "ENG").with_occupier("mos", "ENG")
-        .with_occupier("sev", "TUR").with_unit("RUS: A tyr").with_unit("RUS: F bal"),
+    let world = TestWorld::empty()
+        .with_occupier("stp", "ENG")
+        .with_occupier("mos", "ENG")
+        .with_occupier("sev", "TUR")
+        .with_unit("RUS: A tyr")
+        .with_unit("RUS: F bal");
+    let (_, civil_disorder) = judge_build! {
+        world,
     };
-    #[allow(
-        clippy::single_element_loop,
-        reason = "don't want different code based on disband check quantity"
-    )]
-    for disbanded in [unit_pos("RUS: A tyr")] {
-        assert!(
-            civil_disorder.contains(&disbanded),
-            "{disbanded} should have disbanded"
-        );
-    }
+    let disbanded = unit_pos("RUS: A tyr");
+    assert!(
+        civil_disorder.contains(&disbanded),
+        "{disbanded} should have disbanded"
+    );
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.9
 #[test]
 fn t6j09_civil_disorder_must_be_counted_from_both_coasts() {
-    let (_, civil_disorder) = judge_build_2! {
-        TestWorld::empty().with_occupier("war", "GER").with_occupier("mos", "ENG")
-        .with_unit("RUS: A alb").with_unit("RUS: A sev").with_unit("RUS: F bal"),
+    let world = TestWorld::empty()
+        .with_occupier("war", "GER")
+        .with_occupier("mos", "ENG")
+        .with_unit("RUS: A alb")
+        .with_unit("RUS: A sev")
+        .with_unit("RUS: F bal");
+    let (_, civil_disorder) = judge_build! {
+        world,
     };
-    #[allow(
-        clippy::single_element_loop,
-        reason = "don't want different code based on disband check quantity"
-    )]
-    for disbanded in [unit_pos("RUS: A alb")] {
-        assert!(
-            civil_disorder.contains(&disbanded),
-            "{disbanded} should have disbanded"
-        );
-    }
+    let disbanded = unit_pos("RUS: A alb");
+    assert!(
+        civil_disorder.contains(&disbanded),
+        "{disbanded} should have disbanded"
+    );
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.9
 #[test]
 fn t6j09_civil_disorder_must_be_counted_from_both_coasts_second_scenario() {
-    let (_, civil_disorder) = judge_build_2! {
-        TestWorld::empty().with_occupier("war", "GER").with_occupier("mos", "ENG")
-        .with_unit("RUS: A alb").with_unit("RUS: A sev").with_unit("RUS: F ska"),
+    let world = TestWorld::empty()
+        .with_occupier("war", "GER")
+        .with_occupier("mos", "ENG")
+        .with_unit("RUS: A alb")
+        .with_unit("RUS: A sev")
+        .with_unit("RUS: F ska");
+    let (_, civil_disorder) = judge_build! {
+        world,
     };
-    #[allow(
-        clippy::single_element_loop,
-        reason = "don't want different code based on disband check quantity"
-    )]
-    for disbanded in [unit_pos("RUS: F ska")] {
-        assert!(
-            civil_disorder.contains(&disbanded),
-            "{disbanded} should have disbanded"
-        );
-    }
+    let disbanded = unit_pos("RUS: F ska");
+    assert!(
+        civil_disorder.contains(&disbanded),
+        "{disbanded} should have disbanded"
+    );
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.10
 #[test]
 fn t6j10_civil_disorder_counting_convoying_distance() {
-    let (_, civil_disorder) = judge_build_2! {
-        TestWorld::empty().with_occupier("ven", "AUS").with_occupier("rom", "FRA")
-        .with_unit("ITA: A pie").with_unit("ITA: A alb"),
+    let world = TestWorld::empty()
+        .with_occupier("ven", "AUS")
+        .with_occupier("rom", "FRA")
+        .with_unit("ITA: A pie")
+        .with_unit("ITA: A alb");
+    let (_, civil_disorder) = judge_build! {
+        world,
     };
-    #[allow(
-        clippy::single_element_loop,
-        reason = "don't want different code based on disband check quantity"
-    )]
-    for disbanded in [unit_pos("ITA: A pie")] {
-        assert!(
-            civil_disorder.contains(&disbanded),
-            "{disbanded} should have disbanded"
-        );
-    }
+    let disbanded = unit_pos("ITA: A pie");
+    assert!(
+        civil_disorder.contains(&disbanded),
+        "{disbanded} should have disbanded"
+    );
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.11
 #[test]
 fn t6j11_distance_to_owned_supply_center() {
-    let (_, civil_disorder) = judge_build_2! {
-        TestWorld::empty().with_occupier("ven", "AUS").with_occupier("rom", "FRA")
-        .with_occupier("nap", "AUS").with_unit("ITA: A war").with_unit("ITA: A tus"),
+    let world = TestWorld::empty()
+        .with_occupier("ven", "AUS")
+        .with_occupier("rom", "FRA")
+        .with_occupier("nap", "AUS")
+        .with_unit("ITA: A war")
+        .with_unit("ITA: A tus");
+    let (_, civil_disorder) = judge_build! {
+        world,
     };
-    #[allow(
-        clippy::single_element_loop,
-        reason = "don't want different code based on disband check quantity"
-    )]
-    for disbanded in [unit_pos("ITA: A tus")] {
-        assert!(
-            civil_disorder.contains(&disbanded),
-            "{disbanded} should have disbanded"
-        );
-    }
+    let disbanded = unit_pos("ITA: A tus");
+    assert!(
+        civil_disorder.contains(&disbanded),
+        "{disbanded} should have disbanded"
+    );
 }

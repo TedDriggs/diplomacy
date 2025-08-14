@@ -134,28 +134,6 @@ macro_rules! judge_retreat {
             $(
                 assert_eq!(
                     $expected,
-                    *outcome.get(&retreat_ord($rule)).expect("Order should be in results"),
-                    $rule
-                );
-            )*
-        )*
-    };
-}
-
-/// Adjudicate a retreat phase that occurs after the provided main phase
-#[macro_export]
-macro_rules! judge_retreat_2 {
-    ($main_phase:expr, $($rule:tt $(: $expected:expr)?),+) => {
-        judge_retreat_2!($main_phase, $($rule $(: $expected)?,)+)
-    };
-    ($main_phase:expr, $($rule:tt $(: $expected:expr)?,)+) => {
-        let results = $main_phase.to_retreat_start();
-        let retreat_context = ::diplomacy::judge::retreat::Context::new(&results, vec![$($rule),*].into_iter().map(retreat_ord));
-        let outcome = retreat_context.resolve();
-        $(
-            $(
-                assert_eq!(
-                    $expected,
                     diplomacy::judge::OrderState::from(*outcome.get(&retreat_ord($rule)).expect("Order should be in results")),
                     $rule
                 );
@@ -172,40 +150,6 @@ macro_rules! judge_build {
     };
     ($world:expr, $($rule:tt $(: $expected:expr)?),+) => {
         judge_build!($world, $($rule $(: $expected)?,)+)
-    };
-    ($world:expr, $($rule:tt $(: $expected:expr)?,)*) => {
-        {
-            let map = geo::standard_map();
-            let last_time = initial_ownerships();
-            let world = $world;
-            let build_context = ::diplomacy::judge::build::Context::new(&map, &last_time, &world, vec![$($rule),*].into_iter().map(build_ord));
-            let outcome = build_context.resolve();
-            $(
-                $(
-                    assert_eq!(
-                        $expected,
-                        *outcome.get(&build_ord($rule)).expect("Order should be in results"),
-                        $rule
-                    );
-                )*
-            )*
-
-            let civil_disorder = outcome.to_civil_disorder();
-            let final_units = outcome.final_units_by_nation().map(|(k, v)| (k.clone(), v.clone())).collect::<std::collections::HashMap<_, _>>();
-
-            (final_units, civil_disorder)
-        }
-    };
-}
-
-/// Adjudicate a build phase that occurs in the provided world
-#[macro_export]
-macro_rules! judge_build_2 {
-    ($world:expr) => {
-        judge_build_2!($world, )
-    };
-    ($world:expr, $($rule:tt $(: $expected:expr)?),+) => {
-        judge_build_2!($world, $($rule $(: $expected)?,)+)
     };
     ($world:expr, $($rule:tt $(: $expected:expr)?,)*) => {
         {
