@@ -3,7 +3,9 @@
 
 use diplomacy::{
     geo::{self, Coast, ProvinceKey, RegionKey},
-    judge::{MappedBuildOrder, MappedMainOrder, MappedRetreatOrder, OrderState, Rulebook},
+    judge::{
+        MappedBuildOrder, MappedMainOrder, MappedRetreatOrder, OrderState, Rulebook, Submission,
+    },
     Nation, UnitPosition,
 };
 use std::collections::HashMap;
@@ -84,6 +86,21 @@ macro_rules! assert_state {
 /// Adjudicate a set of orders and - if specified - assert that order's success or failure.
 #[macro_export]
 macro_rules! judge {
+    (@start $start:expr; $($rule:tt $(: $outcome:expr)?),+) => {
+        {
+            let submission = diplomacy::judge::Submission::new(
+                diplomacy::geo::standard_map(),
+                $start,
+                vec![$($rule),*].into_iter().map(ord).collect()
+            );
+            let results = get_results_submission(&submission);
+            $(
+                $(assert_state!(results, $rule, $outcome);)*
+            )*
+
+            results
+        }
+    };
     (@using $resolver:path => $($rule:tt $(: $outcome:expr)?),+) => {
         {
             let results = $resolver(vec![$($rule),*]);
@@ -125,6 +142,28 @@ macro_rules! judge_retreat {
     };
 }
 
+/// Adjudicate a retreat phase that occurs after the provided main phase
+#[macro_export]
+macro_rules! judge_retreat_2 {
+    ($main_phase:expr, $($rule:tt $(: $expected:expr)?),+) => {
+        judge_retreat_2!($main_phase, $($rule $(: $expected)?,)+)
+    };
+    ($main_phase:expr, $($rule:tt $(: $expected:expr)?,)+) => {
+        let results = $main_phase.to_retreat_start();
+        let retreat_context = ::diplomacy::judge::retreat::Context::new(&results, vec![$($rule),*].into_iter().map(retreat_ord));
+        let outcome = retreat_context.resolve();
+        $(
+            $(
+                assert_eq!(
+                    $expected,
+                    diplomacy::judge::OrderState::from(*outcome.get(&retreat_ord($rule)).expect("Order should be in results")),
+                    $rule
+                );
+            )*
+        )*
+    };
+}
+
 /// Adjudicate a build phase that occurs in the provided world
 #[macro_export]
 macro_rules! judge_build {
@@ -159,6 +198,40 @@ macro_rules! judge_build {
     };
 }
 
+/// Adjudicate a build phase that occurs in the provided world
+#[macro_export]
+macro_rules! judge_build_2 {
+    ($world:expr) => {
+        judge_build_2!($world, )
+    };
+    ($world:expr, $($rule:tt $(: $expected:expr)?),+) => {
+        judge_build_2!($world, $($rule $(: $expected)?,)+)
+    };
+    ($world:expr, $($rule:tt $(: $expected:expr)?,)*) => {
+        {
+            let map = diplomacy::geo::standard_map();
+            let last_time = initial_ownerships();
+            let world = $world;
+            let build_context = ::diplomacy::judge::build::Context::new(&map, &last_time, &world, vec![$($rule),*].into_iter().map(build_ord));
+            let outcome = build_context.resolve();
+            $(
+                $(
+                    assert_eq!(
+                        $expected,
+                        diplomacy::judge::OrderState::from(*outcome.get(&build_ord($rule)).expect("Order should be in results")),
+                        $rule
+                    );
+                )*
+            )*
+
+            let civil_disorder = outcome.to_civil_disorder();
+            let final_units = outcome.final_units_by_nation().map(|(k, v)| (k.clone(), v.clone())).collect::<std::collections::HashMap<_, _>>();
+
+            (final_units, civil_disorder)
+        }
+    };
+}
+
 pub fn ord(s: &str) -> MappedMainOrder {
     s.parse()
         .unwrap_or_else(|e| panic!("'{}' should be a valid order: {}", s, e))
@@ -178,8 +251,12 @@ pub fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
     let parsed = orders.into_iter().map(ord).collect::<Vec<_>>();
     let ctx = diplomacy::judge::Submission::with_inferred_state(geo::standard_map(), parsed);
 
-    let out = ctx.adjudicate(Rulebook);
-    for o in ctx.submitted_orders() {
+    get_results_submission(&ctx)
+}
+
+pub fn get_results_submission(sub: &Submission) -> HashMap<MappedMainOrder, OrderState> {
+    let out = sub.adjudicate(Rulebook);
+    for o in sub.submitted_orders() {
         println!("{:?}: {:?}", o, out.get(o).unwrap());
     }
 
