@@ -358,9 +358,9 @@ impl<'a> Resolution<'a> {
 
 #[derive(Debug, Clone)]
 pub struct Outcome<'a> {
-    pub orders: HashMap<&'a MappedBuildOrder, OrderOutcome>,
-    pub civil_disorder: HashSet<UnitPosition<'a, RegionKey>>,
-    pub final_units: HashMap<&'a Nation, HashSet<(UnitType, RegionKey)>>,
+    orders: HashMap<&'a MappedBuildOrder, OrderOutcome>,
+    civil_disorder: HashSet<UnitPosition<'a, RegionKey>>,
+    final_units: HashMap<&'a Nation, HashSet<(UnitType, RegionKey)>>,
 }
 
 impl<'a> Outcome<'a> {
@@ -370,6 +370,27 @@ impl<'a> Outcome<'a> {
 
     pub fn order_outcomes(&self) -> impl Iterator<Item = (&MappedBuildOrder, &OrderOutcome)> {
         self.orders.iter().map(|(k, v)| (*k, v))
+    }
+
+    /// Returns an iterator over the final units grouped by nation.
+    pub fn final_units_by_nation<'s>(
+        &'s self,
+    ) -> impl Iterator<Item = (&'a Nation, &'s HashSet<(UnitType, RegionKey)>)> {
+        self.final_units.iter().map(|(k, v)| (*k, v))
+    }
+
+    /// Returns an iterator over the units that exist after resolution.
+    pub fn to_final_unit_positions<'s>(
+        &'s self,
+    ) -> impl 's + Iterator<Item = UnitPosition<'static, RegionKey>> {
+        self.final_units.iter().flat_map(|(nation, units)| {
+            units.iter().map(|(unit_type, region)| {
+                UnitPosition::new(
+                    Unit::new(Cow::Owned((*nation).clone()), *unit_type),
+                    region.clone(),
+                )
+            })
+        })
     }
 
     pub fn to_civil_disorder(&self) -> HashSet<UnitPosition<'static, RegionKey>> {
