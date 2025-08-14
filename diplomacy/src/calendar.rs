@@ -79,7 +79,7 @@ impl Calendar {
     }
 
     /// Create an infinite iterator that goes through all past and future `Time` values in the game.
-    pub fn iter(&self) -> Iter {
+    pub fn iter(&self) -> Iter<'_> {
         Iter {
             calendar: self,
             step: 0,

@@ -63,7 +63,7 @@ impl<'a> Submission<'a> {
     }
 
     /// Adjudicate the submission using the provided rules.
-    pub fn adjudicate<A: Adjudicate>(&self, rules: A) -> Outcome<A> {
+    pub fn adjudicate<A: Adjudicate>(&self, rules: A) -> Outcome<'_, A> {
         let illegal_orders = self
             .illegal_orders
             .iter()

@@ -42,7 +42,7 @@ impl<'a> Context<'a> {
     }
 
     /// Adjudicate a retreat phase and determine which units move or are disbanded.
-    pub fn resolve(&self) -> Outcome {
+    pub fn resolve(&self) -> Outcome<'_> {
         let mut outcomes = HashMap::new();
         let mut destinations = HashMap::new();
 
@@ -126,15 +126,15 @@ impl<'a> Outcome<'a> {
 }
 
 impl UnitPositions<RegionKey> for Outcome<'_> {
-    fn unit_positions(&self) -> Vec<UnitPosition> {
+    fn unit_positions(&self) -> Vec<UnitPosition<'_>> {
         self.unit_positions.unit_positions()
     }
 
-    fn find_province_occupier(&self, province: &ProvinceKey) -> Option<UnitPosition> {
+    fn find_province_occupier(&self, province: &ProvinceKey) -> Option<UnitPosition<'_>> {
         self.unit_positions.find_province_occupier(province)
     }
 
-    fn find_region_occupier(&self, region: &RegionKey) -> Option<Unit> {
+    fn find_region_occupier(&self, region: &RegionKey) -> Option<Unit<'_>> {
         self.unit_positions.find_region_occupier(region)
     }
 }
