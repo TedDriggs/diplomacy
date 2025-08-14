@@ -21,7 +21,7 @@ use crate::order::{
     BuildCommand, Command, ConvoyedMove, MainCommand, MoveCommand, Order, RetreatCommand,
     SupportedOrder,
 };
-use crate::Nation;
+use crate::{Nation, UnitType};
 
 mod error;
 
@@ -112,10 +112,19 @@ impl<L: Location + FromStr<Err = Error>> FromWords for ConvoyedMove<L> {
     type Err = Error;
 
     fn from_words(w: &[&str]) -> ParseResult<Self> {
-        if w.len() == 3 {
-            Ok(ConvoyedMove::new(w[0].parse()?, w[2].parse()?))
-        } else {
-            Err(Error::new(ErrorKind::MalformedConvoy, w.join(" ")))
+        match w.len() {
+            // The unit type has to be army, so make it optional. If a unit type is declared,
+            // check that it's valid.
+            4 => {
+                let unit_type = w[0].parse::<UnitType>()?;
+                if unit_type != UnitType::Army {
+                    Err(Error::new(ErrorKind::InvalidUnitType, w[0]))
+                } else {
+                    Self::from_words(&w[1..])
+                }
+            }
+            3 => Ok(ConvoyedMove::new(w[0].parse()?, w[2].parse()?)),
+            _ => Err(Error::new(ErrorKind::MalformedConvoy, w.join(" "))),
         }
     }
 }
@@ -178,5 +187,17 @@ mod test {
 
         let no_pref: OrderParseResult = "ENG: A Lon -> Bel".parse();
         assert_ne!(no_pref.unwrap(), order);
+    }
+
+    #[test]
+    fn convoy_with_unit_type() {
+        let c_order: OrderParseResult = "ENG: F Lon convoys A Bel -> NTH".parse();
+        c_order.unwrap();
+    }
+
+    #[test]
+    fn convoy_without_unit_type() {
+        let c_order: OrderParseResult = "ENG: F Lon convoys Bel -> NTH".parse();
+        c_order.unwrap();
     }
 }
