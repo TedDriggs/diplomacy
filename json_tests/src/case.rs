@@ -375,10 +375,11 @@ pub mod build {
 }
 
 #[derive(Debug, Clone, serde::Deserialize)]
+#[non_exhaustive]
 pub struct TestCaseTodo {
     #[serde(flatten)]
-    info: TestCaseInfo,
-    todo: String,
+    pub info: TestCaseInfo,
+    pub todo: String,
 }
 
 /// Either a runnable test case, or a todo item.
