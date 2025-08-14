@@ -655,7 +655,8 @@ fn t6e10_almost_circular_movement_with_no_self_dislodgement_with_beleaguered_gar
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.E.11
 #[test]
-fn t6e11_no_self_dislodgement_with_beleaguered_garrison_unit_swap_with_adjacent_convoying_and_two_coasts() {
+fn t6e11_no_self_dislodgement_with_beleaguered_garrison_unit_swap_with_adjacent_convoying_and_two_coasts(
+) {
     judge! {
         "FRA: A spa -> por via convoy" : Succeeds, "FRA: F mao convoys A spa -> por",
         "FRA: F lyo supports F por -> spa(nc)", "GER: A mar supports A gas -> spa",
@@ -1381,9 +1382,14 @@ fn t6j03_civil_disorder_two_armies_with_different_distance() {
         TestWorld::empty().with_occupier("war", "GER").with_occupier("mos", "GER")
         .with_occupier("sev", "TUR").with_unit("RUS: A lvn").with_unit("RUS: A pru"),
     };
+    #[allow(
+        clippy::single_element_loop,
+        reason = "don't want different code based on disband check quantity"
+    )]
     for disbanded in [unit_pos("RUS: A pru")] {
         assert!(
-            civil_disorder.contains(& disbanded), "{disbanded} should have disbanded"
+            civil_disorder.contains(&disbanded),
+            "{disbanded} should have disbanded"
         );
     }
 }
@@ -1394,9 +1400,14 @@ fn t6j04_civil_disorder_two_armies_with_equal_distance() {
         TestWorld::empty().with_occupier("stp", "ENG").with_occupier("war", "GER")
         .with_occupier("sev", "TUR").with_unit("RUS: A lvn").with_unit("RUS: A ukr"),
     };
+    #[allow(
+        clippy::single_element_loop,
+        reason = "don't want different code based on disband check quantity"
+    )]
     for disbanded in [unit_pos("RUS: A lvn")] {
         assert!(
-            civil_disorder.contains(& disbanded), "{disbanded} should have disbanded"
+            civil_disorder.contains(&disbanded),
+            "{disbanded} should have disbanded"
         );
     }
 }
@@ -1407,9 +1418,14 @@ fn t6j05_civil_disorder_two_fleets_with_different_distance() {
         TestWorld::empty().with_occupier("mos", "ENG").with_occupier("war", "GER")
         .with_occupier("sev", "TUR").with_unit("RUS: F ska").with_unit("RUS: F nao"),
     };
+    #[allow(
+        clippy::single_element_loop,
+        reason = "don't want different code based on disband check quantity"
+    )]
     for disbanded in [unit_pos("RUS: F nao")] {
         assert!(
-            civil_disorder.contains(& disbanded), "{disbanded} should have disbanded"
+            civil_disorder.contains(&disbanded),
+            "{disbanded} should have disbanded"
         );
     }
 }
@@ -1421,9 +1437,14 @@ fn t6j06_civil_disorder_two_fleets_with_equal_distance() {
         .with_occupier("war", "GER").with_occupier("sev", "TUR").with_occupier("mun",
         "RUS").with_unit("RUS: F bot").with_unit("RUS: F nth"),
     };
+    #[allow(
+        clippy::single_element_loop,
+        reason = "don't want different code based on disband check quantity"
+    )]
     for disbanded in [unit_pos("RUS: F bot")] {
         assert!(
-            civil_disorder.contains(& disbanded), "{disbanded} should have disbanded"
+            civil_disorder.contains(&disbanded),
+            "{disbanded} should have disbanded"
         );
     }
 }
@@ -1434,9 +1455,14 @@ fn t6j07_civil_disorder_two_fleets_and_army_with_equal_distance() {
         TestWorld::empty().with_occupier("mos", "ENG").with_occupier("sev", "TUR")
         .with_unit("RUS: A boh").with_unit("RUS: F ska").with_unit("RUS: F nth"),
     };
+    #[allow(
+        clippy::single_element_loop,
+        reason = "don't want different code based on disband check quantity"
+    )]
     for disbanded in [unit_pos("RUS: F nth")] {
         assert!(
-            civil_disorder.contains(& disbanded), "{disbanded} should have disbanded"
+            civil_disorder.contains(&disbanded),
+            "{disbanded} should have disbanded"
         );
     }
 }
@@ -1447,9 +1473,14 @@ fn t6j08_civil_disorder_a_fleet_with_shorter_distance_then_the_army() {
         TestWorld::empty().with_occupier("stp", "ENG").with_occupier("mos", "ENG")
         .with_occupier("sev", "TUR").with_unit("RUS: A tyr").with_unit("RUS: F bal"),
     };
+    #[allow(
+        clippy::single_element_loop,
+        reason = "don't want different code based on disband check quantity"
+    )]
     for disbanded in [unit_pos("RUS: A tyr")] {
         assert!(
-            civil_disorder.contains(& disbanded), "{disbanded} should have disbanded"
+            civil_disorder.contains(&disbanded),
+            "{disbanded} should have disbanded"
         );
     }
 }
@@ -1460,9 +1491,14 @@ fn t6j09_civil_disorder_must_be_counted_from_both_coasts() {
         TestWorld::empty().with_occupier("war", "GER").with_occupier("mos", "ENG")
         .with_unit("RUS: A alb").with_unit("RUS: A sev").with_unit("RUS: F bal"),
     };
+    #[allow(
+        clippy::single_element_loop,
+        reason = "don't want different code based on disband check quantity"
+    )]
     for disbanded in [unit_pos("RUS: A alb")] {
         assert!(
-            civil_disorder.contains(& disbanded), "{disbanded} should have disbanded"
+            civil_disorder.contains(&disbanded),
+            "{disbanded} should have disbanded"
         );
     }
 }
@@ -1473,9 +1509,14 @@ fn t6j09_civil_disorder_must_be_counted_from_both_coasts_second_scenario() {
         TestWorld::empty().with_occupier("war", "GER").with_occupier("mos", "ENG")
         .with_unit("RUS: A alb").with_unit("RUS: A sev").with_unit("RUS: F ska"),
     };
+    #[allow(
+        clippy::single_element_loop,
+        reason = "don't want different code based on disband check quantity"
+    )]
     for disbanded in [unit_pos("RUS: F ska")] {
         assert!(
-            civil_disorder.contains(& disbanded), "{disbanded} should have disbanded"
+            civil_disorder.contains(&disbanded),
+            "{disbanded} should have disbanded"
         );
     }
 }
@@ -1486,9 +1527,14 @@ fn t6j10_civil_disorder_counting_convoying_distance() {
         TestWorld::empty().with_occupier("ven", "AUS").with_occupier("rom", "FRA")
         .with_unit("ITA: A pie").with_unit("ITA: A alb"),
     };
+    #[allow(
+        clippy::single_element_loop,
+        reason = "don't want different code based on disband check quantity"
+    )]
     for disbanded in [unit_pos("ITA: A pie")] {
         assert!(
-            civil_disorder.contains(& disbanded), "{disbanded} should have disbanded"
+            civil_disorder.contains(&disbanded),
+            "{disbanded} should have disbanded"
         );
     }
 }
@@ -1499,10 +1545,14 @@ fn t6j11_distance_to_owned_supply_center() {
         TestWorld::empty().with_occupier("ven", "AUS").with_occupier("rom", "FRA")
         .with_occupier("nap", "AUS").with_unit("ITA: A war").with_unit("ITA: A tus"),
     };
+    #[allow(
+        clippy::single_element_loop,
+        reason = "don't want different code based on disband check quantity"
+    )]
     for disbanded in [unit_pos("ITA: A tus")] {
         assert!(
-            civil_disorder.contains(& disbanded), "{disbanded} should have disbanded"
+            civil_disorder.contains(&disbanded),
+            "{disbanded} should have disbanded"
         );
     }
 }
-

@@ -142,6 +142,7 @@ impl ToTokens for build::TestCase {
             });
             tokens.append_all(quote! {
                 let (_, civil_disorder) = #judge_call;
+                #[allow(clippy::single_element_loop, reason = "don't want different code based on disband check quantity")]
                 for disbanded in [#(#civil_disorder),*] {
                     assert!(civil_disorder.contains(&disbanded), "{disbanded} should have disbanded");
                 }
