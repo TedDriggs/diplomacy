@@ -3,7 +3,9 @@
 
 use diplomacy::{
     geo::{self, Coast, ProvinceKey, RegionKey},
-    judge::{MappedBuildOrder, MappedMainOrder, MappedRetreatOrder, OrderState, Rulebook},
+    judge::{
+        MappedBuildOrder, MappedMainOrder, MappedRetreatOrder, OrderState, Rulebook, Submission,
+    },
     Nation, UnitPosition,
 };
 use std::collections::HashMap;
@@ -84,6 +86,21 @@ macro_rules! assert_state {
 /// Adjudicate a set of orders and - if specified - assert that order's success or failure.
 #[macro_export]
 macro_rules! judge {
+    (@start $start:expr; $($rule:tt $(: $outcome:expr)?),+) => {
+        {
+            let submission = diplomacy::judge::Submission::new(
+                diplomacy::geo::standard_map(),
+                $start,
+                vec![$($rule),*].into_iter().map(ord).collect()
+            );
+            let results = get_results_submission(&submission);
+            $(
+                $(assert_state!(results, $rule, $outcome);)*
+            )*
+
+            results
+        }
+    };
     (@using $resolver:path => $($rule:tt $(: $outcome:expr)?),+) => {
         {
             let results = $resolver(vec![$($rule),*]);
@@ -117,7 +134,7 @@ macro_rules! judge_retreat {
             $(
                 assert_eq!(
                     $expected,
-                    *outcome.get(&retreat_ord($rule)).expect("Order should be in results"),
+                    diplomacy::judge::OrderState::from(*outcome.get(&retreat_ord($rule)).expect("Order should be in results")),
                     $rule
                 );
             )*
@@ -136,7 +153,7 @@ macro_rules! judge_build {
     };
     ($world:expr, $($rule:tt $(: $expected:expr)?,)*) => {
         {
-            let map = geo::standard_map();
+            let map = diplomacy::geo::standard_map();
             let last_time = initial_ownerships();
             let world = $world;
             let build_context = ::diplomacy::judge::build::Context::new(&map, &last_time, &world, vec![$($rule),*].into_iter().map(build_ord));
@@ -145,7 +162,7 @@ macro_rules! judge_build {
                 $(
                     assert_eq!(
                         $expected,
-                        *outcome.get(&build_ord($rule)).expect("Order should be in results"),
+                        diplomacy::judge::OrderState::from(*outcome.get(&build_ord($rule)).expect("Order should be in results")),
                         $rule
                     );
                 )*
@@ -178,8 +195,12 @@ pub fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
     let parsed = orders.into_iter().map(ord).collect::<Vec<_>>();
     let ctx = diplomacy::judge::Submission::with_inferred_state(geo::standard_map(), parsed);
 
-    let out = ctx.adjudicate(Rulebook);
-    for o in ctx.submitted_orders() {
+    get_results_submission(&ctx)
+}
+
+pub fn get_results_submission(sub: &Submission) -> HashMap<MappedMainOrder, OrderState> {
+    let out = sub.adjudicate(Rulebook);
+    for o in sub.submitted_orders() {
         println!("{:?}: {:?}", o, out.get(o).unwrap());
     }
 

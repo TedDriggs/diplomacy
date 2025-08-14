@@ -7,6 +7,7 @@
 pub mod case;
 mod map_key;
 mod outcome_with_state;
+mod rustgen;
 
 pub use map_key::{with_map_key, MapKey};
 pub use outcome_with_state::OrderOutcomeWithState;
