@@ -1,6 +1,6 @@
+// @generated
 //! This module was automatically generated. Do not edit it directly.
 #![cfg(test)]
-#![rustfmt::skip]
 #[path = "./util.rs"]
 mod util;
 #[path = "./world.rs"]

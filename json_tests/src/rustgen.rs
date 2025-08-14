@@ -19,7 +19,6 @@ impl<T: ToTokens> ToTokens for Cases<T> {
         tokens.append_all(quote!(
             //! This module was automatically generated. Do not edit it directly.
             #![cfg(test)]
-            #![rustfmt::skip]
 
             #[path = "./util.rs"]
             mod util;
