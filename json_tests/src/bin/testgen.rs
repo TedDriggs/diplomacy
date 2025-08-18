@@ -11,10 +11,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cases = serde_json::from_str::<Cases<RawTestCase>>(&json)
         .map_err(|e| anyhow::Error::new(e).context(format!("Parsing {path}")))?;
 
-    println!(
-        "// @generated\n{}",
-        prettyplease::unparse(&syn::parse_quote!(#cases))
-    );
+    println!("{}", prettyplease::unparse(&syn::parse_quote!(#cases)));
 
     Ok(())
 }
