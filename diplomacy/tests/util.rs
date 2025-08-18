@@ -47,7 +47,7 @@ macro_rules! submit_main_phase {
 #[macro_export]
 macro_rules! resolve_main {
     ($context:expr, $expectation:expr) => {{
-        let outcome = $context.adjudicate(::diplomacy::judge::Rulebook);
+        let outcome = $context.adjudicate(::diplomacy::judge::Rulebook::default());
 
         // We refer back to the submitted orders to ensure we visit orders in the same
         // order across test runs. This makes output diffing easier.
@@ -199,7 +199,7 @@ pub fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
 }
 
 pub fn get_results_submission(sub: &Submission) -> HashMap<MappedMainOrder, OrderState> {
-    let out = sub.adjudicate(Rulebook);
+    let out = sub.adjudicate(Rulebook::default());
     for o in sub.submitted_orders() {
         println!("{:?}: {:?}", o, out.get(o).unwrap());
     }

@@ -53,7 +53,7 @@ fn dipmath_figure9() {
         ],
     );
 
-    let result = orders.adjudicate(Rulebook);
+    let result = orders.adjudicate(Rulebook::default());
 
     for order in orders.submitted_orders() {
         assert_eq!(OrderState::Succeeds, result.get(order).unwrap().into());
@@ -106,7 +106,7 @@ fn dipmath_figure6() {
         .find_border_between(&reg("sil"), &reg("boh"))
         .is_some());
 
-    let result = orders.adjudicate(Rulebook);
+    let result = orders.adjudicate(Rulebook::default());
     for o in orders.submitted_orders() {
         assert_eq!(
             if o.nation == ger {
@@ -163,7 +163,7 @@ fn dipmath_figure16() {
         ],
     );
 
-    let result = orders.adjudicate(Rulebook);
+    let result = orders.adjudicate(Rulebook::default());
     for o in orders.submitted_orders() {
         assert_eq!(
             if o.nation != ita {

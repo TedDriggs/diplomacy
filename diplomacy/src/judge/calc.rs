@@ -180,7 +180,7 @@ mod tests {
         .map(|ord| ord.parse::<MappedMainOrder>().unwrap())
         .collect::<Vec<_>>();
 
-        let context = Context::new(crate::geo::standard_map(), Rulebook, &orders);
+        let context = Context::new(crate::geo::standard_map(), Rulebook::default(), &orders);
         let mut state = ResolverState::new();
 
         assert_eq!(
@@ -204,7 +204,7 @@ mod tests {
         .map(|ord| ord.parse::<MappedMainOrder>().unwrap())
         .collect::<Vec<_>>();
 
-        let context = Context::new(crate::geo::standard_map(), Rulebook, &orders);
+        let context = Context::new(crate::geo::standard_map(), Rulebook::default(), &orders);
         let mut state = ResolverState::new();
         let nth_prevent = max_prevent_result(&context, &mut state, &orders[3]);
         let swe_prevent = max_prevent_result(&context, &mut state, &orders[4]);

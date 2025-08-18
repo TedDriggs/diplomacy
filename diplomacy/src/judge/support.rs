@@ -234,7 +234,7 @@ mod test {
         assert_eq!(supp_com, orders[1]);
         assert!(super::can_reach(standard_map(), &orders[0]));
 
-        let resolver_ctx = Context::new(standard_map(), crate::judge::Rulebook, &orders);
+        let resolver_ctx = Context::new(standard_map(), crate::judge::Rulebook::default(), &orders);
         let mut res_state = ResolverState::new();
         let supporters = find_for(&resolver_ctx, &mut res_state, &orders[1]);
         assert!(!supporters.is_empty());
