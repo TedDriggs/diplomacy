@@ -1,4 +1,3 @@
-// @generated
 //! This module was automatically generated. Do not edit it directly.
 #![cfg(test)]
 #[path = "./util.rs"]
