@@ -75,7 +75,7 @@ mod tests {
         .collect();
 
         let submission = Submission::with_inferred_state(standard_map(), orders);
-        let outcome = submission.adjudicate(Rulebook);
+        let outcome = submission.adjudicate(Rulebook::default());
         let mut ser = serde_json::Serializer::pretty(std::io::stdout());
         ser.collect_seq(outcome.all_orders_with_outcomes()).unwrap();
     }

@@ -53,7 +53,7 @@ pub mod main {
 
         pub fn run(&self) -> TestResult {
             let submission = self.to_submission();
-            self.to_test_result(&submission.adjudicate(Rulebook))
+            self.to_test_result(&submission.adjudicate(Rulebook::default()))
         }
 
         pub fn to_submission<'a>(&'a self) -> Submission<'a> {
@@ -131,7 +131,7 @@ pub mod retreat {
         pub fn run(&self) -> TestResult {
             // First, adjudicate the preceding main phase to set up the retreat phase.
             let main_phase = self.preceding_main_phase.to_submission();
-            let main_phase_outcome = main_phase.adjudicate(Rulebook);
+            let main_phase_outcome = main_phase.adjudicate(Rulebook::default());
             let main_phase_result = self
                 .preceding_main_phase
                 .to_test_result(&main_phase_outcome);

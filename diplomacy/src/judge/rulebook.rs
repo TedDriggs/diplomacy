@@ -10,7 +10,8 @@ use crate::ShortName;
 
 /// The standard Diplomacy rules.
 #[derive(Debug, Clone, Default)]
-pub struct Rulebook;
+#[non_exhaustive]
+pub struct Rulebook {}
 
 impl Rulebook {
     /// Apply rules to determine hold outcome.
