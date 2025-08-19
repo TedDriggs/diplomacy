@@ -121,8 +121,16 @@ pub mod retreat {
 
     #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
     #[non_exhaustive]
+    pub struct PrecedingMainPhase {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub starting_state: Option<Vec<MapKey<UnitPosition<'static, RegionKey>>>>,
+        pub orders: IndexMap<MappedMainOrder, Option<OrderState>>,
+    }
+
+    #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+    #[non_exhaustive]
     pub struct TestCase {
-        pub preceding_main_phase: main::TestCase,
+        pub preceding_main_phase: PrecedingMainPhase,
         #[serde(with = "with_map_key")]
         pub orders: IndexMap<MappedRetreatOrder, Option<OrderState>>,
     }
@@ -130,11 +138,10 @@ pub mod retreat {
     impl TestCase {
         pub fn run(&self) -> TestResult {
             // First, adjudicate the preceding main phase to set up the retreat phase.
-            let main_phase = self.preceding_main_phase.to_submission();
-            let main_phase_outcome = main_phase.adjudicate(Rulebook::default());
-            let main_phase_result = self
-                .preceding_main_phase
-                .to_test_result(&main_phase_outcome);
+            let main_phase = main::TestCase::from(self);
+            let main_phase_submission = main_phase.to_submission();
+            let main_phase_outcome = main_phase_submission.adjudicate(Rulebook::default());
+            let main_phase_result = main_phase.to_test_result(&main_phase_outcome);
 
             // If the main phase did not pass, then the retreat phase is not set up as expected.
             if !main_phase_result.did_pass() {
@@ -175,6 +182,15 @@ pub mod retreat {
                         }
                     })
                     .collect(),
+            }
+        }
+    }
+
+    impl From<&TestCase> for main::TestCase {
+        fn from(value: &TestCase) -> Self {
+            main::TestCase {
+                starting_state: value.preceding_main_phase.starting_state.clone(),
+                orders: value.preceding_main_phase.orders.clone(),
             }
         }
     }
