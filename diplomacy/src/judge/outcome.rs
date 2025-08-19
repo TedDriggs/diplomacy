@@ -1,3 +1,5 @@
+use crate::judge::WillUseConvoy;
+
 use super::{
     retreat, Adjudicate, AttackOutcome, Context, ConvoyOutcome, HoldOutcome, MappedMainOrder,
     OrderState, ResolverState, SupportOutcome,
@@ -139,11 +141,6 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
         self.orders.get(order)
     }
 
-    /// Calculate retreat phase starting data based on this main-phase outcome.
-    pub fn to_retreat_start(&'a self) -> retreat::Start<'a> {
-        retreat::Start::new(self)
-    }
-
     #[cfg(feature = "dependency-graph")]
     pub fn dependencies(&self) -> impl fmt::Display {
         struct Dependencies(std::collections::BTreeSet<(MappedMainOrder, MappedMainOrder)>);
@@ -160,6 +157,13 @@ impl<'a, A: Adjudicate> Outcome<'a, A> {
         }
 
         Dependencies(self.resolver.dependencies())
+    }
+}
+
+impl<'a, A: Adjudicate + WillUseConvoy> Outcome<'a, A> {
+    /// Calculate retreat phase starting data based on this main-phase outcome.
+    pub fn to_retreat_start(&'a self) -> retreat::Start<'a> {
+        retreat::Start::new(self)
     }
 }
 
