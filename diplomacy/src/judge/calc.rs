@@ -1,6 +1,7 @@
 use super::strength::{Prevent, Strength};
 use super::{convoy, support};
 use super::{Adjudicate, Context, MappedMainOrder, ResolverState};
+use crate::judge::WillUseConvoy;
 use crate::order::{Command, MainCommand};
 use crate::{geo::ProvinceKey, ShortName};
 
@@ -9,7 +10,7 @@ use crate::{geo::ProvinceKey, ShortName};
 /// 1. A border exists and the order permits direct travel OR
 /// 1. A non-disrupted convoy route exists.
 pub fn path_exists<'a>(
-    context: &Context<'a, impl Adjudicate>,
+    context: &Context<'a, impl Adjudicate + WillUseConvoy>,
     resolver: &mut ResolverState<'a>,
     order: &MappedMainOrder,
 ) -> bool {
@@ -29,7 +30,7 @@ pub fn path_exists<'a>(
                 // NOTE: As-written, this short-circuits convoy assessment when
                 // there is an acceptable direct route. Don't change that behavior, as
                 // it may impact how resolution works.
-                return can_travel_directly || convoy::route_exists(context, resolver, order);
+                return can_travel_directly || convoy::uses_convoy(context, resolver, order);
             }
         }
     }
@@ -41,7 +42,7 @@ pub fn path_exists<'a>(
 /// Two orders form a head-to-head battle when they are mirrored moves and no convoy exists to
 /// ferry one of the armies around the other one.
 pub fn is_head_to_head<'a>(
-    context: &Context<'a, impl Adjudicate>,
+    context: &Context<'a, impl Adjudicate + WillUseConvoy>,
     resolver: &mut ResolverState<'a>,
     order1: &MappedMainOrder,
     order2: &MappedMainOrder,
@@ -51,12 +52,12 @@ pub fn is_head_to_head<'a>(
         && order1.move_dest().map(|d| d.province()) == Some(order2.region.province())
         && order2.move_dest().map(|d| d.province()) == Some(order1.region.province()))
     // Then check to see if a convoy route enables the two to avoid head-to-head battle
-        && !convoy::route_exists(context, resolver, order1)
-        && !convoy::route_exists(context, resolver, order2)
+        && !convoy::uses_convoy(context, resolver, order1)
+        && !convoy::uses_convoy(context, resolver, order2)
 }
 
 fn prevent_result<'a>(
-    context: &Context<'a, impl Adjudicate>,
+    context: &Context<'a, impl Adjudicate + WillUseConvoy>,
     resolver: &mut ResolverState<'a>,
     order: &'a MappedMainOrder,
 ) -> Option<Prevent<&'a MappedMainOrder>> {
@@ -86,7 +87,7 @@ fn prevent_result<'a>(
 
 /// Get all prevents for a province, with their supporters.
 pub fn prevent_results<'a>(
-    context: &Context<'a, impl Adjudicate>,
+    context: &Context<'a, impl Adjudicate + WillUseConvoy>,
     resolver: &mut ResolverState<'a>,
     province: &ProvinceKey,
 ) -> Vec<Prevent<&'a MappedMainOrder>> {
@@ -98,7 +99,7 @@ pub fn prevent_results<'a>(
 }
 
 pub fn max_prevent_result<'a>(
-    context: &Context<'a, impl Adjudicate>,
+    context: &Context<'a, impl Adjudicate + WillUseConvoy>,
     resolver: &mut ResolverState<'a>,
     preventing: &MappedMainOrder,
 ) -> Option<Prevent<&'a MappedMainOrder>> {

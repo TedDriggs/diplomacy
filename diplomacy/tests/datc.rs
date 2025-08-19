@@ -941,10 +941,18 @@ fn t6g01_two_units_can_swap_provinces_by_convoy() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.2
 #[test]
-fn t6g02_kidnapping_an_army() {
+fn t6g02_kidnapping_an_army_1971() {
     judge! {
-        "ENG: A nwy -> swe" : Succeeds, "RUS: F swe -> nwy" : Succeeds,
-        "GER: F ska convoys A nwy -> swe"
+        @ rules diplomacy::judge::Rulebook::edition_1971(); "ENG: A nwy -> swe" :
+        Succeeds, "RUS: F swe -> nwy" : Succeeds, "GER: F ska convoys A nwy -> swe"
+    };
+}
+///https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.2
+#[test]
+fn t6g02_kidnapping_an_army_1982() {
+    judge! {
+        @ rules diplomacy::judge::Rulebook::edition_1982(); "ENG: A nwy -> swe" : Fails,
+        "RUS: F swe -> nwy" : Fails, "GER: F ska convoys A nwy -> swe"
     };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.3
@@ -958,11 +966,22 @@ fn t6g03_unwanted_disrupted_convoy_to_adjacent_province() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.4
 #[test]
-fn t6g04_unwanted_disrupted_convoy_to_adjacent_province_and_opposite_move() {
+fn t6g04_unwanted_disrupted_convoy_to_adjacent_province_and_opposite_move_1971() {
     judge! {
-        "FRA: F bre -> eng" : Succeeds, "FRA: A pic -> bel" : Succeeds,
-        "FRA: A bur supports A pic -> bel", "FRA: F mao supports F bre -> eng",
-        "ENG: F eng convoys A pic -> bel", "ENG: A bel -> pic" : Fails
+        @ rules diplomacy::judge::Rulebook::edition_1971(); "FRA: F bre -> eng" :
+        Succeeds, "FRA: A pic -> bel" : Succeeds, "FRA: A bur supports A pic -> bel",
+        "FRA: F mao supports F bre -> eng", "ENG: F eng convoys A pic -> bel",
+        "ENG: A bel -> pic" : Fails
+    };
+}
+///https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.4
+#[test]
+fn t6g04_unwanted_disrupted_convoy_to_adjacent_province_and_opposite_move_1982() {
+    judge! {
+        @ rules diplomacy::judge::Rulebook::edition_1982(); "FRA: F bre -> eng" :
+        Succeeds, "FRA: A pic -> bel" : Succeeds, "FRA: A bur supports A pic -> bel",
+        "FRA: F mao supports F bre -> eng", "ENG: F eng convoys A pic -> bel",
+        "ENG: A bel -> pic" : Fails
     };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.5

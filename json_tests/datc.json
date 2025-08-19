@@ -1237,12 +1237,24 @@
             }
         },
         {
-            "name": "t6g02_kidnapping_an_army",
+            "name": "t6g02_kidnapping_an_army_1971",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.2",
+            "edition": "1971",
             "phase": "Main",
             "orders": {
                 "ENG: A nwy -> swe": "Succeeds",
                 "RUS: F swe -> nwy": "Succeeds",
+                "GER: F ska convoys nwy -> swe": null
+            }
+        },
+        {
+            "name": "t6g02_kidnapping_an_army_1982",
+            "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.2",
+            "edition": "1982",
+            "phase": "Main",
+            "orders": {
+                "ENG: A nwy -> swe": "Fails",
+                "RUS: F swe -> nwy": "Fails",
                 "GER: F ska convoys nwy -> swe": null
             }
         },
@@ -1259,8 +1271,23 @@
             }
         },
         {
-            "name": "t6g04_unwanted_disrupted_convoy_to_adjacent_province_and_opposite_move",
+            "name": "t6g04_unwanted_disrupted_convoy_to_adjacent_province_and_opposite_move_1971",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.4",
+            "edition": "1971",
+            "phase": "Main",
+            "orders": {
+                "FRA: F bre -> eng": "Succeeds",
+                "FRA: A pic -> bel": "Succeeds",
+                "FRA: A bur Supports A pic -> bel": null,
+                "FRA: F mao Supports F bre -> eng": null,
+                "ENG: F eng convoys pic -> bel": null,
+                "ENG: A bel -> pic": "Fails"
+            }
+        },
+        {
+            "name": "t6g04_unwanted_disrupted_convoy_to_adjacent_province_and_opposite_move_1982",
+            "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.4",
+            "edition": "1982",
             "phase": "Main",
             "orders": {
                 "FRA: F bre -> eng": "Succeeds",

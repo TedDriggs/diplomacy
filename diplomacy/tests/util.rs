@@ -87,36 +87,43 @@ macro_rules! assert_state {
 #[macro_export]
 macro_rules! judge {
     (@start $start:expr; $($rule:tt $(: $outcome:expr)?),+) => {
+        judge!(@rules diplomacy::judge::Rulebook::default(); @start $start; $($rule $(: $outcome)?),+)
+    };
+    (@rules $rules:expr; $($rule:tt $(: $outcome:expr)?),+) => {
+        let submission = diplomacy::judge::Submission::with_inferred_state(
+            diplomacy::geo::standard_map(),
+            vec![$($rule),*].into_iter().map(ord).collect()
+        );
+        let results = get_results_submission(&submission, $rules);
+        $(
+            $(assert_state!(results, $rule, $outcome);)*
+        )*
+
+        #[allow(path_statements)]
+        results
+    };
+    (@rules $rules:expr; @start $start:expr; $($rule:tt $(: $outcome:expr)?),+) => {
         {
             let submission = diplomacy::judge::Submission::new(
                 diplomacy::geo::standard_map(),
                 $start,
                 vec![$($rule),*].into_iter().map(ord).collect()
             );
-            let results = get_results_submission(&submission);
-            $(
-                $(assert_state!(results, $rule, $outcome);)*
-            )*
-
-            results
-        }
-    };
-    (@using $resolver:path => $($rule:tt $(: $outcome:expr)?),+) => {
-        {
-            let results = $resolver(vec![$($rule),*]);
+            let results = get_results_submission(&submission, $rules);
 
             $(
                 $(assert_state!(results, $rule, $outcome);)*
             )*
 
+            #[allow(path_statements)]
             results
         }
     };
     ($($rule:tt $(: $outcome:expr)?),+) => {
-        judge!(@using get_results => $($rule $(: $outcome)*),*)
+        judge!(@rules diplomacy::judge::Rulebook::default(); $($rule $(: $outcome)*),*)
     };
     ($($rule:tt $(: $outcome:expr)?,)+) => {
-        judge!(@using get_results => $($rule $(: $outcome)*),*)
+        judge!(@rules diplomacy::judge::Rulebook::default(); $($rule $(: $outcome)*),*)
     };
 }
 
@@ -195,11 +202,14 @@ pub fn get_results(orders: Vec<&str>) -> HashMap<MappedMainOrder, OrderState> {
     let parsed = orders.into_iter().map(ord).collect::<Vec<_>>();
     let ctx = diplomacy::judge::Submission::with_inferred_state(geo::standard_map(), parsed);
 
-    get_results_submission(&ctx)
+    get_results_submission(&ctx, Rulebook::default())
 }
 
-pub fn get_results_submission(sub: &Submission) -> HashMap<MappedMainOrder, OrderState> {
-    let out = sub.adjudicate(Rulebook::default());
+pub fn get_results_submission(
+    sub: &Submission,
+    rules: Rulebook,
+) -> HashMap<MappedMainOrder, OrderState> {
+    let out = sub.adjudicate(rules);
     for o in sub.submitted_orders() {
         println!("{:?}: {:?}", o, out.get(o).unwrap());
     }

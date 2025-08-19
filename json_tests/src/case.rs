@@ -4,12 +4,35 @@ use std::fmt;
 
 use diplomacy::{
     geo::RegionKey,
-    judge::{MappedBuildOrder, MappedMainOrder, MappedRetreatOrder, OrderState},
+    judge::{MappedBuildOrder, MappedMainOrder, MappedRetreatOrder, OrderState, Rulebook},
     Nation, UnitPosition,
 };
 use indexmap::IndexMap;
 
 use crate::MapKey;
+
+#[derive(Debug, Clone, Copy, serde::Deserialize, serde::Serialize)]
+pub enum Edition {
+    #[serde(rename = "1971")]
+    Edition1971,
+    #[serde(rename = "1982")]
+    Edition1982,
+    #[serde(rename = "2023")]
+    Edition2023,
+    #[serde(rename = "dptg")]
+    Dptg,
+}
+
+impl From<Edition> for Rulebook {
+    fn from(edition: Edition) -> Self {
+        match edition {
+            Edition::Edition1971 => Rulebook::edition_1971(),
+            Edition::Edition1982 => Rulebook::edition_1982(),
+            Edition::Edition2023 => Rulebook::edition_2023(),
+            Edition::Dptg => Rulebook::dptg(),
+        }
+    }
+}
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[non_exhaustive]
@@ -35,6 +58,10 @@ pub mod main {
     #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
     #[non_exhaustive]
     pub struct TestCase {
+        /// The edition of the rules to use for this test case.
+        /// If `None`, the test behaves identically for all editions of the standard rules.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub edition: Option<Edition>,
         /// Unit locations at the start of the test.
         ///
         /// If `None`, the test will infer the starting positions from the orders.
@@ -53,7 +80,9 @@ pub mod main {
 
         pub fn run(&self) -> TestResult {
             let submission = self.to_submission();
-            self.to_test_result(&submission.adjudicate(Rulebook::default()))
+            self.to_test_result(
+                &submission.adjudicate(self.edition.map(Rulebook::from).unwrap_or_default()),
+            )
         }
 
         pub fn to_submission<'a>(&'a self) -> Submission<'a> {
@@ -124,12 +153,17 @@ pub mod retreat {
     pub struct PrecedingMainPhase {
         #[serde(skip_serializing_if = "Option::is_none")]
         pub starting_state: Option<Vec<MapKey<UnitPosition<'static, RegionKey>>>>,
+        #[serde(with = "with_map_key")]
         pub orders: IndexMap<MappedMainOrder, Option<OrderState>>,
     }
 
     #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
     #[non_exhaustive]
     pub struct TestCase {
+        /// The edition of the rules to use for this test case.
+        /// If `None`, the test behaves identically for all editions of the standard rules.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub edition: Option<Edition>,
         pub preceding_main_phase: PrecedingMainPhase,
         #[serde(with = "with_map_key")]
         pub orders: IndexMap<MappedRetreatOrder, Option<OrderState>>,
@@ -189,6 +223,7 @@ pub mod retreat {
     impl From<&TestCase> for main::TestCase {
         fn from(value: &TestCase) -> Self {
             main::TestCase {
+                edition: value.edition,
                 starting_state: value.preceding_main_phase.starting_state.clone(),
                 orders: value.preceding_main_phase.orders.clone(),
             }

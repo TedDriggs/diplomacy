@@ -1,4 +1,5 @@
 use crate::geo::{Border, ProvinceKey, RegionKey};
+use crate::judge::WillUseConvoy;
 use crate::judge::{
     calc::dislodger_of, calc::prevent_results, convoy, Adjudicate, Context, MappedMainOrder,
     OrderState, Outcome, Prevent, ResolverState,
@@ -20,7 +21,7 @@ pub struct Start<'a> {
 impl<'a> Start<'a> {
     /// Initialize a retreat phase, determining which units are dislodged and where they are
     /// able to go based on the outcome of a main phase adjudication.
-    pub fn new(outcome: &'a Outcome<'a, impl Adjudicate>) -> Self {
+    pub fn new(outcome: &'a Outcome<'a, impl Adjudicate + WillUseConvoy>) -> Self {
         let mut state = outcome.resolver.clone();
         let dislodged = {
             let mut dislodged = HashMap::new();
@@ -90,7 +91,7 @@ impl<'a> Start<'a> {
 }
 
 fn is_valid_retreat_route<'a>(
-    main_phase: &'a Context<'a, impl Adjudicate>,
+    main_phase: &'a Context<'a, impl Adjudicate + WillUseConvoy>,
     state: &mut ResolverState<'a>,
     non_dislodged_positions: &impl UnitPositions<RegionKey>,
     dislodged: &HashMap<&MappedMainOrder, &MappedMainOrder>,
@@ -111,7 +112,7 @@ fn is_valid_retreat_route<'a>(
     // A unit cannot retreat to its dislodger's point of origin unless the dislodger was
     // convoyed to the destination.
     if dest.province() == dislodger.region.province()
-        && !convoy::route_exists(main_phase, state, dislodger)
+        && !convoy::uses_convoy(main_phase, state, dislodger)
     {
         return DestStatus::BlockedByDislodger;
     }

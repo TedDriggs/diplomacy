@@ -3,10 +3,11 @@
 
 use super::{calc, Adjudicate, Context, MappedMainOrder, OrderState, ResolverState};
 use crate::geo::Map;
+use crate::judge::WillUseConvoy;
 use crate::order::{Command, MainCommand, SupportedOrder};
 
 fn order_cuts<'a>(
-    ctx: &Context<'a, impl Adjudicate>,
+    ctx: &Context<'a, impl Adjudicate + WillUseConvoy>,
     resolver: &mut ResolverState<'a>,
     support_order: &MappedMainOrder,
     cutting_order: &'a MappedMainOrder,
@@ -52,7 +53,7 @@ fn order_cuts<'a>(
 
 /// Find all orders which cut a specified support order.
 pub fn find_cutting_order<'a>(
-    ctx: &Context<'a, impl Adjudicate>,
+    ctx: &Context<'a, impl Adjudicate + WillUseConvoy>,
     resolver: &mut ResolverState<'a>,
     support_order: &MappedMainOrder,
 ) -> Option<&'a MappedMainOrder> {
@@ -69,7 +70,7 @@ pub fn find_cutting_order<'a>(
 ///
 /// This method short-circuits the search after any hit has been found.
 pub fn is_order_cut<'a>(
-    ctx: &Context<'a, impl Adjudicate>,
+    ctx: &Context<'a, impl Adjudicate + WillUseConvoy>,
     resolver: &mut ResolverState<'a>,
     support_order: &MappedMainOrder,
 ) -> bool {

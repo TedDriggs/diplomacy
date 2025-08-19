@@ -36,6 +36,9 @@
         },
         "mainPhase": {
             "properties": {
+                "edition": {
+                    "enum": ["1971", "1982", "2023"]
+                },
                 "phase": {
                     "enum": ["Main"]
                 },
@@ -58,6 +61,9 @@
         },
         "retreatPhase": {
             "properties": {
+                "edition": {
+                    "enum": ["1971", "1982", "2023"]
+                },
                 "phase": {
                     "enum": ["Retreat"]
                 },
@@ -93,6 +99,9 @@
         },
         "buildPhase": {
             "properties": {
+                "edition": {
+                    "enum": ["1971", "1982", "2023"]
+                },
                 "phase": {
                     "enum": ["Build"]
                 },

@@ -5,13 +5,78 @@ use super::support::{self, SupportOutcome};
 use super::{Adjudicate, MappedMainOrder, OrderOutcome, OrderState};
 use crate::geo::Terrain;
 use crate::judge::strength::Strength;
-use crate::order::Command;
+use crate::judge::WillUseConvoy;
+use crate::order::{Command, MainCommand};
 use crate::ShortName;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ConvoyUsePolicy {
+    /// Any move order that can be convoyed will use a convoy.
+    Any,
+    /// A convoy will be used if the order explicitly mandates it, or if the convoy route
+    /// includes an order from the same nation as the convoyed unit.
+    IncludesSameCountry,
+    /// A convoy will only be used if the order explicitly mandates it.
+    MustBeExplicit,
+}
+
+impl WillUseConvoy for ConvoyUsePolicy {
+    fn will_use_convoy(&self, order: &MappedMainOrder, route: &[&MappedMainOrder]) -> bool {
+        let MainCommand::Move(cmd) = &order.command else {
+            return false;
+        };
+
+        // If the order talks about convoys and does not mandate use of a convoy,
+        // then never use one.
+        if cmd.mentions_convoy() && !cmd.mandates_convoy() {
+            return false;
+        }
+
+        match self {
+            ConvoyUsePolicy::Any => true,
+            ConvoyUsePolicy::IncludesSameCountry => {
+                cmd.mandates_convoy() || route.iter().any(|o| o.nation == order.nation)
+            }
+            ConvoyUsePolicy::MustBeExplicit => cmd.mandates_convoy(),
+        }
+    }
+}
+
 /// The standard Diplomacy rules.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 #[non_exhaustive]
-pub struct Rulebook {}
+pub struct Rulebook {
+    convoy_policy: ConvoyUsePolicy,
+}
+
+impl Rulebook {
+    /// Returns the 1971 edition of the standard rules.
+    pub fn edition_1971() -> Self {
+        Self {
+            convoy_policy: ConvoyUsePolicy::Any,
+        }
+    }
+
+    /// Returns the 1982 edition of the standard rules.
+    pub fn edition_1982() -> Self {
+        Self {
+            convoy_policy: ConvoyUsePolicy::IncludesSameCountry,
+        }
+    }
+
+    /// Returns the 2023 edition of the standard rules.
+    pub fn edition_2023() -> Self {
+        Self {
+            convoy_policy: ConvoyUsePolicy::IncludesSameCountry,
+        }
+    }
+
+    pub fn dptg() -> Self {
+        Self {
+            convoy_policy: ConvoyUsePolicy::MustBeExplicit,
+        }
+    }
+}
 
 impl Rulebook {
     /// Apply rules to determine hold outcome.
@@ -27,7 +92,7 @@ impl Rulebook {
 
     /// Apply rules to determine move outcome.
     fn adjudicate_move<'a>(
-        ctx: &Context<'a, impl Adjudicate>,
+        ctx: &Context<'a, impl Adjudicate + WillUseConvoy>,
         rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
     ) -> AttackOutcome<&'a MappedMainOrder> {
@@ -140,7 +205,7 @@ impl Rulebook {
     }
 
     fn adjudicate_support<'a>(
-        ctx: &Context<'a, impl Adjudicate>,
+        ctx: &Context<'a, impl Adjudicate + WillUseConvoy>,
         rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
     ) -> SupportOutcome<&'a MappedMainOrder> {
@@ -157,7 +222,7 @@ impl Rulebook {
     }
 
     fn adjudicate_convoy<'a>(
-        ctx: &Context<'a, impl Adjudicate>,
+        ctx: &Context<'a, impl Adjudicate + WillUseConvoy>,
         rslv: &mut ResolverState<'a>,
         ord: &'a MappedMainOrder,
     ) -> ConvoyOutcome<&'a MappedMainOrder> {
@@ -189,7 +254,7 @@ impl Rulebook {
     }
 
     fn explain<'a>(
-        context: &Context<'a, impl Adjudicate>,
+        context: &Context<'a, impl Adjudicate + WillUseConvoy>,
         resolver: &mut ResolverState<'a>,
         order: &'a MappedMainOrder,
     ) -> OrderOutcome<&'a MappedMainOrder> {
@@ -236,6 +301,24 @@ impl Adjudicate for &Rulebook {
         order: &'a MappedMainOrder,
     ) -> OrderOutcome<&'a MappedMainOrder> {
         Rulebook::explain(context, resolver, order)
+    }
+}
+
+impl WillUseConvoy for Rulebook {
+    fn will_use_convoy(&self, order: &MappedMainOrder, route: &[&MappedMainOrder]) -> bool {
+        self.convoy_policy.will_use_convoy(order, route)
+    }
+}
+
+impl WillUseConvoy for &Rulebook {
+    fn will_use_convoy(&self, order: &MappedMainOrder, route: &[&MappedMainOrder]) -> bool {
+        self.convoy_policy.will_use_convoy(order, route)
+    }
+}
+
+impl Default for Rulebook {
+    fn default() -> Self {
+        Self::edition_1971()
     }
 }
 

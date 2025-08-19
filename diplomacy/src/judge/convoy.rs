@@ -1,5 +1,6 @@
 use super::{Adjudicate, Context, MappedMainOrder, OrderState, ResolverState};
 use crate::geo::{Map, ProvinceKey, RegionKey, Terrain};
+use crate::judge::WillUseConvoy;
 use crate::order::{Command, MainCommand};
 use crate::{UnitPosition, UnitType};
 
@@ -145,14 +146,17 @@ pub fn routes<'a>(
 }
 
 /// Determines if any valid convoy route exists for the given move order.
-pub fn route_exists<'a>(
-    ctx: &Context<'a, impl Adjudicate>,
+pub fn uses_convoy<'a>(
+    ctx: &Context<'a, impl Adjudicate + WillUseConvoy>,
     state: &mut ResolverState<'a>,
     mv_ord: &MappedMainOrder,
 ) -> bool {
-    routes(ctx, state, mv_ord)
-        .map(|r| !r.is_empty())
-        .unwrap_or(false)
+    let Ok(r) = routes(ctx, state, mv_ord) else {
+        return false;
+    };
+
+    r.iter()
+        .any(|route| !route.is_empty() && ctx.rules.will_use_convoy(mv_ord, route))
 }
 
 /// Checks if a convoy route may exist for an order, based on the positions

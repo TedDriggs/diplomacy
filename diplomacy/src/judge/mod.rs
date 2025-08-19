@@ -57,6 +57,13 @@ pub trait Adjudicate: Sized {
     ) -> OrderOutcome<&'a MappedMainOrder>;
 }
 
+/// Checks if an order will use an offered convoy route.
+///
+/// Different editions of the rules have different policies on when a convoy is taken.
+pub trait WillUseConvoy: Sized {
+    fn will_use_convoy(&self, order: &MappedMainOrder, route: &[&MappedMainOrder]) -> bool;
+}
+
 impl Border {
     fn is_passable_by(&self, unit_type: UnitType) -> bool {
         unit_type.can_occupy(self.terrain())

@@ -4,12 +4,26 @@ use diplomacy::{judge::OrderState, ShortName};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 
-use crate::case::{build, main, retreat, Cases, RawTestCase, TestCase, TestCaseBody, TestCaseTodo};
+use crate::case::{
+    build, main, retreat, Cases, Edition, RawTestCase, TestCase, TestCaseBody, TestCaseTodo,
+};
 
 fn order_state_to_ident(state: OrderState) -> proc_macro2::Ident {
     match state {
         OrderState::Succeeds => format_ident!("Succeeds"),
         OrderState::Fails => format_ident!("Fails"),
+    }
+}
+
+impl ToTokens for Edition {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let edition = match self {
+            Edition::Edition1971 => quote!(edition_1971),
+            Edition::Edition1982 => quote!(edition_1982),
+            Edition::Edition2023 => quote!(edition_2023),
+            Edition::Dptg => quote!(edition_dptg),
+        };
+        tokens.append_all(quote!(diplomacy::judge::Rulebook::#edition()));
     }
 }
 
@@ -36,6 +50,12 @@ impl<T: ToTokens> ToTokens for Cases<T> {
 
 impl ToTokens for main::TestCase {
     fn to_tokens(&self, tokens: &mut TokenStream) {
+        let rules = self.edition.map(|edition| {
+            quote! {
+                @rules #edition;
+            }
+        });
+
         let start_state = self.starting_state.as_ref().map(|starting_state| {
             let starting_state = starting_state.iter().map(std::string::ToString::to_string);
             tokens.append_all(quote! {
@@ -57,6 +77,7 @@ impl ToTokens for main::TestCase {
 
         tokens.append_all(quote! {
             judge! {
+                #rules
                 #start_state
                 #(#orders),*
             };
