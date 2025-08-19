@@ -163,8 +163,8 @@ macro_rules! judge_build {
             let map = diplomacy::geo::standard_map();
             let last_time = initial_ownerships();
             let world = $world;
-            let build_context = ::diplomacy::judge::build::Context::new(&map, &last_time, &world, vec![$($rule),*].into_iter().map(build_ord));
-            let outcome = build_context.resolve();
+            let build_context = ::diplomacy::judge::build::Submission::new(&map, &last_time, &world, vec![$($rule),*].into_iter().map(build_ord));
+            let outcome = build_context.adjudicate(diplomacy::judge::Rulebook::default());
             $(
                 $(
                     assert_eq!(
