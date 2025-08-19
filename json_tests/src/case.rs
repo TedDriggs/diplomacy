@@ -277,14 +277,14 @@ pub mod build {
         pub fn run(&self) -> TestResult {
             let world = World::from(self);
             let last_time = to_initial_ownerships(geo::standard_map());
-            let ctx = diplomacy::judge::build::Context::new(
+            let ctx = diplomacy::judge::build::Submission::new(
                 geo::standard_map(),
                 &last_time,
                 &world,
                 self.orders.keys().cloned(),
             );
 
-            let outcome = ctx.resolve();
+            let outcome = ctx.adjudicate(Rulebook::default());
 
             let civil_disorder: Vec<_> = outcome
                 .to_civil_disorder()
