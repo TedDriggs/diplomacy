@@ -61,6 +61,10 @@ pub trait Adjudicate: Sized {
 ///
 /// Different editions of the rules have different policies on when a convoy is taken.
 pub trait WillUseConvoy: Sized {
+    /// Returns if the given order will accept the offered convoy route.
+    ///
+    /// This function will only be called with convoy routes that get the order to its destination;
+    /// the implementer should not recheck that.
     fn will_use_convoy(&self, order: &MappedMainOrder, route: &[&MappedMainOrder]) -> bool;
 }
 
