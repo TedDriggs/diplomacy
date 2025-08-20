@@ -37,7 +37,7 @@
         "mainPhase": {
             "properties": {
                 "edition": {
-                    "enum": ["1971", "1982", "2023"]
+                    "$ref": "#/definitions/edition"
                 },
                 "phase": {
                     "enum": ["Main"]
@@ -100,7 +100,7 @@
         "buildPhase": {
             "properties": {
                 "edition": {
-                    "enum": ["1971", "1982", "2023"]
+                    "$ref": "#/definitions/edition"
                 },
                 "phase": {
                     "enum": ["Build"]
@@ -146,6 +146,10 @@
                 }
             },
             "required": ["todo"]
+        },
+        "edition": {
+            "enum": ["1971", "1982", "2023", "dptg"],
+            "description": "The edition of the rules that this test case is based on. If not set, the test should work on any edition of the standard rules."
         },
         "unitPosition": {
             "type": "string",
