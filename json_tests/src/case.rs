@@ -51,6 +51,18 @@ pub struct Cases<T> {
     pub cases: Vec<T>,
 }
 
+impl Cases<RawTestCase> {
+    pub fn run(&self) -> impl Iterator<Item = (&RawTestCase, Option<TestResult<TestResultBody>>)> {
+        self.cases.iter().map(|case| {
+            let result = match case {
+                RawTestCase::Todo(_) => None,
+                RawTestCase::Case(test_case) => Some(test_case.run()),
+            };
+            (case, result)
+        })
+    }
+}
+
 pub trait DidPass {
     /// Returns `true` if the test case passed, meaning all expected outcomes matched the actual outcomes.
     fn did_pass(&self) -> bool;
@@ -460,6 +472,13 @@ impl RawTestCase {
         }
     }
 
+    pub fn full_name(&self) -> String {
+        match self {
+            RawTestCase::Todo(todo) => todo.info.to_string(),
+            RawTestCase::Case(case) => case.full_name(),
+        }
+    }
+
     pub fn todo(&self) -> Option<&str> {
         match self {
             RawTestCase::Todo(todo) => Some(&todo.todo),
@@ -585,15 +604,13 @@ impl TestCase {
 
 #[cfg(test)]
 mod tests {
-    use crate::case::Cases;
+    use serde_json::json;
 
-    use super::{DidPass, RawTestCase, TestCase};
+    use super::{DidPass, TestCase};
 
     #[test]
     fn build_example() {
-        // DO NOT USE json! macro, as it does not preserve key order.
-        let test_case: TestCase = serde_json::from_str(
-            r#"{
+        let test_case: TestCase = serde_json::from_value(json!({
             "name": "t6i01_too_many_build_orders",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.I.1",
             "phase": "Build",
@@ -603,8 +620,7 @@ mod tests {
                 "GER: A ber build": "Succeeds",
                 "GER: A mun build": "Fails"
             }
-        }"#,
-        )
+        }))
         .unwrap();
 
         let result = test_case.run();
@@ -613,9 +629,7 @@ mod tests {
 
     #[test]
     fn t6j01_too_many_remove_orders() {
-        // DO NOT USE json! macro, as it does not preserve key order.
-        let test_case: TestCase = serde_json::from_str(
-            r#"{
+        let test_case: TestCase = serde_json::from_value(json!({
             "name": "t6j01_too_many_remove_orders",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.1",
             "phase": "Build",
@@ -629,8 +643,7 @@ mod tests {
                 "FRA: A pic disband": "Succeeds",
                 "FRA: A par disband": "Fails"
             }
-        }"#,
-        )
+        }))
         .unwrap();
 
         assert!(test_case.run().did_pass(), "Test case should pass");
@@ -638,9 +651,7 @@ mod tests {
 
     #[test]
     fn retreat_example() {
-        // DO NOT USE json! macro, as it does not preserve key order.
-        let test_case: TestCase = serde_json::from_str(
-            r#"{
+        let test_case: TestCase = serde_json::from_value(json!({
             "name": "t6h06_unit_may_not_retreat_to_a_contested_area",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.6",
             "phase": "Retreat",
@@ -656,39 +667,10 @@ mod tests {
             "orders": {
                 "ITA: A vie -> boh": "Fails"
             }
-        }"#,
-        )
+        }))
         .unwrap();
         let result = test_case.run();
         eprintln!("{}", serde_json::to_string_pretty(&result).unwrap());
         assert!(result.did_pass(), "Test case should pass");
-    }
-
-    #[test]
-    fn reads_all() {
-        let test_cases: Vec<TestCase> =
-            serde_json::from_str::<Cases<RawTestCase>>(include_str!("../datc.json"))
-                .unwrap()
-                .cases
-                .into_iter()
-                .filter_map(|v| match v {
-                    RawTestCase::Case(test_case) => Some(test_case),
-                    RawTestCase::Todo(e) => {
-                        eprintln!("Skipping test case '{}'. {}", e.info, e.todo);
-                        None
-                    }
-                })
-                .collect();
-        for test in test_cases {
-            let result = test.run();
-            if !result.did_pass() {
-                eprintln!(
-                    "Test case '{}' failed with mismatches: {}\n{}",
-                    test.info,
-                    serde_json::to_string_pretty(&test.body).unwrap(),
-                    serde_json::to_string_pretty(&result).unwrap()
-                );
-            }
-        }
     }
 }
