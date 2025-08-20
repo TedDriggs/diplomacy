@@ -1891,6 +1891,7 @@
         {
             "name": "t6j03_civil_disorder_two_armies_with_different_distance",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.3",
+            "edition": "2023",
             "phase": "Build",
             "occupiers": {
                 "war": "GER",
@@ -1904,6 +1905,7 @@
         {
             "name": "t6j04_civil_disorder_two_armies_with_equal_distance",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.4",
+            "edition": "2023",
             "phase": "Build",
             "occupiers": {
                 "stp": "ENG",
@@ -1917,6 +1919,7 @@
         {
             "name": "t6j05_civil_disorder_two_fleets_with_different_distance",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.5",
+            "edition": "2023",
             "phase": "Build",
             "occupiers": {
                 "mos": "ENG",
@@ -1930,6 +1933,7 @@
         {
             "name": "t6j06_civil_disorder_two_fleets_with_equal_distance",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.6",
+            "edition": "2023",
             "phase": "Build",
             "occupiers": {
                 "stp": "ENG",
@@ -1945,6 +1949,7 @@
         {
             "name": "t6j07_civil_disorder_two_fleets_and_army_with_equal_distance",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.7",
+            "edition": "2023",
             "phase": "Build",
             "occupiers": {
                 "mos": "ENG",
@@ -1957,6 +1962,7 @@
         {
             "name": "t6j08_civil_disorder_a_fleet_with_shorter_distance_then_the_army",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.8",
+            "edition": "2023",
             "phase": "Build",
             "occupiers": {
                 "stp": "ENG",
@@ -1970,6 +1976,7 @@
         {
             "name": "t6j09_civil_disorder_must_be_counted_from_both_coasts",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.9",
+            "edition": "2023",
             "phase": "Build",
             "occupiers": {
                 "war": "GER",
@@ -1982,6 +1989,7 @@
         {
             "name": "t6j09_civil_disorder_must_be_counted_from_both_coasts_second_scenario",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.9",
+            "edition": "2023",
             "phase": "Build",
             "occupiers": {
                 "war": "GER",
@@ -1994,6 +2002,7 @@
         {
             "name": "t6j10_civil_disorder_counting_convoying_distance",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.10",
+            "edition": "2023",
             "phase": "Build",
             "occupiers": {
                 "ven": "AUS",
@@ -2006,6 +2015,7 @@
         {
             "name": "t6j11_distance_to_owned_supply_center",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.11",
+            "edition": "2023",
             "phase": "Build",
             "occupiers": {
                 "ven": "AUS",

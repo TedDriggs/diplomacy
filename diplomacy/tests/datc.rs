@@ -1433,7 +1433,7 @@ fn t6j02_removing_the_same_unit_twice() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.3
 #[test]
-fn t6j03_civil_disorder_two_armies_with_different_distance() {
+fn t6j03_civil_disorder_two_armies_with_different_distance_2023() {
     let world = TestWorld::empty()
         .with_occupier("war", "GER")
         .with_occupier("mos", "GER")
@@ -1441,7 +1441,7 @@ fn t6j03_civil_disorder_two_armies_with_different_distance() {
         .with_unit("RUS: A lvn")
         .with_unit("RUS: A pru");
     let (_, civil_disorder) = judge_build! {
-        world,
+        world, @ rules diplomacy::judge::Rulebook::edition_2023(),
     };
     let disbanded = unit_pos("RUS: A pru");
     assert!(
@@ -1451,7 +1451,7 @@ fn t6j03_civil_disorder_two_armies_with_different_distance() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.4
 #[test]
-fn t6j04_civil_disorder_two_armies_with_equal_distance() {
+fn t6j04_civil_disorder_two_armies_with_equal_distance_2023() {
     let world = TestWorld::empty()
         .with_occupier("stp", "ENG")
         .with_occupier("war", "GER")
@@ -1459,7 +1459,7 @@ fn t6j04_civil_disorder_two_armies_with_equal_distance() {
         .with_unit("RUS: A lvn")
         .with_unit("RUS: A ukr");
     let (_, civil_disorder) = judge_build! {
-        world,
+        world, @ rules diplomacy::judge::Rulebook::edition_2023(),
     };
     let disbanded = unit_pos("RUS: A lvn");
     assert!(
@@ -1469,7 +1469,7 @@ fn t6j04_civil_disorder_two_armies_with_equal_distance() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.5
 #[test]
-fn t6j05_civil_disorder_two_fleets_with_different_distance() {
+fn t6j05_civil_disorder_two_fleets_with_different_distance_2023() {
     let world = TestWorld::empty()
         .with_occupier("mos", "ENG")
         .with_occupier("war", "GER")
@@ -1477,7 +1477,7 @@ fn t6j05_civil_disorder_two_fleets_with_different_distance() {
         .with_unit("RUS: F ska")
         .with_unit("RUS: F nao");
     let (_, civil_disorder) = judge_build! {
-        world,
+        world, @ rules diplomacy::judge::Rulebook::edition_2023(),
     };
     let disbanded = unit_pos("RUS: F nao");
     assert!(
@@ -1487,7 +1487,7 @@ fn t6j05_civil_disorder_two_fleets_with_different_distance() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.6
 #[test]
-fn t6j06_civil_disorder_two_fleets_with_equal_distance() {
+fn t6j06_civil_disorder_two_fleets_with_equal_distance_2023() {
     let world = TestWorld::empty()
         .with_occupier("stp", "ENG")
         .with_occupier("mos", "ENG")
@@ -1497,7 +1497,7 @@ fn t6j06_civil_disorder_two_fleets_with_equal_distance() {
         .with_unit("RUS: F bot")
         .with_unit("RUS: F nth");
     let (_, civil_disorder) = judge_build! {
-        world,
+        world, @ rules diplomacy::judge::Rulebook::edition_2023(),
     };
     let disbanded = unit_pos("RUS: F bot");
     assert!(
@@ -1507,7 +1507,7 @@ fn t6j06_civil_disorder_two_fleets_with_equal_distance() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.7
 #[test]
-fn t6j07_civil_disorder_two_fleets_and_army_with_equal_distance() {
+fn t6j07_civil_disorder_two_fleets_and_army_with_equal_distance_2023() {
     let world = TestWorld::empty()
         .with_occupier("mos", "ENG")
         .with_occupier("sev", "TUR")
@@ -1515,7 +1515,7 @@ fn t6j07_civil_disorder_two_fleets_and_army_with_equal_distance() {
         .with_unit("RUS: F ska")
         .with_unit("RUS: F nth");
     let (_, civil_disorder) = judge_build! {
-        world,
+        world, @ rules diplomacy::judge::Rulebook::edition_2023(),
     };
     let disbanded = unit_pos("RUS: F nth");
     assert!(
@@ -1525,7 +1525,7 @@ fn t6j07_civil_disorder_two_fleets_and_army_with_equal_distance() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.8
 #[test]
-fn t6j08_civil_disorder_a_fleet_with_shorter_distance_then_the_army() {
+fn t6j08_civil_disorder_a_fleet_with_shorter_distance_then_the_army_2023() {
     let world = TestWorld::empty()
         .with_occupier("stp", "ENG")
         .with_occupier("mos", "ENG")
@@ -1533,7 +1533,7 @@ fn t6j08_civil_disorder_a_fleet_with_shorter_distance_then_the_army() {
         .with_unit("RUS: A tyr")
         .with_unit("RUS: F bal");
     let (_, civil_disorder) = judge_build! {
-        world,
+        world, @ rules diplomacy::judge::Rulebook::edition_2023(),
     };
     let disbanded = unit_pos("RUS: A tyr");
     assert!(
@@ -1543,7 +1543,7 @@ fn t6j08_civil_disorder_a_fleet_with_shorter_distance_then_the_army() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.9
 #[test]
-fn t6j09_civil_disorder_must_be_counted_from_both_coasts() {
+fn t6j09_civil_disorder_must_be_counted_from_both_coasts_2023() {
     let world = TestWorld::empty()
         .with_occupier("war", "GER")
         .with_occupier("mos", "ENG")
@@ -1551,7 +1551,7 @@ fn t6j09_civil_disorder_must_be_counted_from_both_coasts() {
         .with_unit("RUS: A sev")
         .with_unit("RUS: F bal");
     let (_, civil_disorder) = judge_build! {
-        world,
+        world, @ rules diplomacy::judge::Rulebook::edition_2023(),
     };
     let disbanded = unit_pos("RUS: A alb");
     assert!(
@@ -1561,7 +1561,7 @@ fn t6j09_civil_disorder_must_be_counted_from_both_coasts() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.9
 #[test]
-fn t6j09_civil_disorder_must_be_counted_from_both_coasts_second_scenario() {
+fn t6j09_civil_disorder_must_be_counted_from_both_coasts_second_scenario_2023() {
     let world = TestWorld::empty()
         .with_occupier("war", "GER")
         .with_occupier("mos", "ENG")
@@ -1569,7 +1569,7 @@ fn t6j09_civil_disorder_must_be_counted_from_both_coasts_second_scenario() {
         .with_unit("RUS: A sev")
         .with_unit("RUS: F ska");
     let (_, civil_disorder) = judge_build! {
-        world,
+        world, @ rules diplomacy::judge::Rulebook::edition_2023(),
     };
     let disbanded = unit_pos("RUS: F ska");
     assert!(
@@ -1579,14 +1579,14 @@ fn t6j09_civil_disorder_must_be_counted_from_both_coasts_second_scenario() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.10
 #[test]
-fn t6j10_civil_disorder_counting_convoying_distance() {
+fn t6j10_civil_disorder_counting_convoying_distance_2023() {
     let world = TestWorld::empty()
         .with_occupier("ven", "AUS")
         .with_occupier("rom", "FRA")
         .with_unit("ITA: A pie")
         .with_unit("ITA: A alb");
     let (_, civil_disorder) = judge_build! {
-        world,
+        world, @ rules diplomacy::judge::Rulebook::edition_2023(),
     };
     let disbanded = unit_pos("ITA: A pie");
     assert!(
@@ -1596,7 +1596,7 @@ fn t6j10_civil_disorder_counting_convoying_distance() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.11
 #[test]
-fn t6j11_distance_to_owned_supply_center() {
+fn t6j11_distance_to_owned_supply_center_2023() {
     let world = TestWorld::empty()
         .with_occupier("ven", "AUS")
         .with_occupier("rom", "FRA")
@@ -1604,7 +1604,7 @@ fn t6j11_distance_to_owned_supply_center() {
         .with_unit("ITA: A war")
         .with_unit("ITA: A tus");
     let (_, civil_disorder) = judge_build! {
-        world,
+        world, @ rules diplomacy::judge::Rulebook::edition_2023(),
     };
     let disbanded = unit_pos("ITA: A tus");
     assert!(

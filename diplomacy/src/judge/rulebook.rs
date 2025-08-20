@@ -9,6 +9,15 @@ use crate::judge::WillUseConvoy;
 use crate::order::{Command, MainCommand};
 use crate::ShortName;
 
+/// Where distance is measured from for civil disorder disbands.
+#[derive(Debug, Clone)]
+enum BuildPhaseCivilDisorderDistance {
+    /// The distance is measured from the nearest owned supply center.
+    OwnedSupplyCenter,
+    /// The distance is measured from the home supply center.
+    HomeSupplyCenter,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ConvoyUsePolicy {
     /// Any move order that can be convoyed will use a convoy.
@@ -47,6 +56,7 @@ impl WillUseConvoy for ConvoyUsePolicy {
 #[non_exhaustive]
 pub struct Rulebook {
     convoy_policy: ConvoyUsePolicy,
+    disband_policy: BuildPhaseCivilDisorderDistance,
 }
 
 impl Rulebook {
@@ -54,6 +64,7 @@ impl Rulebook {
     pub fn edition_1971() -> Self {
         Self {
             convoy_policy: ConvoyUsePolicy::Any,
+            disband_policy: BuildPhaseCivilDisorderDistance::HomeSupplyCenter,
         }
     }
 
@@ -61,6 +72,7 @@ impl Rulebook {
     pub fn edition_1982() -> Self {
         Self {
             convoy_policy: ConvoyUsePolicy::IncludesSameCountry,
+            disband_policy: BuildPhaseCivilDisorderDistance::HomeSupplyCenter,
         }
     }
 
@@ -68,6 +80,7 @@ impl Rulebook {
     pub fn edition_2023() -> Self {
         Self {
             convoy_policy: ConvoyUsePolicy::IncludesSameCountry,
+            disband_policy: BuildPhaseCivilDisorderDistance::OwnedSupplyCenter,
         }
     }
 
@@ -77,6 +90,7 @@ impl Rulebook {
     pub fn edition_dptg() -> Self {
         Self {
             convoy_policy: ConvoyUsePolicy::MustBeExplicit,
+            disband_policy: BuildPhaseCivilDisorderDistance::HomeSupplyCenter,
         }
     }
 }
@@ -336,6 +350,7 @@ mod build {
         geo::{ProvinceKey, SupplyCenter},
         judge::{
             build::{adjudicate, Adjudicate, Context, OrderOutcome, ResolverState, WorldState},
+            rulebook::BuildPhaseCivilDisorderDistance,
             MappedBuildOrder,
         },
         order::BuildCommand,
@@ -495,13 +510,18 @@ mod build {
                     continue;
                 };
 
-                // Get all regions in the owned supply centers. The rules require checking
+                let regions = context.world_map.regions();
+
+                // Get all regions in the policy-defined "safe" supply centers. The rules require checking
                 // distance to all coasts, so province precision is insufficient.
-                let owned_sc_regions = context
-                    .world_map
-                    .regions()
-                    .filter(|r| owned_scs.contains(r.province()))
-                    .collect::<Vec<_>>();
+                let safe_points: Vec<_> = match self.disband_policy {
+                    BuildPhaseCivilDisorderDistance::OwnedSupplyCenter => regions
+                        .filter(|r| owned_scs.contains(r.province()))
+                        .collect(),
+                    BuildPhaseCivilDisorderDistance::HomeSupplyCenter => regions
+                        .filter(|r| delta.home_scs.contains(r.province()))
+                        .collect(),
+                };
 
                 let mut units_by_disband_priority = units
                     .into_iter()
@@ -513,11 +533,11 @@ mod build {
                                 panic!("Unit location {} should exist in world", unit.1)
                             });
 
-                        if owned_sc_regions.contains(&unit_region) {
+                        if safe_points.contains(&unit_region) {
                             return (unit, 0);
                         }
 
-                        let min_distance = owned_sc_regions
+                        let min_distance = safe_points
                             .iter()
                             .filter_map(|sc_region| {
                                 // Using dijkstra because there isn't an obvious way to estimate
