@@ -153,18 +153,21 @@ macro_rules! judge_retreat {
 #[macro_export]
 macro_rules! judge_build {
     ($world:expr) => {
-        judge_build!($world, )
+        judge_build!($world, @rules diplomacy::judge::Rulebook::default(),)
     };
     ($world:expr, $($rule:tt $(: $expected:expr)?),+) => {
-        judge_build!($world, $($rule $(: $expected)?,)+)
+        judge_build!($world, @rules diplomacy::judge::Rulebook::default(), $($rule $(: $expected)?,)+)
     };
     ($world:expr, $($rule:tt $(: $expected:expr)?,)*) => {
+        judge_build!($world, @rules diplomacy::judge::Rulebook::default(), $($rule $(: $expected)?,)*)
+    };
+    ($world:expr, @rules $rules:expr, $($rule:tt $(: $expected:expr)?,)*) => {
         {
             let map = diplomacy::geo::standard_map();
             let last_time = initial_ownerships();
             let world = $world;
             let build_context = ::diplomacy::judge::build::Submission::new(&map, &last_time, &world, vec![$($rule),*].into_iter().map(build_ord));
-            let outcome = build_context.adjudicate(diplomacy::judge::Rulebook::default());
+            let outcome = build_context.adjudicate($rules);
             $(
                 $(
                     assert_eq!(
