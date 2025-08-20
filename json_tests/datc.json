@@ -1335,6 +1335,18 @@
             }
         },
         {
+            "name": "t6g07_swapping_with_illegal_intent_dptg",
+            "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.7",
+            "edition": "dptg",
+            "phase": "Main",
+            "orders": {
+                "ENG: F ska convoys swe -> nwy": null,
+                "ENG: F nwy -> swe": "Fails",
+                "RUS: A swe -> nwy": "Fails",
+                "RUS: F bot convoys swe -> nwy": null
+            }
+        },
+        {
             "name": "t6g08_explicit_convoy_that_isnt_there",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.8",
             "phase": "Main",
