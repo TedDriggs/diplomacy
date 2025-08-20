@@ -1003,10 +1003,20 @@ fn t6g06_swapping_with_unintended_intent() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.7
 #[test]
-fn t6g07_swapping_with_illegal_intent() {
+fn t6g07_swapping_with_illegal_intent_1971() {
     judge! {
+        @ rules diplomacy::judge::Rulebook::edition_1971();
         "ENG: F ska convoys A swe -> nwy", "ENG: F nwy -> swe" : Succeeds,
         "RUS: A swe -> nwy" : Succeeds, "RUS: F bot convoys A swe -> nwy"
+    };
+}
+///https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.7
+#[test]
+fn t6g07_swapping_with_illegal_intent_2023() {
+    judge! {
+        @ rules diplomacy::judge::Rulebook::edition_2023();
+        "ENG: F ska convoys A swe -> nwy", "ENG: F nwy -> swe" : Fails,
+        "RUS: A swe -> nwy" : Fails, "RUS: F bot convoys A swe -> nwy"
     };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.7

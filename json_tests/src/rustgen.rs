@@ -1,8 +1,10 @@
 //! `ToTokens` implementations for the types in [`json_tests::case`].
 
+use std::fmt;
+
 use diplomacy::{judge::OrderState, ShortName};
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote, ToTokens, TokenStreamExt};
+use quote::{format_ident, quote, IdentFragment, ToTokens, TokenStreamExt};
 
 use crate::case::{
     build, main, retreat, Cases, Edition, RawTestCase, TestCase, TestCaseBody, TestCaseTodo,
@@ -24,6 +26,12 @@ impl ToTokens for Edition {
             Edition::Dptg => quote!(edition_dptg),
         };
         tokens.append_all(quote!(diplomacy::judge::Rulebook::#edition()));
+    }
+}
+
+impl IdentFragment for Edition {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{self}")
     }
 }
 
@@ -207,7 +215,7 @@ impl ToTokens for TestCaseBody {
 impl ToTokens for TestCase {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let Self { info, body } = self;
-        let name = format_ident!("{}", info.name.as_deref().unwrap_or("unnamed"));
+        let name = test_case_ident(self);
         let url = info.url.as_ref().map(|u| quote!(#[doc = #u]));
         tokens.append_all(quote! {
             #url
@@ -216,6 +224,16 @@ impl ToTokens for TestCase {
                 #body
             }
         });
+    }
+}
+
+fn test_case_ident(case: &TestCase) -> proc_macro2::Ident {
+    let base_name = case.info.name.as_deref().unwrap_or("unnamed");
+    match case.body.edition() {
+        Some(edition) => {
+            format_ident!("{}_{}", base_name, edition)
+        }
+        None => format_ident!("{}", base_name),
     }
 }
 
