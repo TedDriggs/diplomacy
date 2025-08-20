@@ -1237,7 +1237,7 @@
             }
         },
         {
-            "name": "t6g02_kidnapping_an_army_1971",
+            "name": "t6g02_kidnapping_an_army",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.2",
             "edition": "1971",
             "phase": "Main",
@@ -1248,7 +1248,7 @@
             }
         },
         {
-            "name": "t6g02_kidnapping_an_army_1982",
+            "name": "t6g02_kidnapping_an_army",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.2",
             "edition": "1982",
             "phase": "Main",
@@ -1271,7 +1271,7 @@
             }
         },
         {
-            "name": "t6g04_unwanted_disrupted_convoy_to_adjacent_province_and_opposite_move_1971",
+            "name": "t6g04_unwanted_disrupted_convoy_to_adjacent_province_and_opposite_move",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.4",
             "edition": "1971",
             "phase": "Main",
@@ -1285,7 +1285,7 @@
             }
         },
         {
-            "name": "t6g04_unwanted_disrupted_convoy_to_adjacent_province_and_opposite_move_1982",
+            "name": "t6g04_unwanted_disrupted_convoy_to_adjacent_province_and_opposite_move",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.4",
             "edition": "1982",
             "phase": "Main",
@@ -1326,6 +1326,7 @@
         {
             "name": "t6g07_swapping_with_illegal_intent",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.7",
+            "edition": "1971",
             "phase": "Main",
             "orders": {
                 "ENG: F ska convoys swe -> nwy": null,
@@ -1335,7 +1336,19 @@
             }
         },
         {
-            "name": "t6g07_swapping_with_illegal_intent_dptg",
+            "name": "t6g07_swapping_with_illegal_intent",
+            "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.7",
+            "edition": "2023",
+            "phase": "Main",
+            "orders": {
+                "ENG: F ska convoys swe -> nwy": null,
+                "ENG: F nwy -> swe": "Fails",
+                "RUS: A swe -> nwy": "Fails",
+                "RUS: F bot convoys swe -> nwy": null
+            }
+        },
+        {
+            "name": "t6g07_swapping_with_illegal_intent",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.7",
             "edition": "dptg",
             "phase": "Main",

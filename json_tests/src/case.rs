@@ -34,6 +34,17 @@ impl From<Edition> for Rulebook {
     }
 }
 
+impl fmt::Display for Edition {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Edition::Edition1971 => write!(f, "1971"),
+            Edition::Edition1982 => write!(f, "1982"),
+            Edition::Edition2023 => write!(f, "2023"),
+            Edition::Dptg => write!(f, "dptg"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[non_exhaustive]
 pub struct Cases<T> {
@@ -466,6 +477,14 @@ pub enum TestCaseBody {
 }
 
 impl TestCaseBody {
+    pub fn edition(&self) -> Option<Edition> {
+        match self {
+            TestCaseBody::Main(case) => case.edition,
+            TestCaseBody::Retreat(case) => case.edition,
+            TestCaseBody::Build(_case) => None,
+        }
+    }
+
     pub fn run(&self) -> TestResultBody {
         match self {
             TestCaseBody::Main(case) => TestResultBody::Main(case.run()),
