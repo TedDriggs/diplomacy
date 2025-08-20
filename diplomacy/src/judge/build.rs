@@ -299,12 +299,9 @@ fn adjudicate<A>(
                 return OccupiedProvince;
             }
 
-            let region =
-                if let Some(region) = context.world_map.find_region(&order.region.short_name()) {
-                    region
-                } else {
-                    return InvalidProvince;
-                };
+            let Some(region) = context.world_map.find_region(&order.region.short_name()) else {
+                return InvalidProvince;
+            };
 
             if !order.unit_type.can_occupy(region.terrain()) {
                 return InvalidTerrain;
