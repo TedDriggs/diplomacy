@@ -322,6 +322,242 @@ impl Default for Rulebook {
     }
 }
 
+/// Standard rulebook build-phase adjudication.
+mod build {
+    use std::{
+        borrow::Cow,
+        collections::{HashMap, HashSet},
+    };
+
+    use crate::{
+        geo::{ProvinceKey, SupplyCenter},
+        judge::{
+            build::{adjudicate, Adjudicate, Context, OrderOutcome, ResolverState, WorldState},
+            MappedBuildOrder,
+        },
+        order::BuildCommand,
+        Nation, Unit, UnitPosition,
+    };
+
+    /// Scratch space for standard variant build-phase adjudication.
+    pub struct RuleScratch<'a> {
+        deltas: HashMap<&'a Nation, (BuildCommand, i16)>,
+        home_scs: HashMap<&'a Nation, HashSet<ProvinceKey>>,
+        ownerships: HashMap<&'a Nation, HashSet<ProvinceKey>>,
+    }
+
+    impl<'a> RuleScratch<'a> {
+        fn new<W: WorldState, A>(context: &Context<'a, W, A>) -> Self {
+            let mut home_scs = HashMap::<&Nation, HashSet<ProvinceKey>>::new();
+            let mut ownerships = HashMap::<&Nation, HashSet<ProvinceKey>>::new();
+
+            // Figure out who owns what and where nations are allowed to build.
+            for province in context
+                .world_map
+                .provinces()
+                .filter(|p| p.is_supply_center())
+            {
+                if let SupplyCenter::Home(nat) = &province.supply_center {
+                    home_scs.entry(nat).or_default().insert(province.into());
+                }
+
+                let key = ProvinceKey::from(province);
+                if let Some(nation) = context
+                    .this_time
+                    .occupier(&key)
+                    .or_else(|| context.last_time.get(&key))
+                {
+                    ownerships.entry(nation).or_default().insert(key);
+                }
+            }
+
+            Self {
+                deltas: ownerships
+                    .iter()
+                    .filter_map(|(&nation, ownerships)| {
+                        let adjustment = i16::from(ownerships.len() as u8)
+                            - i16::from(context.this_time.unit_count(nation));
+                        match adjustment {
+                            0 => None,
+                            x if x > 0 => Some((nation, (BuildCommand::Build, x))),
+                            x => Some((nation, (BuildCommand::Disband, -x))),
+                        }
+                    })
+                    .collect(),
+                home_scs,
+                ownerships,
+            }
+        }
+    }
+
+    impl<'a> Adjudicate<'a> for crate::judge::Rulebook {
+        type Scratch = RuleScratch<'a>;
+
+        fn initialize<W: WorldState>(&self, context: &Context<'a, W, Self>) -> Self::Scratch {
+            Self::Scratch::new(context)
+        }
+
+        fn explain<W: WorldState>(
+            &self,
+            context: &Context<'a, W, Self>,
+            resolver: &mut ResolverState<'a, Self::Scratch>,
+            order: &'a MappedBuildOrder,
+        ) -> OrderOutcome {
+            use crate::judge::build::OrderOutcome::*;
+
+            let Some(delta) = resolver.scratch.deltas.get_mut(&order.nation) else {
+                return RedeploymentProhibited;
+            };
+
+            // A power is only allowed to build or disband in a given turn, not both
+            if delta.0 != order.command {
+                return RedeploymentProhibited;
+            }
+
+            let adjudication = adjudicate(context, &resolver.scratch.home_scs, order);
+
+            if adjudication != OrderOutcome::Succeeds {
+                return adjudication;
+            }
+
+            match order.command {
+                BuildCommand::Build => {
+                    if delta.1 == 0 {
+                        return AllBuildsUsed;
+                    }
+
+                    delta.1 -= 1;
+
+                    resolver
+                        .final_units
+                        .entry(&order.nation)
+                        .or_default()
+                        .insert((order.unit_type, order.region.clone()));
+
+                    Succeeds
+                }
+                BuildCommand::Disband => {
+                    if delta.1 == 0 {
+                        return AllDisbandsUsed;
+                    }
+
+                    delta.1 -= 1;
+
+                    resolver
+                        .final_units
+                        .entry(&order.nation)
+                        .or_default()
+                        .remove(&(order.unit_type, order.region.clone()));
+
+                    Succeeds
+                }
+            }
+        }
+
+        fn civil_disorder<W: WorldState>(
+            &self,
+            context: &Context<'a, W, Self>,
+            resolver: &mut ResolverState<'a, Self::Scratch>,
+        ) {
+            let world_graph = context.world_map.to_graph();
+
+            for (nation, delta) in &mut resolver.scratch.deltas {
+                if delta.0 == BuildCommand::Build || delta.1 == 0 {
+                    continue;
+                }
+
+                let usize_delta: usize = delta.1.try_into().unwrap();
+                let units = resolver.final_units.remove(*nation).unwrap();
+
+                // Per 2023 rulebook, units disband based on distance from the nation's owned
+                // supply centers (earlier editions had it based on distance from the home supply centers)
+                let Some(owned_scs) = resolver.scratch.ownerships.get(*nation) else {
+                    // If there are no owned supply centers, all units disband
+                    resolver
+                        .civil_disorder
+                        .extend(units.into_iter().map(|unit| {
+                            UnitPosition::new(Unit::new(Cow::Borrowed(*nation), unit.0), unit.1)
+                        }));
+                    continue;
+                };
+
+                // Get all regions in the owned supply centers. The rules require checking
+                // distance to all coasts, so province precision is insufficient.
+                let owned_sc_regions = context
+                    .world_map
+                    .regions()
+                    .filter(|r| owned_scs.contains(r.province()))
+                    .collect::<Vec<_>>();
+
+                let mut units_by_disband_priority = units
+                    .into_iter()
+                    .map(|unit| {
+                        let unit_region = context
+                            .world_map
+                            .find_region(&unit.1.to_string())
+                            .unwrap_or_else(|| {
+                                panic!("Unit location {} should exist in world", unit.1)
+                            });
+
+                        if owned_sc_regions.contains(&unit_region) {
+                            return (unit, 0);
+                        }
+
+                        let min_distance = owned_sc_regions
+                            .iter()
+                            .filter_map(|sc_region| {
+                                // Using dijkstra because there isn't an obvious way to estimate
+                                // distance for A*, and the graph size is so small that the efficiency
+                                // difference shouldn't matter.
+                                petgraph::algo::dijkstra(
+                                    &world_graph,
+                                    unit_region,
+                                    Some(sc_region),
+                                    // Per DATC test 6.J.6, terrain is ingored in this
+                                    // calculation. This is a deviation from older versions
+                                    // of the DATC, which stated that sea units could only
+                                    // consider sea distances
+                                    |_| 1,
+                                )
+                                .get(sc_region)
+                                .copied()
+                            })
+                            .min()
+                            .unwrap_or(i32::MAX);
+
+                        (unit, min_distance)
+                    })
+                    .collect::<Vec<_>>();
+
+                // Per the DATC, units are sorted by distance from an owned SC. Equidistant fleets
+                // are disbanded before armies, and sorting of units within the same type is done
+                // alphabetically.
+                units_by_disband_priority.sort_by(|a, b| {
+                    // Distance from nearest owned supply center, descending
+                    b.1.cmp(&a.1)
+                        // when equidistant, disband fleets before armies
+                        .then(b.0 .0.cmp(&a.0 .0))
+                        // when units are same type and equidistant, disband in alphabetical order
+                        .then_with(|| a.0 .1.cmp(&b.0 .1))
+                });
+
+                // Add units from the disband queue to the civil disorder output
+                resolver.civil_disorder.extend(
+                    units_by_disband_priority.drain(0..usize_delta).map(|v| {
+                        UnitPosition::new(Unit::new(Cow::Borrowed(*nation), v.0 .0), v.0 .1)
+                    }),
+                );
+
+                // Add the remaining units to the map of units that survive the turn.
+                resolver.final_units.insert(
+                    nation,
+                    units_by_disband_priority.into_iter().map(|v| v.0).collect(),
+                );
+            }
+        }
+    }
+}
+
 /// The outcome of a main-phase hold order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
