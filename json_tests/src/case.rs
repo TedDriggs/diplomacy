@@ -568,6 +568,16 @@ pub struct TestCase {
 }
 
 impl TestCase {
+    /// Returns the human-readable full name for the test case, including the edition if one was
+    /// explicitly specified.
+    pub fn full_name(&self) -> String {
+        if let Some(edition) = self.body.edition() {
+            format!("{} ({})", self.info, edition)
+        } else {
+            self.info.to_string()
+        }
+    }
+
     pub fn run(&self) -> TestResult<TestResultBody> {
         TestResult::new(self.body.run())
     }
