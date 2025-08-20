@@ -122,13 +122,21 @@ impl<'a, W: WorldState> Submission<'a, W> {
 /// rather than being accessed from the context.
 pub struct Context<'a, W, A> {
     pub world_map: &'a Map,
+    /// The adjudicator being used.
     pub rules: A,
+    /// The current locations of units at the start of the build phase.
     pub this_time: &'a W,
+    /// Map of province ownerships to nations at the end of the last build phase.
+    ///
+    /// Unoccupied provinces stay under the control of their previous owner, so
+    /// this is used when determining how many units a nation can sustain, and
+    /// where a nation can build.
     pub last_time: &'a HashMap<ProvinceKey, Nation>,
     orders: Vec<&'a MappedBuildOrder>,
 }
 
 impl<'a, W: WorldState, A> Context<'a, W, A> {
+    /// Returns the owner of the province at the end of this build phase.
     pub fn current_owner(&'a self, province: &ProvinceKey) -> Option<&'a Nation> {
         self.this_time
             .occupier(province)
