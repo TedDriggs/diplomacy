@@ -1596,6 +1596,24 @@ fn t6j10_civil_disorder_counting_convoying_distance_2023() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.11
 #[test]
+fn t6j11_distance_to_owned_supply_center_1971() {
+    let world = TestWorld::empty()
+        .with_occupier("ven", "AUS")
+        .with_occupier("rom", "FRA")
+        .with_occupier("nap", "AUS")
+        .with_unit("ITA: A war")
+        .with_unit("ITA: A tus");
+    let (_, civil_disorder) = judge_build! {
+        world, @ rules diplomacy::judge::Rulebook::edition_1971(),
+    };
+    let disbanded = unit_pos("ITA: A war");
+    assert!(
+        civil_disorder.contains(&disbanded),
+        "{disbanded} should have disbanded"
+    );
+}
+///https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.11
+#[test]
 fn t6j11_distance_to_owned_supply_center_2023() {
     let world = TestWorld::empty()
         .with_occupier("ven", "AUS")

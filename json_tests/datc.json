@@ -2015,6 +2015,20 @@
         {
             "name": "t6j11_distance_to_owned_supply_center",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.11",
+            "edition": "1971",
+            "phase": "Build",
+            "occupiers": {
+                "ven": "AUS",
+                "rom": "FRA",
+                "nap": "AUS"
+            },
+            "starting_state": ["ITA: A war", "ITA: A tus"],
+            "orders": {},
+            "civil_disorder": ["ITA: A war"]
+        },
+        {
+            "name": "t6j11_distance_to_owned_supply_center",
+            "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.J.11",
             "edition": "2023",
             "phase": "Build",
             "occupiers": {
