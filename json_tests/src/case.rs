@@ -286,6 +286,10 @@ pub mod build {
     #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
     #[non_exhaustive]
     pub struct TestCase {
+        /// The edition of the rules to use for this test case.
+        /// If `None`, the test behaves identically for all editions of the standard rules.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub edition: Option<Edition>,
         #[serde(skip_serializing_if = "Option::is_none")]
         pub occupiers: Option<IndexMap<ProvinceKey, Nation>>,
         #[serde(skip_serializing_if = "Option::is_none")]
@@ -307,7 +311,7 @@ pub mod build {
                 self.orders.keys().cloned(),
             );
 
-            let outcome = ctx.adjudicate(Rulebook::default());
+            let outcome = ctx.adjudicate(self.edition.map(Rulebook::from).unwrap_or_default());
 
             let civil_disorder: Vec<_> = outcome
                 .to_civil_disorder()
@@ -500,7 +504,7 @@ impl TestCaseBody {
         match self {
             TestCaseBody::Main(case) => case.edition,
             TestCaseBody::Retreat(case) => case.edition,
-            TestCaseBody::Build(_case) => None,
+            TestCaseBody::Build(case) => case.edition,
         }
     }
 

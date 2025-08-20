@@ -145,6 +145,12 @@ impl ToTokens for build::TestCase {
             quote!(.with_unit(#unit))
         });
 
+        let rules = self.edition.map(|edition| {
+            quote! {
+                @rules #edition,
+            }
+        });
+
         let orders = self.orders.iter().map(|(order, expectation)| {
             let order = order.to_string();
             let expectation = expectation.map(order_state_to_ident);
@@ -164,6 +170,7 @@ impl ToTokens for build::TestCase {
         let judge_call = quote! {
             judge_build! {
                 world,
+                #rules
                 #(#orders),*
             };
         };
