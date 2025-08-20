@@ -29,7 +29,7 @@ impl From<Edition> for Rulebook {
             Edition::Edition1971 => Rulebook::edition_1971(),
             Edition::Edition1982 => Rulebook::edition_1982(),
             Edition::Edition2023 => Rulebook::edition_2023(),
-            Edition::Dptg => Rulebook::dptg(),
+            Edition::Dptg => Rulebook::edition_dptg(),
         }
     }
 }
