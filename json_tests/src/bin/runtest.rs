@@ -12,7 +12,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn execute_test_cases(json: &str) -> Result<(), Box<dyn std::error::Error>> {
     let cases = serde_json::from_str::<Cases<RawTestCase>>(json)
-        .map_err(|e| anyhow::Error::new(e).context(format!("Parsing JSON")))?;
+        .map_err(|e| anyhow::Error::new(e).context("Parsing JSON"))?;
 
     let mut failures = vec![];
 
