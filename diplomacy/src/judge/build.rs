@@ -327,7 +327,7 @@ pub trait Adjudicate<'a>: Sized {
 /// and just focuses on whether or not a given build or disband command is otherwise valid.
 pub(crate) fn adjudicate<A>(
     context: &Context<impl WorldState, A>,
-    home_scs: &HashMap<&Nation, HashSet<ProvinceKey>>,
+    home_scs: &HashSet<ProvinceKey>,
     order: &MappedBuildOrder,
 ) -> OrderOutcome {
     use self::OrderOutcome::*;
@@ -335,11 +335,7 @@ pub(crate) fn adjudicate<A>(
 
     match order.command {
         BuildCommand::Build => {
-            if !home_scs
-                .get(&order.nation)
-                .expect("Every nation should have home SCs")
-                .contains(province)
-            {
+            if !home_scs.contains(province) {
                 return InvalidProvince;
             }
 

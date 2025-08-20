@@ -339,62 +339,68 @@ mod build {
         Nation, Unit, UnitPosition,
     };
 
-    /// Scratch space for standard variant build-phase adjudication.
-    pub struct RuleScratch<'a> {
-        deltas: HashMap<&'a Nation, (BuildCommand, i16)>,
-        home_scs: HashMap<&'a Nation, HashSet<ProvinceKey>>,
-        ownerships: HashMap<&'a Nation, HashSet<ProvinceKey>>,
+    /// Per-nation information for build-phase adjudication.
+    pub struct NationScratch {
+        allowed_command: BuildCommand,
+        allowed_amount: u16,
+        home_scs: HashSet<ProvinceKey>,
+        ownerships: HashSet<ProvinceKey>,
     }
 
-    impl<'a> RuleScratch<'a> {
-        fn new<W: WorldState, A>(context: &Context<'a, W, A>) -> Self {
-            let mut home_scs = HashMap::<&Nation, HashSet<ProvinceKey>>::new();
-            let mut ownerships = HashMap::<&Nation, HashSet<ProvinceKey>>::new();
+    fn scratch_from_context<'a, W: WorldState, A>(
+        context: &Context<'a, W, A>,
+    ) -> HashMap<&'a Nation, NationScratch> {
+        let mut home_scs = HashMap::<&Nation, HashSet<ProvinceKey>>::new();
+        let mut ownerships = HashMap::<&Nation, HashSet<ProvinceKey>>::new();
 
-            // Figure out who owns what and where nations are allowed to build.
-            for province in context
-                .world_map
-                .provinces()
-                .filter(|p| p.is_supply_center())
-            {
-                if let SupplyCenter::Home(nat) = &province.supply_center {
-                    home_scs.entry(nat).or_default().insert(province.into());
-                }
-
-                let key = ProvinceKey::from(province);
-                if let Some(nation) = context
-                    .this_time
-                    .occupier(&key)
-                    .or_else(|| context.last_time.get(&key))
-                {
-                    ownerships.entry(nation).or_default().insert(key);
-                }
+        // Figure out who owns what and where nations are allowed to build.
+        for province in context
+            .world_map
+            .provinces()
+            .filter(|p| p.is_supply_center())
+        {
+            if let SupplyCenter::Home(nat) = &province.supply_center {
+                home_scs.entry(nat).or_default().insert(province.into());
             }
 
-            Self {
-                deltas: ownerships
-                    .iter()
-                    .filter_map(|(&nation, ownerships)| {
-                        let adjustment = i16::from(ownerships.len() as u8)
-                            - i16::from(context.this_time.unit_count(nation));
-                        match adjustment {
-                            0 => None,
-                            x if x > 0 => Some((nation, (BuildCommand::Build, x))),
-                            x => Some((nation, (BuildCommand::Disband, -x))),
-                        }
-                    })
-                    .collect(),
-                home_scs,
-                ownerships,
+            let key = ProvinceKey::from(province);
+            if let Some(nation) = context
+                .this_time
+                .occupier(&key)
+                .or_else(|| context.last_time.get(&key))
+            {
+                ownerships.entry(nation).or_default().insert(key);
             }
         }
+
+        ownerships
+            .into_iter()
+            .filter_map(|(nation, ownerships)| {
+                let adjustment = i16::from(ownerships.len() as u8)
+                    - i16::from(context.this_time.unit_count(nation));
+                let cmd = match adjustment {
+                    0 => return None,
+                    x if x > 0 => BuildCommand::Build,
+                    _ => BuildCommand::Disband,
+                };
+                Some((
+                    nation,
+                    NationScratch {
+                        allowed_command: cmd,
+                        allowed_amount: adjustment.unsigned_abs(),
+                        home_scs: home_scs.remove(nation).unwrap_or_default(),
+                        ownerships,
+                    },
+                ))
+            })
+            .collect()
     }
 
     impl<'a> Adjudicate<'a> for crate::judge::Rulebook {
-        type Scratch = RuleScratch<'a>;
+        type Scratch = HashMap<&'a Nation, NationScratch>;
 
         fn initialize<W: WorldState>(&self, context: &Context<'a, W, Self>) -> Self::Scratch {
-            Self::Scratch::new(context)
+            scratch_from_context(context)
         }
 
         fn explain<W: WorldState>(
@@ -405,16 +411,16 @@ mod build {
         ) -> OrderOutcome {
             use crate::judge::build::OrderOutcome::*;
 
-            let Some(delta) = resolver.scratch.deltas.get_mut(&order.nation) else {
+            let Some(delta) = resolver.scratch.get_mut(&order.nation) else {
                 return RedeploymentProhibited;
             };
 
             // A power is only allowed to build or disband in a given turn, not both
-            if delta.0 != order.command {
+            if delta.allowed_command != order.command {
                 return RedeploymentProhibited;
             }
 
-            let adjudication = adjudicate(context, &resolver.scratch.home_scs, order);
+            let adjudication = adjudicate(context, &delta.home_scs, order);
 
             if adjudication != OrderOutcome::Succeeds {
                 return adjudication;
@@ -422,11 +428,11 @@ mod build {
 
             match order.command {
                 BuildCommand::Build => {
-                    if delta.1 == 0 {
+                    if delta.allowed_amount == 0 {
                         return AllBuildsUsed;
                     }
 
-                    delta.1 -= 1;
+                    delta.allowed_amount -= 1;
 
                     resolver
                         .final_units
@@ -437,11 +443,11 @@ mod build {
                     Succeeds
                 }
                 BuildCommand::Disband => {
-                    if delta.1 == 0 {
+                    if delta.allowed_amount == 0 {
                         return AllDisbandsUsed;
                     }
 
-                    delta.1 -= 1;
+                    delta.allowed_amount -= 1;
 
                     resolver
                         .final_units
@@ -461,17 +467,22 @@ mod build {
         ) {
             let world_graph = context.world_map.to_graph();
 
-            for (nation, delta) in &mut resolver.scratch.deltas {
-                if delta.0 == BuildCommand::Build || delta.1 == 0 {
+            for (nation, delta) in &mut resolver.scratch {
+                if delta.allowed_command == BuildCommand::Build || delta.allowed_amount == 0 {
                     continue;
                 }
 
-                let usize_delta: usize = delta.1.try_into().unwrap();
-                let units = resolver.final_units.remove(*nation).unwrap();
+                let usize_delta: usize = delta.allowed_amount.into();
+                let units = resolver
+                    .final_units
+                    .remove(*nation)
+                    .expect("nation has units if it's being forced to disband some");
 
                 // Per 2023 rulebook, units disband based on distance from the nation's owned
                 // supply centers (earlier editions had it based on distance from the home supply centers)
-                let Some(owned_scs) = resolver.scratch.ownerships.get(*nation) else {
+                let owned_scs = &delta.ownerships;
+
+                if owned_scs.is_empty() {
                     // If there are no owned supply centers, all units disband
                     resolver
                         .civil_disorder
