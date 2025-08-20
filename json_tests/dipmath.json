@@ -1,0 +1,40 @@
+{
+    "$schema": "./tests.schema.json",
+    "cases": [
+        {
+            "name": "fig8",
+            "url": "https://diplom.org/Zine/S2009M/Kruijswijk/DipMath_Chp3.htm",
+            "phase": "Main",
+            "starting_state": ["FRA: A par", "FRA: F bre"],
+            "orders": {
+                "FRA: A par -> bre": "Succeeds",
+                "FRA: F bre -> mao": "Succeeds"
+            }
+        },
+        {
+            "name": "fig9",
+            "url": "https://diplom.org/Zine/S2009M/Kruijswijk/DipMath_Chp3.htm",
+            "phase": "Main",
+            "orders": {
+                "ENG: F nwg -> nth": "Succeeds",
+                "GER: F ska supports F nth -> nwy": "Succeeds",
+                "GER: F nth -> nwy": "Succeeds",
+                "RUS: F nwy -> nwg": "Succeeds"
+            }
+        },
+        {
+            "name": "fig10",
+            "url": "https://diplom.org/Zine/S2009M/Kruijswijk/DipMath_Chp3.htm",
+            "phase": "Main",
+            "orders": {
+                "ENG: A edi -> swe": "Fails",
+                "ENG: F nth convoys A edi -> swe": null,
+                "ENG: F ska convoys A edi -> swe": null,
+                "GER: F den -> ska": "Succeeds",
+                "GER: F swe supports F den -> ska": "Succeeds",
+                "RUS: F nwg -> nth": "Succeeds",
+                "RUS: F nwy supports F nwg -> nth": "Succeeds"
+            }
+        }
+    ]
+}
