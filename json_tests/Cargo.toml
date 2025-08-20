@@ -13,6 +13,10 @@ prettyplease = "0.2.36"
 proc-macro2 = "1.0.97"
 quote = { version = "1.0.40", default-features = false }
 serde = { version = "1.0.202", features = ["derive"] }
-serde_json = "1.0.117"
+serde_json = { version = "1.0.117", features = ["preserve_order"] }
 serde_with = { version = "3.14.0", features = ["macros"] }
-syn = { version = "2.0.105", default-features = false, features = ["full", "parsing", "printing"] }
+syn = { version = "2.0.105", default-features = false, features = [
+    "full",
+    "parsing",
+    "printing",
+] }
