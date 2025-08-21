@@ -16,22 +16,22 @@ pub fn path_exists<'a>(
 ) -> bool {
     if let MainCommand::Move(cmd) = &order.command {
         let dst = cmd.dest();
-        if let Some(reg) = context.world_map.find_region(&dst.short_name()) {
-            if order.unit_type.can_occupy(reg.terrain()) {
-                // If the move order allows direct travel, look for a border that would support
-                // direct movement.
-                let can_travel_directly = !cmd.mandates_convoy()
-                    && context
-                        .world_map
-                        .find_border_between(&order.region, dst)
-                        .map(|b| b.is_passable_by(order.unit_type))
-                        .unwrap_or(false);
+        if let Some(reg) = context.world_map.find_region(&dst.short_name())
+            && order.unit_type.can_occupy(reg.terrain())
+        {
+            // If the move order allows direct travel, look for a border that would support
+            // direct movement.
+            let can_travel_directly = !cmd.mandates_convoy()
+                && context
+                    .world_map
+                    .find_border_between(&order.region, dst)
+                    .map(|b| b.is_passable_by(order.unit_type))
+                    .unwrap_or(false);
 
-                // NOTE: As-written, this short-circuits convoy assessment when
-                // there is an acceptable direct route. Don't change that behavior, as
-                // it may impact how resolution works.
-                return can_travel_directly || convoy::uses_convoy(context, resolver, order);
-            }
+            // NOTE: As-written, this short-circuits convoy assessment when
+            // there is an acceptable direct route. Don't change that behavior, as
+            // it may impact how resolution works.
+            return can_travel_directly || convoy::uses_convoy(context, resolver, order);
         }
     }
 
@@ -69,10 +69,9 @@ fn prevent_result<'a>(
             if let Some(h2h) = context
                 .orders()
                 .find(|o| is_head_to_head(context, resolver, o, order))
+                && resolver.resolve(context, h2h).into()
             {
-                if resolver.resolve(context, h2h).into() {
-                    return Some(Prevent::LostHeadToHead);
-                }
+                return Some(Prevent::LostHeadToHead);
             }
 
             Some(Prevent::Prevents(

@@ -96,11 +96,10 @@ impl<'a> Outcome<'a> {
     ) -> Self {
         let mut unit_positions = retreat_start_positions;
         for (order, outcome) in &by_order {
-            if let Some(dest) = order.move_dest() {
-                if let OrderOutcome::Moves = outcome {
-                    unit_positions
-                        .insert(dest.province(), UnitPosition::new((*order).into(), dest));
-                }
+            if let Some(dest) = order.move_dest()
+                && let OrderOutcome::Moves = outcome
+            {
+                unit_positions.insert(dest.province(), UnitPosition::new((*order).into(), dest));
             }
         }
 
