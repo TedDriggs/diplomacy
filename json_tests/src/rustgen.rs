@@ -6,9 +6,7 @@ use diplomacy::{judge::OrderState, ShortName};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, IdentFragment, ToTokens, TokenStreamExt};
 
-use crate::case::{
-    build, main, retreat, Cases, Edition, RawTestCase, TestCase, TestCaseBody, TestCaseTodo,
-};
+use crate::case::{build, main, retreat, Cases, Edition, TestCase, TestCaseBody};
 
 fn order_state_to_ident(state: OrderState) -> proc_macro2::Ident {
     match state {
@@ -269,30 +267,5 @@ fn test_case_ident(case: &TestCase) -> proc_macro2::Ident {
             format_ident!("{}_{}", base_name, edition)
         }
         None => format_ident!("{}", base_name),
-    }
-}
-
-impl ToTokens for TestCaseTodo {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let Self { info, todo } = self;
-        let name = format_ident!("{}", info.name.as_deref().unwrap_or("unnamed"));
-        let url = info.url.as_ref().map(|u| quote!(#[doc = #u]));
-        tokens.append_all(quote! {
-            #url
-            #[test]
-            #[ignore = #todo]
-            fn #name() {
-                todo!(#todo);
-            }
-        });
-    }
-}
-
-impl ToTokens for RawTestCase {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        match self {
-            RawTestCase::Todo(case) => case.to_tokens(tokens),
-            RawTestCase::Case(case) => case.to_tokens(tokens),
-        }
     }
 }

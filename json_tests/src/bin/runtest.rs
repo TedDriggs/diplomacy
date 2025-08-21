@@ -1,6 +1,6 @@
 //! Runs tests from a JSON file of Diplomacy test cases.
 
-use json_tests::case::{Cases, DidPass, RawTestCase};
+use json_tests::case::{Cases, DidPass, TestCase};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let path = std::env::args()
@@ -11,35 +11,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn execute_test_cases(json: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let cases = serde_json::from_str::<Cases<RawTestCase>>(json)
+    let cases = serde_json::from_str::<Cases<TestCase>>(json)
         .map_err(|e| anyhow::Error::new(e).context("Parsing JSON"))?;
 
     let mut failures = vec![];
 
     for (test, result) in cases.run() {
-        let Some(result) = result else {
-            match test {
-                RawTestCase::Todo(case) => {
-                    eprintln!("Skipping test case '{}'. {}", case.info, case.todo)
-                }
-                RawTestCase::Case(case) => {
-                    eprintln!("Test case '{}' did not produce a result.", case.full_name())
-                }
-            }
+        if let Some(ignore) = &test.info.ignore {
+            eprintln!("Skipping test case '{}'. {}", test.full_name(), ignore);
             continue;
-        };
+        }
 
         if !result.did_pass() {
             failures.push(test.full_name());
-
-            let RawTestCase::Case(test) = test else {
-                eprintln!(
-                    "Test case '{}' is a todo, but it failed with mismatches: {}",
-                    test.full_name(),
-                    serde_json::to_string_pretty(&result).unwrap()
-                );
-                continue;
-            };
 
             eprintln!(
                 "Test case '{}' failed with mismatches: {}\n{}",

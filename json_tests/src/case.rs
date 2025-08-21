@@ -51,15 +51,9 @@ pub struct Cases<T> {
     pub cases: Vec<T>,
 }
 
-impl Cases<RawTestCase> {
-    pub fn run(&self) -> impl Iterator<Item = (&RawTestCase, Option<TestResult<TestResultBody>>)> {
-        self.cases.iter().map(|case| {
-            let result = match case {
-                RawTestCase::Todo(_) => None,
-                RawTestCase::Case(test_case) => Some(test_case.run()),
-            };
-            (case, result)
-        })
+impl Cases<TestCase> {
+    pub fn run(&self) -> impl Iterator<Item = (&TestCase, TestResult<TestResultBody>)> {
+        self.cases.iter().map(|case| (case, case.run()))
     }
 }
 
@@ -448,45 +442,6 @@ pub mod build {
     impl DidPass for TestResult {
         fn did_pass(&self) -> bool {
             self.mismatches.is_empty()
-        }
-    }
-}
-
-#[derive(Debug, Clone, serde::Deserialize)]
-#[non_exhaustive]
-pub struct TestCaseTodo {
-    #[serde(flatten)]
-    pub info: TestCaseInfo,
-    pub todo: String,
-}
-
-/// Either a runnable test case, or a todo item.
-#[derive(Debug, Clone, serde::Deserialize)]
-#[serde(untagged)]
-pub enum RawTestCase {
-    Todo(TestCaseTodo),
-    Case(TestCase),
-}
-
-impl RawTestCase {
-    pub fn info(&self) -> &TestCaseInfo {
-        match self {
-            RawTestCase::Todo(todo) => &todo.info,
-            RawTestCase::Case(case) => &case.info,
-        }
-    }
-
-    pub fn full_name(&self) -> String {
-        match self {
-            RawTestCase::Todo(todo) => todo.info.to_string(),
-            RawTestCase::Case(case) => case.full_name(),
-        }
-    }
-
-    pub fn todo(&self) -> Option<&str> {
-        match self {
-            RawTestCase::Todo(todo) => Some(&todo.todo),
-            RawTestCase::Case(_) => None,
         }
     }
 }

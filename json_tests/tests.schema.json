@@ -31,9 +31,6 @@
                 },
                 {
                     "$ref": "#/definitions/buildPhase"
-                },
-                {
-                    "$ref": "#/definitions/todoCase"
                 }
             ],
             "required": ["name", "url"]
@@ -141,15 +138,6 @@
                 }
             },
             "required": ["phase", "orders"]
-        },
-        "todoCase": {
-            "properties": {
-                "todo": {
-                    "type": "string",
-                    "description": "A description of the test case that is yet to be implemented."
-                }
-            },
-            "required": ["todo"]
         },
         "edition": {
             "enum": ["1971", "1982", "2023", "dptg"],
