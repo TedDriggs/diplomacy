@@ -22,9 +22,9 @@ pub use self::support::SupportOutcome;
 
 pub use self::resolver::{Context, ResolverState, Submission};
 pub use self::rulebook::Rulebook;
+use crate::UnitType;
 use crate::geo::{Border, RegionKey, Terrain};
 use crate::order::{BuildOrder, MainCommand, Order, RetreatOrder};
-use crate::UnitType;
 
 pub type MappedMainOrder = Order<RegionKey, MainCommand<RegionKey>>;
 pub type MappedBuildOrder = BuildOrder<RegionKey>;

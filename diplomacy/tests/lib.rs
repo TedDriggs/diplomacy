@@ -96,15 +96,21 @@ fn dipmath_figure6() {
         ],
     );
 
-    assert!(geo::standard_map()
-        .find_border_between(&reg("ber"), &reg("sil"))
-        .is_some());
-    assert!(geo::standard_map()
-        .find_border_between(&reg("war"), &reg("sil"))
-        .is_some());
-    assert!(geo::standard_map()
-        .find_border_between(&reg("sil"), &reg("boh"))
-        .is_some());
+    assert!(
+        geo::standard_map()
+            .find_border_between(&reg("ber"), &reg("sil"))
+            .is_some()
+    );
+    assert!(
+        geo::standard_map()
+            .find_border_between(&reg("war"), &reg("sil"))
+            .is_some()
+    );
+    assert!(
+        geo::standard_map()
+            .find_border_between(&reg("sil"), &reg("boh"))
+            .is_some()
+    );
 
     let result = orders.adjudicate(Rulebook::default());
     for o in orders.submitted_orders() {

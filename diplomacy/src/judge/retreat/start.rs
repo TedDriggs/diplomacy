@@ -1,10 +1,10 @@
 use crate::geo::{Border, ProvinceKey, RegionKey};
 use crate::judge::WillUseConvoy;
 use crate::judge::{
-    calc::dislodger_of, calc::prevent_results, convoy, Adjudicate, Context, MappedMainOrder,
-    OrderState, Outcome, Prevent, ResolverState,
+    Adjudicate, Context, MappedMainOrder, OrderState, Outcome, Prevent, ResolverState,
+    calc::dislodger_of, calc::prevent_results, convoy,
 };
-use crate::{order::Command, Unit, UnitPosition, UnitPositions};
+use crate::{Unit, UnitPosition, UnitPositions, order::Command};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::iter;
 

@@ -2,8 +2,8 @@ use std::{fmt, str::FromStr};
 
 use std::ops::Deref;
 
-use diplomacy::geo::Location;
 use diplomacy::Command;
+use diplomacy::geo::Location;
 use serde_with::{DeserializeFromStr, SerializeDisplay};
 
 #[derive(
@@ -52,9 +52,9 @@ pub mod with_map_key {
 
     use super::MapKey;
     use serde::{
+        Deserialize, Serialize, Serializer,
         de::{Error, Visitor},
         ser::SerializeMap,
-        Deserialize, Serialize, Serializer,
     };
 
     pub fn serialize<'a, S: Serializer, K: 'a + Serialize + Display, V: 'a + Serialize>(

@@ -1,8 +1,8 @@
 use crate::judge::WillUseConvoy;
 
 use super::{
-    retreat, Adjudicate, AttackOutcome, Context, ConvoyOutcome, HoldOutcome, MappedMainOrder,
-    OrderState, ResolverState, SupportOutcome,
+    Adjudicate, AttackOutcome, Context, ConvoyOutcome, HoldOutcome, MappedMainOrder, OrderState,
+    ResolverState, SupportOutcome, retreat,
 };
 use from_variants::FromVariants;
 use std::collections::HashMap;

@@ -1,4 +1,4 @@
-use super::{convoy, Adjudicate, IllegalOrder, MappedMainOrder, OrderState, Outcome, Rulebook};
+use super::{Adjudicate, IllegalOrder, MappedMainOrder, OrderState, Outcome, Rulebook, convoy};
 use crate::geo::{Map, ProvinceKey, RegionKey};
 use crate::order::{Command, MainCommand, Order};
 use crate::{Unit, UnitPosition, UnitPositions};

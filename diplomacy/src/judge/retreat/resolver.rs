@@ -1,7 +1,7 @@
 use super::{DestStatus, Start};
 use crate::judge::{MappedRetreatOrder, OrderState};
 use crate::order::{Command, RetreatCommand};
-use crate::{geo::ProvinceKey, geo::RegionKey, Unit, UnitPosition, UnitPositions};
+use crate::{Unit, UnitPosition, UnitPositions, geo::ProvinceKey, geo::RegionKey};
 use std::collections::{HashMap, HashSet};
 
 /// The immutable parts of retreat phase adjudication.

@@ -1,9 +1,9 @@
 use super::strength::{Prevent, Strength};
-use super::{convoy, support};
 use super::{Adjudicate, Context, MappedMainOrder, ResolverState};
+use super::{convoy, support};
 use crate::judge::WillUseConvoy;
 use crate::order::{Command, MainCommand};
-use crate::{geo::ProvinceKey, ShortName};
+use crate::{ShortName, geo::ProvinceKey};
 
 /// Returns true if `order` is a move AND between the source and dest, either:
 ///
@@ -166,7 +166,7 @@ pub fn dislodger_of<'a>(
 
 #[cfg(test)]
 mod tests {
-    use super::{max_prevent_result, Prevent};
+    use super::{Prevent, max_prevent_result};
     use crate::judge::{Context, MappedMainOrder, ResolverState, Rulebook};
 
     #[test]

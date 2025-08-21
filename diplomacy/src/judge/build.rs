@@ -91,7 +91,9 @@ impl<'a, W: WorldState> Submission<'a, W> {
         orders: impl IntoIterator<Item = MappedBuildOrder>,
     ) -> Self {
         if last_time.is_empty() {
-            panic!("At least one supply center must have been owned by at least one nation. Did you forget to pass the initial world state?");
+            panic!(
+                "At least one supply center must have been owned by at least one nation. Did you forget to pass the initial world state?"
+            );
         }
 
         Self {
@@ -382,8 +384,8 @@ pub fn to_initial_ownerships(map: &Map) -> HashMap<ProvinceKey, Nation> {
 #[cfg(test)]
 mod tests {
     use super::to_initial_ownerships;
-    use crate::geo::{standard_map, ProvinceKey};
     use crate::Nation;
+    use crate::geo::{ProvinceKey, standard_map};
 
     #[test]
     fn to_initial_ownerships_for_standard_map() {

@@ -1,7 +1,7 @@
 //! Contains helper functions for evaluating the success of support commands
 //! during the main phase of a turn.
 
-use super::{calc, Adjudicate, Context, MappedMainOrder, OrderState, ResolverState};
+use super::{Adjudicate, Context, MappedMainOrder, OrderState, ResolverState, calc};
 use crate::geo::Map;
 use crate::judge::WillUseConvoy;
 use crate::order::{Command, MainCommand, SupportedOrder};
@@ -203,10 +203,10 @@ impl<O> From<SupportOutcome<O>> for OrderState {
 mod test {
     use super::super::{Context, ResolverState};
     use super::*;
-    use crate::geo::{standard_map, RegionKey};
-    use crate::order::{MainCommand, MoveCommand, Order, SupportedOrder};
     use crate::Nation;
     use crate::UnitType;
+    use crate::geo::{RegionKey, standard_map};
+    use crate::order::{MainCommand, MoveCommand, Order, SupportedOrder};
     use std::str::FromStr;
 
     fn reg(s: &str) -> RegionKey {

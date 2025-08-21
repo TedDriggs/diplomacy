@@ -3,9 +3,9 @@
 use std::fmt;
 
 use diplomacy::{
+    Nation, UnitPosition,
     geo::RegionKey,
     judge::{MappedBuildOrder, MappedMainOrder, MappedRetreatOrder, OrderState, Rulebook},
-    Nation, UnitPosition,
 };
 use indexmap::IndexMap;
 
@@ -68,7 +68,7 @@ pub mod main {
         judge::{OrderOutcome, Outcome, Rulebook, Submission},
     };
 
-    use crate::{with_map_key, OrderOutcomeWithState};
+    use crate::{OrderOutcomeWithState, with_map_key};
 
     use super::*;
 
@@ -157,11 +157,11 @@ pub mod main {
 
 pub mod retreat {
     use diplomacy::judge::{
-        retreat::{Context, OrderOutcome},
         Rulebook,
+        retreat::{Context, OrderOutcome},
     };
 
-    use crate::{with_map_key, OrderOutcomeWithState};
+    use crate::{OrderOutcomeWithState, with_map_key};
 
     use super::*;
 
@@ -268,13 +268,13 @@ pub mod retreat {
 pub mod build {
     use std::collections::{HashMap, HashSet};
 
-    use crate::{with_map_key, OrderOutcomeWithState};
+    use crate::{OrderOutcomeWithState, with_map_key};
 
     use super::*;
     use diplomacy::{
-        geo::{self, ProvinceKey},
-        judge::build::{to_initial_ownerships, OrderOutcome, WorldState},
         UnitType,
+        geo::{self, ProvinceKey},
+        judge::build::{OrderOutcome, WorldState, to_initial_ownerships},
     };
 
     #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]

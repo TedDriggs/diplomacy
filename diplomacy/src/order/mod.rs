@@ -1,6 +1,6 @@
 //! The model for an order issued to a unit.
 
-use crate::{geo::Location, Nation, ShortName, Unit, UnitPosition, UnitType};
+use crate::{Nation, ShortName, Unit, UnitPosition, UnitType, geo::Location};
 use std::{borrow::Cow, fmt};
 
 mod command;

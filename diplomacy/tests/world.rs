@@ -7,9 +7,9 @@ use std::{
 };
 
 use diplomacy::{
+    Nation, UnitPosition, UnitType,
     geo::{ProvinceKey, RegionKey},
     judge::build::WorldState,
-    Nation, UnitPosition, UnitType,
 };
 
 pub(crate) struct TestWorld {

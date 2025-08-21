@@ -2,11 +2,11 @@
 
 use std::{borrow::Cow, fmt};
 
-use diplomacy::{judge::OrderState, ShortName};
+use diplomacy::{ShortName, judge::OrderState};
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote, IdentFragment, ToTokens, TokenStreamExt};
+use quote::{IdentFragment, ToTokens, TokenStreamExt, format_ident, quote};
 
-use crate::case::{build, main, retreat, Cases, Edition, TestCase, TestCaseBody};
+use crate::case::{Cases, Edition, TestCase, TestCaseBody, build, main, retreat};
 
 fn order_state_to_ident(state: OrderState) -> proc_macro2::Ident {
     match state {

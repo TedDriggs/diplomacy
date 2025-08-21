@@ -1,8 +1,8 @@
 use super::Command;
-use crate::geo::Location;
-use crate::order::Order;
 use crate::ShortName;
 use crate::UnitType;
+use crate::geo::Location;
+use crate::order::Order;
 use std::cmp::PartialEq;
 use std::fmt;
 

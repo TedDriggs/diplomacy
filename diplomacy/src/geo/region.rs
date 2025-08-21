@@ -1,6 +1,6 @@
+use crate::ShortName;
 use crate::geo::{Location, ProvinceKey};
 use crate::parser::{Error, ErrorKind};
-use crate::ShortName;
 use std::borrow::Cow;
 use std::fmt;
 use std::str::FromStr;

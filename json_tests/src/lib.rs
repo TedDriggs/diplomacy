@@ -9,7 +9,7 @@ mod map_key;
 mod outcome_with_state;
 mod rustgen;
 
-pub use map_key::{with_map_key, MapKey};
+pub use map_key::{MapKey, with_map_key};
 pub use outcome_with_state::OrderOutcomeWithState;
 
 #[cfg(test)]
@@ -21,7 +21,7 @@ mod tests {
         geo::standard_map,
         judge::{MappedBuildOrder, MappedMainOrder, Rulebook, Submission},
     };
-    use serde::{de::DeserializeOwned, ser::Serializer, Serialize};
+    use serde::{Serialize, de::DeserializeOwned, ser::Serializer};
 
     /// Parse an order, serialize it to JSON, deserialize it, and check that the two structs are equal.
     fn roundtrip_order<T>(ord: &str) -> anyhow::Result<()>
@@ -37,7 +37,9 @@ mod tests {
         if parsed == roundtripped {
             Ok(())
         } else {
-            Err(anyhow::Error::msg(format!("Input: {ord} | Parsed: {parsed} | Roundtripped: {roundtripped} | Serialized: {serialized}")))
+            Err(anyhow::Error::msg(format!(
+                "Input: {ord} | Parsed: {parsed} | Roundtripped: {roundtripped} | Serialized: {serialized}"
+            )))
         }
     }
 

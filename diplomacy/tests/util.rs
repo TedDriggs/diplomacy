@@ -2,11 +2,11 @@
 #![cfg(test)]
 
 use diplomacy::{
+    Nation, UnitPosition,
     geo::{self, Coast, ProvinceKey, RegionKey},
     judge::{
         MappedBuildOrder, MappedMainOrder, MappedRetreatOrder, OrderState, Rulebook, Submission,
     },
-    Nation, UnitPosition,
 };
 use std::collections::HashMap;
 

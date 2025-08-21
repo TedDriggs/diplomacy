@@ -1,5 +1,5 @@
 use crate::parser::{Error, ErrorKind};
-use crate::{geo::Location, geo::RegionKey, Command, Nation, Order, ShortName};
+use crate::{Command, Nation, Order, ShortName, geo::Location, geo::RegionKey};
 use std::borrow::{Borrow, Cow};
 use std::collections::HashMap;
 use std::fmt;
@@ -262,7 +262,7 @@ where
 #[cfg(test)]
 mod test {
     use super::{UnitPosition, UnitType};
-    use crate::{geo::RegionKey, Nation};
+    use crate::{Nation, geo::RegionKey};
 
     #[test]
     fn parse_unit_type() {

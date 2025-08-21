@@ -1,6 +1,6 @@
 use crate::ShortName;
 #[cfg(feature = "serde")]
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use std::borrow::Cow;
 use std::str::FromStr;
 

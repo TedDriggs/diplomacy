@@ -3,11 +3,11 @@ use super::convoy::ConvoyOutcome;
 use super::resolver::{Context, ResolverState};
 use super::support::{self, SupportOutcome};
 use super::{Adjudicate, MappedMainOrder, OrderOutcome, OrderState};
-use crate::geo::Terrain;
-use crate::judge::strength::Strength;
-use crate::judge::WillUseConvoy;
-use crate::order::{Command, MainCommand};
 use crate::ShortName;
+use crate::geo::Terrain;
+use crate::judge::WillUseConvoy;
+use crate::judge::strength::Strength;
+use crate::order::{Command, MainCommand};
 
 /// Where distance is measured from for civil disorder disbands.
 #[derive(Debug, Clone)]
@@ -347,14 +347,14 @@ mod build {
     };
 
     use crate::{
+        Nation, Unit, UnitPosition,
         geo::{ProvinceKey, SupplyCenter},
         judge::{
-            build::{adjudicate, Adjudicate, Context, OrderOutcome, ResolverState, WorldState},
-            rulebook::BuildPhaseCivilDisorderDistance,
             MappedBuildOrder,
+            build::{Adjudicate, Context, OrderOutcome, ResolverState, WorldState, adjudicate},
+            rulebook::BuildPhaseCivilDisorderDistance,
         },
         order::BuildCommand,
-        Nation, Unit, UnitPosition,
     };
 
     /// Per-nation information for build-phase adjudication.
@@ -570,15 +570,15 @@ mod build {
                     // Distance from nearest owned supply center, descending
                     b.1.cmp(&a.1)
                         // when equidistant, disband fleets before armies
-                        .then(b.0 .0.cmp(&a.0 .0))
+                        .then(b.0.0.cmp(&a.0.0))
                         // when units are same type and equidistant, disband in alphabetical order
-                        .then_with(|| a.0 .1.cmp(&b.0 .1))
+                        .then_with(|| a.0.1.cmp(&b.0.1))
                 });
 
                 // Add units from the disband queue to the civil disorder output
                 resolver.civil_disorder.extend(
                     units_by_disband_priority.drain(0..usize_delta).map(|v| {
-                        UnitPosition::new(Unit::new(Cow::Borrowed(*nation), v.0 .0), v.0 .1)
+                        UnitPosition::new(Unit::new(Cow::Borrowed(*nation), v.0.0), v.0.1)
                     }),
                 );
 
