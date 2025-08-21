@@ -153,12 +153,26 @@
         {
             "name": "t6b07_supporting_with_unspecified_coast",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.7",
-            "todo": "Region-level precision is the caller's responsibility"
+            "ignore": "Region-level precision is the caller's responsibility",
+            "phase": "Main",
+            "orders": {
+                "FRA: F por supports F mao -> spa": null,
+                "FRA: F mao -> spa(nc)": "Fails",
+                "ITA: F lyo supports F wes -> spa(sc)": null,
+                "ITA: F wes -> spa(sc)": "Fails"
+            }
         },
         {
             "name": "t6b08_supporting_with_unspecified_coast_when_only_one_coast_is_possible",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.8",
-            "todo": "Region-level precision is the caller's responsibility"
+            "ignore": "Region-level precision is the caller's responsibility",
+            "phase": "Main",
+            "orders": {
+                "FRA: F por supports F gas -> spa": null,
+                "FRA: F gas -> spa(nc)": "Fails",
+                "ITA: F lyo supports F wes -> spa(sc)": null,
+                "ITA: F wes -> spa(sc)": "Fails"
+            }
         },
         {
             "name": "t6b09_supporting_with_wrong_coast",
@@ -219,7 +233,14 @@
         {
             "name": "t6b15_supporting_foreign_unit_with_unspecified_coast",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.15",
-            "todo": "Region-level precision is the caller's responsibility"
+            "ignore": "Region-level precision is the caller's responsibility",
+            "phase": "Main",
+            "orders": {
+                "FRA: F por supports F mao -> spa": null,
+                "ENG: F mao -> spa(nc)": "Succeeds",
+                "ITA: F lyo supports F wes -> spa(sc)": null,
+                "ITA: F wes -> spa(sc)": "Fails"
+            }
         },
         {
             "name": "t6c01_three_army_circular_movement_succeeds",
@@ -1518,7 +1539,21 @@
         {
             "name": "t6g19_swapping_with_intent_of_unnecessary_convoy",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.19",
-            "todo": "Test marked with should_panic in Rust implementation",
+            "edition": "1971",
+            "phase": "Main",
+            "orders": {
+                "FRA: A mar -> spa": "Succeeds",
+                "FRA: F wes convoys mar -> spa": null,
+                "ITA: F lyo convoys mar -> spa": null,
+                "ITA: A spa -> mar": "Succeeds"
+            }
+        },
+        {
+            "name": "t6g19_swapping_with_intent_of_unnecessary_convoy",
+            "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.19",
+            "ignore": "DATC claims this should fail, but relies on an odd definition of convoy legality",
+            "edition": "2023",
+            "phase": "Main",
             "orders": {
                 "FRA: A mar -> spa": "Fails",
                 "FRA: F wes convoys mar -> spa": null,
@@ -1541,17 +1576,53 @@
         {
             "name": "t6h01_no_supports_during_retreat",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.1",
-            "todo": "Test checks that support orders are illegal in retreat phase"
+            "ignore": "Support orders are illegal in retreat phase - this test cannot parse",
+            "phase": "Retreat",
+            "preceding_main_phase": {
+                "orders": {
+                    "AUS: F tri hold": "Fails",
+                    "AUS: A ser hold": "Succeeds",
+                    "TUR: F gre hold": "Fails",
+                    "ITA: A ven supports A tyr -> tri": null,
+                    "ITA: A tyr -> tri": "Succeeds",
+                    "ITA: F ion -> gre": "Succeeds",
+                    "ITA: F aeg supports F ion -> gre": null
+                }
+            },
+            "orders": {
+                "AUS: F tri -> alb": "Fails",
+                "TUR: F gre -> alb": "Succeeds"
+            }
         },
         {
             "name": "t6h02_no_supports_from_retreating_unit",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.2",
-            "todo": "Test checks that retreating units cannot give support"
+            "ignore": "Support orders are illegal in retreat phase - this test cannot parse",
+            "phase": "Retreat",
+            "preceding_main_phase": {
+                "orders": {
+                    "ENG: A lvp -> edi": null,
+                    "ENG: F nor hold": "Fails"
+                }
+            },
+            "orders": {
+                "ENG: F nor -> nth": "Fails"
+            }
         },
         {
             "name": "t6h03_no_convoy_during_retreat",
             "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.3",
-            "todo": "Test checks that convoy orders are illegal in retreat phase"
+            "ignore": "Convoy orders are illegal in retreat phase - this test cannot parse",
+            "phase": "Retreat",
+            "preceding_main_phase": {
+                "orders": {
+                    "ENG: F nth hold": "Fails",
+                    "ENG: A hol hold": "Fails"
+                }
+            },
+            "orders": {
+                "ENG: A hol -> yor": "Fails"
+            }
         },
         {
             "name": "t6h04_no_other_moves_during_retreat",

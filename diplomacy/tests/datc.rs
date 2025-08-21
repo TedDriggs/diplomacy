@@ -145,15 +145,21 @@ fn t6b06_support_can_be_cut_with_other_coast() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.7
 #[test]
-#[ignore = "Region-level precision is the caller's responsibility"]
+#[ignore = "region-level precision is the caller's responsibility"]
 fn t6b07_supporting_with_unspecified_coast() {
-    todo!("Region-level precision is the caller's responsibility");
+    judge! {
+        "FRA: F por supports F mao -> spa", "FRA: F mao -> spa(nc)" : Fails,
+        "ITA: F lyo supports F wes -> spa(sc)", "ITA: F wes -> spa(sc)" : Fails
+    };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.8
 #[test]
-#[ignore = "Region-level precision is the caller's responsibility"]
+#[ignore = "region-level precision is the caller's responsibility"]
 fn t6b08_supporting_with_unspecified_coast_when_only_one_coast_is_possible() {
-    todo!("Region-level precision is the caller's responsibility");
+    judge! {
+        "FRA: F por supports F gas -> spa", "FRA: F gas -> spa(nc)" : Fails,
+        "ITA: F lyo supports F wes -> spa(sc)", "ITA: F wes -> spa(sc)" : Fails
+    };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.9
 #[test]
@@ -203,9 +209,12 @@ fn t6b14_building_with_unspecified_coast() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.B.15
 #[test]
-#[ignore = "Region-level precision is the caller's responsibility"]
+#[ignore = "region-level precision is the caller's responsibility"]
 fn t6b15_supporting_foreign_unit_with_unspecified_coast() {
-    todo!("Region-level precision is the caller's responsibility");
+    judge! {
+        "FRA: F por supports F mao -> spa", "ENG: F mao -> spa(nc)" : Succeeds,
+        "ITA: F lyo supports F wes -> spa(sc)", "ITA: F wes -> spa(sc)" : Fails
+    };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.C.1
 #[test]
@@ -1141,9 +1150,22 @@ fn t6g18_the_two_unit_in_one_area_bug_with_double_convoy() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.19
 #[test]
-#[ignore = "Test marked with should_panic in Rust implementation"]
-fn t6g19_swapping_with_intent_of_unnecessary_convoy() {
-    todo!("Test marked with should_panic in Rust implementation");
+fn t6g19_swapping_with_intent_of_unnecessary_convoy_1971() {
+    judge! {
+        @ rules diplomacy::judge::Rulebook::edition_1971(); "FRA: A mar -> spa" :
+        Succeeds, "FRA: F wes convoys A mar -> spa", "ITA: F lyo convoys A mar -> spa",
+        "ITA: A spa -> mar" : Succeeds
+    };
+}
+///https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.19
+#[test]
+#[ignore = "DATC claims this should fail, but relies on an odd definition of convoy legality"]
+fn t6g19_swapping_with_intent_of_unnecessary_convoy_2023() {
+    judge! {
+        @ rules diplomacy::judge::Rulebook::edition_2023(); "FRA: A mar -> spa" : Fails,
+        "FRA: F wes convoys A mar -> spa", "ITA: F lyo convoys A mar -> spa",
+        "ITA: A spa -> mar" : Fails
+    };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.20
 #[test]
@@ -1156,21 +1178,41 @@ fn t6g20_explicit_convoy_to_adjacent_province_disrupted() {
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.1
 #[test]
-#[ignore = "Test checks that support orders are illegal in retreat phase"]
+#[ignore = "support orders are illegal in retreat phase - this test cannot parse"]
 fn t6h01_no_supports_during_retreat() {
-    todo!("Test checks that support orders are illegal in retreat phase");
+    let (submission, expected) = submit_main_phase! {
+        "AUS: F tri holds" : Fails, "AUS: A ser holds" : Succeeds, "TUR: F gre holds" :
+        Fails, "ITA: A ven supports A tyr -> tri", "ITA: A tyr -> tri" : Succeeds,
+        "ITA: F ion -> gre" : Succeeds, "ITA: F aeg supports F ion -> gre",
+    };
+    let outcome = resolve_main!(submission, expected);
+    judge_retreat! {
+        outcome, "AUS: F tri -> alb" : Fails, "TUR: F gre -> alb" : Succeeds
+    };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.2
 #[test]
-#[ignore = "Test checks that retreating units cannot give support"]
+#[ignore = "support orders are illegal in retreat phase - this test cannot parse"]
 fn t6h02_no_supports_from_retreating_unit() {
-    todo!("Test checks that retreating units cannot give support");
+    let (submission, expected) = submit_main_phase! {
+        "ENG: A lvp -> edi", "ENG: F nor holds" : Fails,
+    };
+    let outcome = resolve_main!(submission, expected);
+    judge_retreat! {
+        outcome, "ENG: F nor -> nth" : Fails
+    };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.3
 #[test]
-#[ignore = "Test checks that convoy orders are illegal in retreat phase"]
+#[ignore = "convoy orders are illegal in retreat phase - this test cannot parse"]
 fn t6h03_no_convoy_during_retreat() {
-    todo!("Test checks that convoy orders are illegal in retreat phase");
+    let (submission, expected) = submit_main_phase! {
+        "ENG: F nth holds" : Fails, "ENG: A hol holds" : Fails,
+    };
+    let outcome = resolve_main!(submission, expected);
+    judge_retreat! {
+        outcome, "ENG: A hol -> yor" : Fails
+    };
 }
 ///https://webdiplomacy.net/doc/DATC_v3_0.html#6.H.4
 #[test]

@@ -1,6 +1,6 @@
 //! `ToTokens` implementations for the types in [`json_tests::case`].
 
-use std::fmt;
+use std::{borrow::Cow, fmt};
 
 use diplomacy::{judge::OrderState, ShortName};
 use proc_macro2::TokenStream;
@@ -219,14 +219,42 @@ impl ToTokens for TestCaseBody {
     }
 }
 
+/// Lowercases the first character in the message if the second character is lowercase.
+///
+/// Rust wants messages such as `#[ignore = "..."]` to start lowercase, but the JSON
+/// declares them as sentences that start uppercase.
+fn lowercase_first_if_second_lowercase(message: &str) -> Cow<'_, str> {
+    fn inner(message: &str) -> Option<String> {
+        let mut chars = message.chars().peekable();
+        let first_char = chars.next()?;
+        let second_char_upper = chars.peek()?.is_uppercase();
+
+        if first_char.is_uppercase() && !second_char_upper {
+            Some(first_char.to_lowercase().chain(chars).collect())
+        } else {
+            None
+        }
+    }
+
+    inner(message)
+        .map(Cow::Owned)
+        .unwrap_or_else(|| Cow::Borrowed(message))
+}
+
 impl ToTokens for TestCase {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let Self { info, body } = self;
         let name = test_case_ident(self);
         let url = info.url.as_ref().map(|u| quote!(#[doc = #u]));
+        let ignore = info
+            .ignore
+            .as_deref()
+            .map(lowercase_first_if_second_lowercase)
+            .map(|reason| quote!(#[ignore = #reason]));
         tokens.append_all(quote! {
             #url
             #[test]
+            #ignore
             fn #name() {
                 #body
             }

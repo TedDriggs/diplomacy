@@ -520,6 +520,7 @@ impl TestCaseBody {
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 #[serde(tag = "phase")]
 pub enum TestResultBody {
+    Ignored,
     Main(main::TestResult),
     Retreat(retreat::TestResult),
     Build(build::TestResult),
@@ -528,6 +529,7 @@ pub enum TestResultBody {
 impl DidPass for TestResultBody {
     fn did_pass(&self) -> bool {
         match self {
+            TestResultBody::Ignored => true,
             TestResultBody::Main(result) => result.did_pass(),
             TestResultBody::Retreat(result) => result.did_pass(),
             TestResultBody::Build(result) => result.did_pass(),
@@ -566,6 +568,8 @@ pub struct TestCaseInfo {
     pub url: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ignore: Option<String>,
 }
 
 impl fmt::Display for TestCaseInfo {
@@ -602,7 +606,11 @@ impl TestCase {
     }
 
     pub fn run(&self) -> TestResult<TestResultBody> {
-        TestResult::new(self.body.run())
+        if self.info.ignore.is_some() {
+            TestResult::new(TestResultBody::Ignored)
+        } else {
+            TestResult::new(self.body.run())
+        }
     }
 }
 
