@@ -640,4 +640,24 @@ mod tests {
         eprintln!("{}", serde_json::to_string_pretty(&result).unwrap());
         assert!(result.did_pass(), "Test case should pass");
     }
+
+    #[test]
+    fn ignore_example() {
+        let test_case: TestCase = serde_json::from_value(json!({
+            "name": "t6g19_swapping_with_intent_of_unnecessary_convoy",
+            "url": "https://webdiplomacy.net/doc/DATC_v3_0.html#6.G.19",
+            "ignore": "DATC claims this should fail, but relies on an odd definition of convoy legality",
+            "edition": "2023",
+            "phase": "Main",
+            "orders": {
+                "FRA: A mar -> spa": "Fails",
+                "FRA: F wes convoys mar -> spa": null,
+                "ITA: F lyo convoys mar -> spa": null,
+                "ITA: A spa -> mar": "Fails"
+            }
+        })).unwrap();
+        let result = test_case.run();
+        eprintln!("{}", serde_json::to_string_pretty(&result).unwrap());
+        assert!(result.did_pass(), "Test case should pass");
+    }
 }
