@@ -84,7 +84,7 @@ impl Rulebook {
         }
     }
 
-    /// Returns the [Diplomacy Player's Technical Guide](dptg) edition of the standard rules.
+    /// Returns the [Diplomacy Player's Technical Guide][dptg] edition of the standard rules.
     ///
     /// [dptg]: https://www.ludomaniac.de/ludopedia/Diplomacy_Player%27s_Technical_Guide
     pub fn edition_dptg() -> Self {
