@@ -10,6 +10,7 @@ use std::iter;
 
 /// Data needed to adjudicate the retreat phase and to present players with useful UI for submitting
 /// retreat orders.
+#[derive(Debug, Clone)]
 pub struct Start<'a> {
     /// A map of dislodged orders to the orders that dislodged them.
     dislodged: HashMap<&'a MappedMainOrder, &'a MappedMainOrder>,
@@ -88,6 +89,64 @@ impl<'a> Start<'a> {
             .values()
             .any(|dests| !dests.is_any_available())
     }
+
+    /// Returns a new [`Start`] from the given parts without further validation.
+    ///
+    /// # Safety
+    /// This function does not check that the parts are internally consistent or comply with
+    /// any rulebook, which could cause incorrect retreat phase adjudications or program crashes.
+    ///
+    /// # Usage
+    /// This function allows the rehydration of a [`Start`] without rerunning main-phase adjudication.
+    /// The caller is responsible for deciding the serialized shape of the [`Start`] data.
+    ///
+    /// To decompose a [`Start`] into raw parts, use:
+    ///
+    /// - [`Start::dislodged`]
+    /// - [`Start::retreat_destinations`]
+    /// - [`Start::unit_positions`]
+    pub unsafe fn from_raw_parts(
+        dislodged: HashMap<&'a MappedMainOrder, &'a MappedMainOrder>,
+        retreat_destinations: HashMap<
+            UnitPosition<'a>,
+            impl IntoIterator<Item = (&'a RegionKey, DestStatus)>,
+        >,
+        unit_positions: impl IntoIterator<Item = UnitPosition<'a>>,
+    ) -> Self {
+        Self {
+            dislodged,
+            retreat_destinations: retreat_destinations
+                .into_iter()
+                .map(|(pos, dests)| (pos, Destinations::from_iter(dests)))
+                .collect(),
+            unit_positions: unit_positions
+                .into_iter()
+                .map(|pos| (pos.region.province(), pos))
+                .collect(),
+        }
+    }
+}
+
+impl UnitPositions<RegionKey> for Start<'_> {
+    fn unit_positions(&self) -> Vec<UnitPosition<'_, &RegionKey>> {
+        self.unit_positions.values().cloned().collect()
+    }
+
+    fn find_province_occupier(
+        &self,
+        province: &ProvinceKey,
+    ) -> Option<UnitPosition<'_, &RegionKey>> {
+        self.unit_positions.get(province).cloned()
+    }
+
+    fn find_region_occupier(&self, region: &RegionKey) -> Option<Unit<'_>> {
+        self.unit_positions
+            .get(region.province())
+            .iter()
+            .filter(|p| p.region == region)
+            .map(|p| p.unit.clone())
+            .next()
+    }
 }
 
 fn is_valid_retreat_route<'a>(
@@ -144,6 +203,7 @@ fn is_valid_retreat_route<'a>(
 
 /// Possible destinations a unit could move to during the retreat phase, along with the
 /// status of each destination.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Destinations<'a> {
     regions: BTreeMap<&'a RegionKey, DestStatus>,
 }
