@@ -240,6 +240,15 @@ impl Destinations<'_> {
     }
 }
 
+impl<'a> IntoIterator for Destinations<'a> {
+    type Item = (&'a RegionKey, DestStatus);
+    type IntoIter = std::collections::btree_map::IntoIter<&'a RegionKey, DestStatus>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.regions.into_iter()
+    }
+}
+
 impl<'a> iter::FromIterator<(&'a RegionKey, DestStatus)> for Destinations<'a> {
     fn from_iter<I: iter::IntoIterator<Item = (&'a RegionKey, DestStatus)>>(iterator: I) -> Self {
         Self {
