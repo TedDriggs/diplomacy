@@ -7,7 +7,7 @@ description = "JSON serialization tests for diplomacy crate"
 
 [dependencies]
 anyhow = "1.0.86"
-diplomacy = { version = "0.1.3", path = "../diplomacy", features = ["serde"] }
+diplomacy = { version = "0.2.0", path = "../diplomacy", features = ["serde"] }
 indexmap = { version = "2.10.0", features = ["serde"] }
 prettyplease = "0.2.36"
 proc-macro2 = "1.0.97"

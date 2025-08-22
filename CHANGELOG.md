@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## Unreleased
+## v0.2.0
 
 -   **Breaking:** Remove `PartialEq` impls between outcomes and `judge::OrderState`. These did not uphold the Rust rules of `PartialEq`.
 -   **Breaking:** Rename `OrderOutcome::Invalid` to `OrderOutcome::Ilegal` to match the distinction drawn by the DATC.
@@ -8,6 +8,8 @@
 -   Make all `OrderOutcome` enums derive `Copy`
 -   Only expose the preventing order in `AttackOutcome::Prevented` - exposing the supports was unnecessary complexity, and allowed for some confusing cases where the provided Prevent value couldn't have caused a failed move
 -   Add `map_order` function to outcomes, which runs a mapping function over any orders referenced in the outcome. This makes it possible to convert order outcomes to be owned, for example.
+-   Add `retreat::Start::from_raw_parts`; this allows construction of a start from a deserialized snapshot. `Start` deliberately does not directly implement `Serialize` or `Deserialize`, as its internal representation is not suitable for serialization.
+-   Add `PartialEq` and `Eq` to `retreat::Start` to allow for comparison of deserialized starts with computed ones. With this, callers can store the retreat start to ensure players see exactly the same game state, while also detecting if there is any drift in adjudication.
 
 ## v0.1.3 (2024-05-22)
 
