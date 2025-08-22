@@ -10,7 +10,7 @@ use std::iter;
 
 /// Data needed to adjudicate the retreat phase and to present players with useful UI for submitting
 /// retreat orders.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Start<'a> {
     /// A map of dislodged orders to the orders that dislodged them.
     dislodged: HashMap<&'a MappedMainOrder, &'a MappedMainOrder>,
