@@ -8,6 +8,7 @@ use diplomacy::{
     judge::{MappedBuildOrder, MappedMainOrder, MappedRetreatOrder, OrderState, Rulebook},
 };
 use indexmap::IndexMap;
+use serde_with::{DisplayFromStr, serde_as};
 
 use crate::MapKey;
 
@@ -57,6 +58,14 @@ impl Cases<TestCase> {
     }
 }
 
+impl<T> FromIterator<T> for Cases<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        Self {
+            cases: iter.into_iter().collect(),
+        }
+    }
+}
+
 pub trait DidPass {
     /// Returns `true` if the test case passed, meaning all expected outcomes matched the actual outcomes.
     fn did_pass(&self) -> bool;
@@ -72,8 +81,8 @@ pub mod main {
 
     use super::*;
 
+    #[serde_as]
     #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-    #[non_exhaustive]
     pub struct TestCase {
         /// The edition of the rules to use for this test case.
         /// If `None`, the test behaves identically for all editions of the standard rules.
@@ -82,8 +91,9 @@ pub mod main {
         /// Unit locations at the start of the test.
         ///
         /// If `None`, the test will infer the starting positions from the orders.
+        #[serde_as(as = "Option<Vec<DisplayFromStr>>")]
         #[serde(skip_serializing_if = "Option::is_none")]
-        pub starting_state: Option<Vec<MapKey<UnitPosition<'static, RegionKey>>>>,
+        pub starting_state: Option<Vec<UnitPosition<'static, RegionKey>>>,
         #[serde(with = "with_map_key")]
         pub orders: IndexMap<MappedMainOrder, Option<OrderState>>,
     }
@@ -92,7 +102,7 @@ pub mod main {
         fn starting_state(&self) -> Option<Vec<UnitPosition<'static, RegionKey>>> {
             self.starting_state
                 .as_ref()
-                .map(|positions| positions.iter().cloned().map(MapKey::into_inner).collect())
+                .map(|positions| positions.iter().cloned().collect())
         }
 
         pub fn run(&self) -> TestResult {
@@ -132,7 +142,7 @@ pub mod main {
                         if expected == order_outcome.into() {
                             None
                         } else {
-                            Some(MapKey(order.clone()))
+                            Some(order.clone())
                         }
                     })
                     .collect(),
@@ -140,12 +150,14 @@ pub mod main {
         }
     }
 
+    #[serde_as]
     #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
     pub struct TestResult {
         #[serde(with = "with_map_key")]
         outcomes:
             IndexMap<MappedMainOrder, OrderOutcomeWithState<OrderOutcome<MapKey<MappedMainOrder>>>>,
-        mismatches: Vec<MapKey<MappedMainOrder>>,
+        #[serde_as(as = "Vec<DisplayFromStr>")]
+        mismatches: Vec<MappedMainOrder>,
     }
 
     impl DidPass for TestResult {
@@ -165,17 +177,17 @@ pub mod retreat {
 
     use super::*;
 
+    #[serde_as]
     #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-    #[non_exhaustive]
     pub struct PrecedingMainPhase {
+        #[serde_as(as = "Option<Vec<DisplayFromStr>>")]
         #[serde(skip_serializing_if = "Option::is_none")]
-        pub starting_state: Option<Vec<MapKey<UnitPosition<'static, RegionKey>>>>,
+        pub starting_state: Option<Vec<UnitPosition<'static, RegionKey>>>,
         #[serde(with = "with_map_key")]
         pub orders: IndexMap<MappedMainOrder, Option<OrderState>>,
     }
 
     #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-    #[non_exhaustive]
     pub struct TestCase {
         /// The edition of the rules to use for this test case.
         /// If `None`, the test behaves identically for all editions of the standard rules.
@@ -229,7 +241,7 @@ pub mod retreat {
                         if expected == order_outcome.into() {
                             None
                         } else {
-                            Some(MapKey(order.clone()))
+                            Some(order.clone())
                         }
                     })
                     .collect(),
@@ -247,6 +259,7 @@ pub mod retreat {
         }
     }
 
+    #[serde_as]
     #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
     pub struct TestResult {
         preceding_main_phase: main::TestResult,
@@ -255,7 +268,8 @@ pub mod retreat {
             MappedRetreatOrder,
             OrderOutcomeWithState<OrderOutcome<MapKey<MappedRetreatOrder>>>,
         >,
-        mismatches: Vec<MapKey<MappedRetreatOrder>>,
+        #[serde_as(as = "Vec<DisplayFromStr>")]
+        mismatches: Vec<MappedRetreatOrder>,
     }
 
     impl DidPass for TestResult {
@@ -277,8 +291,8 @@ pub mod build {
         judge::build::{OrderOutcome, WorldState, to_initial_ownerships},
     };
 
+    #[serde_as]
     #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-    #[non_exhaustive]
     pub struct TestCase {
         /// The edition of the rules to use for this test case.
         /// If `None`, the test behaves identically for all editions of the standard rules.
@@ -286,12 +300,14 @@ pub mod build {
         pub edition: Option<Edition>,
         #[serde(skip_serializing_if = "Option::is_none")]
         pub occupiers: Option<IndexMap<ProvinceKey, Nation>>,
+        #[serde_as(as = "Option<Vec<DisplayFromStr>>")]
         #[serde(skip_serializing_if = "Option::is_none")]
-        pub starting_state: Option<Vec<MapKey<UnitPosition<'static, RegionKey>>>>,
+        pub starting_state: Option<Vec<UnitPosition<'static, RegionKey>>>,
         #[serde(with = "with_map_key")]
         pub orders: IndexMap<MappedBuildOrder, Option<OrderState>>,
+        #[serde_as(as = "Option<Vec<DisplayFromStr>>")]
         #[serde(skip_serializing_if = "Option::is_none")]
-        pub civil_disorder: Option<Vec<MapKey<UnitPosition<'static, RegionKey>>>>,
+        pub civil_disorder: Option<Vec<UnitPosition<'static, RegionKey>>>,
     }
 
     impl TestCase {
@@ -307,11 +323,7 @@ pub mod build {
 
             let outcome = ctx.adjudicate(self.edition.map(Rulebook::from).unwrap_or_default());
 
-            let civil_disorder: Vec<_> = outcome
-                .to_civil_disorder()
-                .into_iter()
-                .map(MapKey)
-                .collect();
+            let civil_disorder: Vec<_> = outcome.to_civil_disorder().into_iter().collect();
 
             TestResult {
                 outcomes: outcome
@@ -406,34 +418,31 @@ pub mod build {
         }
     }
 
+    #[serde_as]
     #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
     #[non_exhaustive]
     pub enum Mismatch {
-        Order(MapKey<MappedBuildOrder>),
-        Unit(MapKey<UnitPosition<'static, RegionKey>>),
+        Order(#[serde_as(as = "DisplayFromStr")] MappedBuildOrder),
+        Unit(#[serde_as(as = "DisplayFromStr")] UnitPosition<'static, RegionKey>),
     }
 
     impl From<MappedBuildOrder> for Mismatch {
         fn from(order: MappedBuildOrder) -> Self {
-            Mismatch::Order(MapKey(order))
-        }
-    }
-
-    impl From<MapKey<UnitPosition<'static, RegionKey>>> for Mismatch {
-        fn from(pos: MapKey<UnitPosition<'static, RegionKey>>) -> Self {
-            Mismatch::Unit(pos)
+            Mismatch::Order(order)
         }
     }
 
     impl From<UnitPosition<'static, RegionKey>> for Mismatch {
         fn from(pos: UnitPosition<'static, RegionKey>) -> Self {
-            Mismatch::Unit(MapKey(pos))
+            Mismatch::Unit(pos)
         }
     }
 
+    #[serde_as]
     #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
     pub struct TestResult {
-        civil_disorder: Vec<MapKey<UnitPosition<'static, RegionKey>>>,
+        #[serde_as(as = "Vec<DisplayFromStr>")]
+        civil_disorder: Vec<UnitPosition<'static, RegionKey>>,
         #[serde(with = "with_map_key")]
         outcomes: IndexMap<MappedBuildOrder, OrderOutcomeWithState<OrderOutcome>>,
         mismatches: Vec<Mismatch>,
@@ -517,12 +526,13 @@ impl<T> DidPass for TestResult<T> {
 }
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-#[non_exhaustive]
 pub struct TestCaseInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore: Option<String>,
 }
