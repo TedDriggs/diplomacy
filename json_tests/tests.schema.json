@@ -17,6 +17,9 @@
                 "url": {
                     "type": "string"
                 },
+                "description": {
+                    "type": "string"
+                },
                 "ignore": {
                     "type": "string",
                     "description": "A reason why this test case should be ignored. If set, the test will not be run."
