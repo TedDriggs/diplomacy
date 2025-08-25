@@ -102,7 +102,7 @@ pub mod main {
         fn starting_state(&self) -> Option<Vec<UnitPosition<'static, RegionKey>>> {
             self.starting_state
                 .as_ref()
-                .map(|positions| positions.iter().cloned().collect())
+                .map(|positions| positions.to_vec())
         }
 
         pub fn run(&self) -> TestResult {
